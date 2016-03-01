@@ -1,0 +1,11 @@
+import se.kth.autoscalar.common.monitoring.RuleSupport.ResourceType;
+import se.kth.autoscalar.scaling.rules.Rule;
+
+
+rule "scaleOutCPU"
+    when
+        cpu : Rule(resourceType == ResourceType.CPU_PERCENTAGE, threshold >= 80);
+        //ES should fill >= and 80 according to rule defined by user
+    then
+        //call ES scale out method
+end

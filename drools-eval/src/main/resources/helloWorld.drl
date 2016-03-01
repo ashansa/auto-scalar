@@ -1,0 +1,10 @@
+import se.kth.drools.Message;
+
+rule "Hello"
+
+when
+    message : Message(type == "something")
+then
+    message.trigger();
+
+end
