@@ -1,4 +1,4 @@
-package se.kth.elasticscalar.scaling;
+package se.kth.autoscalar.scaling;
 
 /**
  * Created with IntelliJ IDEA.

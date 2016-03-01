@@ -3,6 +3,7 @@ package se.kth.drools;
 
 import org.drools.RuleBase;
 import org.drools.RuleBaseFactory;
+import org.drools.rule.Package;
 import org.drools.WorkingMemory;
 import org.drools.compiler.DroolsError;
 import org.drools.compiler.DroolsParserException;
