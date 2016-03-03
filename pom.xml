@@ -9,8 +9,8 @@
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>scalar</module>
         <module>common</module>
+        <module>scaling</module>
         <module>monitoring</module>
         <module>api</module>
         <module>drools-eval</module>

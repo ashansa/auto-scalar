@@ -9,6 +9,4 @@ package se.kth.autoscalar.common.monitoring;
  */
 public class MonitoringEvent {
 
-    //String
-
 }
