@@ -5,6 +5,8 @@ import se.kth.autoscalar.common.monitoring.RuleSupport;
 import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
 import se.kth.autoscalar.scaling.rules.Rule;
 
+import java.util.Map;
+
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,7 +17,7 @@ import se.kth.autoscalar.scaling.rules.Rule;
  */
 public interface GroupManager{
     Group createGroup(String groupName, int minInstances, int maxInstances, int coolingTimeUp, int coolingTimeDown,
-                      String[] ruleNames) throws ElasticScalarException;
+                      String[] ruleNames, Map<Group.ResourceRequirement, Integer> minResourceReq, float reliabilityReq) throws ElasticScalarException;
 
     boolean isGroupExists(String groupName) throws ElasticScalarException;
 

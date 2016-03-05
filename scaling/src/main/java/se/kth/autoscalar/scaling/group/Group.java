@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -28,11 +29,14 @@ public class Group {
     //minimum time interval in seconds between two scale down actions
     private int coolingTimeDown;
 
-    /*TODO requre minimum resource request per machine minCPU: 4, minRAM: 8GB, minStorage: 100GB ==> all these may not be
-    considered in scaling decision, but when providing machines, we can consider all of them */
+    //minimum resource request per machine minCPU: 4, minRAM: 8GB, minStorage: 100GB ==> all these may not be
+    //considered in scaling decision, but when providing machines, we can consider all of them */
+    private Map<ResourceRequirement, Integer> minResourceReq;
 
-    public Group(String name, int minInstances, int maxInstances, int coolingTimeUp,
-                 int coolingTimeDown, String[] ruleNames) {
+    private float reliabilityReq;
+
+    public Group(String name, int minInstances, int maxInstances, int coolingTimeUp, int coolingTimeDown,
+                 String[] ruleNames, Map<ResourceRequirement, Integer> minResourceReq, float reliabilityReq) {
         this.groupName = name;
         this.minInstances = minInstances;
         this.maxInstances = maxInstances;
@@ -45,6 +49,9 @@ public class Group {
         } else {
             this.ruleNames = new ArrayList<String>();
         }
+
+        this.minResourceReq = minResourceReq;
+        this.reliabilityReq = reliabilityReq;
     }
 
     public String getGroupName() {
@@ -93,5 +100,17 @@ public class Group {
         } else {
              log.info("Rule with name " + ruleName + " already exists in group " + groupName);
         }
+    }
+
+    public Map<ResourceRequirement, Integer> getMinResourceReq() {
+        return minResourceReq;
+    }
+
+    public float getReliabilityReq() {
+        return reliabilityReq;
+    }
+
+    public enum ResourceRequirement {
+        NUMBER_OF_VCPUS, RAM, STORAGE
     }
 }

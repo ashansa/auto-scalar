@@ -11,6 +11,7 @@ import se.kth.autoscalar.scaling.rules.RuleManagerImpl;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -45,7 +46,7 @@ public class GroupManagerImpl implements GroupManager {
     }
 
     public Group createGroup(String groupName, int minInstances, int maxInstances, int coolingTimeUp, int coolingTimeDown,
-                             String[] ruleNames) throws ElasticScalarException {
+                             String[] ruleNames, Map<Group.ResourceRequirement, Integer> minResourceReq, float reliabilityReq) throws ElasticScalarException {
 
         String[] validRules = getValidRules(ruleNames);
 
@@ -53,7 +54,7 @@ public class GroupManagerImpl implements GroupManager {
             throw new ElasticScalarException("At least one valid rule name should be provided when creating a scaling group");
         } else {
             try {
-                Group group = new Group(groupName, minInstances, maxInstances, coolingTimeUp, coolingTimeDown, validRules);
+                Group group = new Group(groupName, minInstances, maxInstances, coolingTimeUp, coolingTimeDown, validRules, minResourceReq, reliabilityReq);
                 groupDAO.createGroup(group);
                 return group;
             } catch (SQLException e) {

@@ -1,5 +1,6 @@
-package se.kth.autoscalar.scaling.budget;
+package se.kth.autoscalar.scaling.cost.mgt;
 
+import se.kth.autoscalar.scaling.group.Group;
 import se.kth.autoscalar.scaling.models.MachineType;
 
 import java.util.Map;
@@ -13,11 +14,8 @@ import java.util.Map;
  */
 public interface MachineProposer {
 
-    public enum ResourceRequirement {
-        NUMBER_OF_VCPUS, RAM, STORAGE
-    }
-
-    MachineType getMachineProposal(Map<ResourceRequirement, Integer> minimumResourceReq, int reliabilityPercentage);
+    MachineType[] getMachineProposals(String groupId, Map<Group.ResourceRequirement, Integer> minimumResourceReq,
+                                      int noOfMachines, float reliabilityPercentage);
 
     //to be supported later
     /*MachineType getMachineProposal(Map<ResourceRequirement, Integer> minimumResourceReq, int reliabilityPercentage,

@@ -10,6 +10,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -184,13 +186,23 @@ public class GroupDAO {
 
                 String[] rulesOfGroup = getRuleNamesForGroup(groupName);
 
-                return new Group(groupName, minInstances, maxInstances, coolingTimeUp, coolingTimeDown, rulesOfGroup);
+                //TODO config db to have new parameters
+                return new Group(groupName, minInstances, maxInstances, coolingTimeUp, coolingTimeDown, rulesOfGroup,
+                        getDefaultMinResourceReq(), 2.0f);
             }
         } catch (SQLException e) {
             log.error("Error while retrieving the attributes for group " + groupName);
             throw e;
         }
         return null;
+    }
+
+    private Map<Group.ResourceRequirement, Integer> getDefaultMinResourceReq() {
+        Map<Group.ResourceRequirement, Integer> minReq = new HashMap<Group.ResourceRequirement, Integer>();
+        minReq.put(Group.ResourceRequirement.NUMBER_OF_VCPUS, 4);
+        minReq.put(Group.ResourceRequirement.RAM, 4);
+        minReq.put(Group.ResourceRequirement.STORAGE, 50);
+        return minReq;
     }
 
     /*

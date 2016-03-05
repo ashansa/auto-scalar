@@ -15,6 +15,7 @@ import se.kth.autoscalar.scaling.rules.RuleManagerImpl;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 import static org.junit.Assert.fail;
 
@@ -51,7 +52,7 @@ public class GroupTest {
         // test create group with non existant rule
         try {
             groupManager.createGroup( groupName, (int)(random * 10),
-                    (int)(random * 100), coolingTimeOut, coolingTimeIn, new String[]{"wrongRule"});
+                    (int)(random * 100), coolingTimeOut, coolingTimeIn, new String[]{"wrongRule"}, new HashMap<Group.ResourceRequirement, Integer>(), 2.0f);
 
             fail("Expected exception not thrown");
 
@@ -65,7 +66,7 @@ public class GroupTest {
         Assert.assertNotNull(rule);
 
         Group group = groupManager.createGroup(groupName, (int)(random * 10),
-                (int)(random * 100), coolingTimeOut, coolingTimeIn, new String[]{rule.getRuleName()});
+                (int)(random * 100), coolingTimeOut, coolingTimeIn, new String[]{rule.getRuleName()}, new HashMap<Group.ResourceRequirement, Integer>(), 2.0f);
         Assert.assertNotNull(group);
 
         //test exists

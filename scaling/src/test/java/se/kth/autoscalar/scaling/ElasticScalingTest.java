@@ -69,7 +69,7 @@ public class ElasticScalingTest {
                     ResourceType.CPU_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN, (int)(random * 100), 1);
 
             group = groupManager.createGroup(groupName, (int)(random * 10),
-                    (int)(random * 100), coolingTimeOut, coolingTimeIn, new String[]{rule.getRuleName(), rule2.getRuleName()});
+                    (int)(random * 100), coolingTimeOut, coolingTimeIn, new String[]{rule.getRuleName(), rule2.getRuleName()}, new HashMap<Group.ResourceRequirement, Integer>(), 2.0f);
 
         } catch (ElasticScalarException e) {
             throw new IllegalStateException(e);

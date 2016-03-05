@@ -1,11 +1,16 @@
 package se.kth.autoscalar.scaling.core;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import se.kth.autoscalar.common.monitoring.MachineMonitoringEvent;
 import se.kth.autoscalar.common.monitoring.MonitoringEvent;
 import se.kth.autoscalar.common.monitoring.ResourceMonitoringEvent;
 import se.kth.autoscalar.common.monitoring.RuleSupport;
 import se.kth.autoscalar.scaling.ScalingSuggestion;
+import se.kth.autoscalar.scaling.cost.mgt.KaramelMachineProposer;
+import se.kth.autoscalar.scaling.cost.mgt.MachineProposer;
 import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
+import se.kth.autoscalar.scaling.group.Group;
 import se.kth.autoscalar.scaling.group.GroupManager;
 import se.kth.autoscalar.scaling.group.GroupManagerImpl;
 import se.kth.autoscalar.scaling.models.MachineType;
@@ -14,7 +19,6 @@ import se.kth.autoscalar.scaling.rules.Rule;
 import se.kth.autoscalar.scaling.rules.RuleManager;
 import se.kth.autoscalar.scaling.rules.RuleManagerImpl;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -28,11 +32,16 @@ import java.util.concurrent.ArrayBlockingQueue;
  */
 public class ElasticScalingManager {
 
+    Log log = LogFactory.getLog(ElasticScalingManager.class);
+
     GroupManager groupManager;
     RuleManager ruleManager;
 
     private Map<String, RuntimeGroupInfo> activeGroupsInfo = new HashMap<String, RuntimeGroupInfo>();
     private Map<String, ArrayBlockingQueue<ScalingSuggestion>> suggestionMap = new HashMap<String, ArrayBlockingQueue<ScalingSuggestion>>();
+    private ArrayBlockingQueue<String> scaleOutInternalQueue = new ArrayBlockingQueue<String>(1000); //String with the form   <groupId>:<noOfMachines>
+    private ArrayBlockingQueue<String> scaleInInternalQueue = new ArrayBlockingQueue<String>(1000); //String with the form   <groupId>:<noOfMachines>
+
     //private ArrayList<String> activeESGroups = new ArrayList<String>();
     //ArrayBlockingQueue<ScalingSuggestion> suggestionsQueue = new ArrayBlockingQueue<ScalingSuggestion>(50);
 
@@ -78,38 +87,64 @@ public class ElasticScalingManager {
         if(activeGroupsInfo.containsKey(groupId)) {
             Rule[] matchingRules = groupManager.getMatchingRulesForGroup(groupId, event.getResourceType(), comparator, event.getCurrentValue());
             //TODO: decide what to do based on rules and cooling time
-            int maxChange = 0;
+            int maxChangeOfMachines = 0;
 
             for (Rule rule : matchingRules) {
-                if (maxChange < rule.getOperationAction())
-                    maxChange = rule.getOperationAction();
+                if (maxChangeOfMachines < rule.getOperationAction())
+                    maxChangeOfMachines = rule.getOperationAction();
             }
 
-            ScalingSuggestion suggestion;
+            //ScalingSuggestion suggestion;
 
             if (RuleSupport.Comparator.GREATER_THAN.name().equals(comparator.name()) ||
                     RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.name().equals(comparator.name())) {
-                ArrayList<MachineType> suggestions = new ArrayList<MachineType>();
-                //TODO add suggestions to array
-                 suggestion = new ScalingSuggestion(suggestions.toArray(new MachineType[suggestions.size()]));
+
+                scaleOutInternalQueue.add(groupId.concat(":").concat(String.valueOf(maxChangeOfMachines)));
             } else {
-                ArrayList<String> machineIdsToKill = new ArrayList<String>();
-                //TODO add machine Ids
-                suggestion = new ScalingSuggestion(machineIdsToKill.toArray(new String[machineIdsToKill.size()]));
+                scaleInInternalQueue.add(groupId.concat(":").concat(String.valueOf(maxChangeOfMachines)));
             }
-            addSuggestion(groupId, suggestion);
         }
     }
 
-    private void addSuggestion (String groupId, ScalingSuggestion suggestion) {
 
-        ArrayBlockingQueue<ScalingSuggestion> suggestionsQueue;
-        if (suggestionMap.containsKey(groupId)) {
-            suggestionsQueue = suggestionMap.get(groupId);
-        } else {
-            suggestionsQueue = new ArrayBlockingQueue<ScalingSuggestion>(50);   //TODO: make 50 configurable
+    private class ScaleOutDecisionMaker implements Runnable {
+
+        MachineProposer machineProposer = new KaramelMachineProposer();  //TODO: get 'which proposer to use' from a config file
+
+        public void run() {
+            String groupId = "";
+            int noOfMachines;
+            while (true) {
+                try {
+                    String suggestion = scaleOutInternalQueue.take(); //suggestion is in the form <groupId>:<noOfMachines>
+                    groupId = suggestion.substring(0,suggestion.lastIndexOf(":"));
+                    noOfMachines = Integer.parseInt(suggestion.substring(suggestion.lastIndexOf(":") + 1, suggestion.length()));
+
+                    Group group = groupManager.getGroup(groupId);
+                    Map<Group.ResourceRequirement, Integer> minResourceReq = group.getMinResourceReq();
+                    MachineType[] machineProposals = machineProposer.getMachineProposals(groupId, minResourceReq,
+                            noOfMachines, group.getReliabilityReq());
+                    addMachinesToSuggestions(groupId, machineProposals);
+
+                } catch (InterruptedException e) {
+                    log.error("Error while retrieving item from scaleOutInternalQueue. " + e.getMessage());
+                } catch (ElasticScalarException e) {
+                    log.error("Error while retrieving min resource req of group " + groupId + " ." + e.getMessage());
+                }
+            }
         }
-        suggestionsQueue.add(suggestion);
-        suggestionMap.put(groupId, suggestionsQueue);
+
+        private void addMachinesToSuggestions(String groupId, MachineType[] machines) {
+            ScalingSuggestion suggestion = new ScalingSuggestion(machines);
+
+            ArrayBlockingQueue<ScalingSuggestion> suggestionsQueue;
+            if (suggestionMap.containsKey(groupId)) {
+                suggestionsQueue = suggestionMap.get(groupId);
+            } else {
+                suggestionsQueue = new ArrayBlockingQueue<ScalingSuggestion>(50);   //TODO: make 50 configurable
+            }
+            suggestionsQueue.add(suggestion);
+            suggestionMap.put(groupId, suggestionsQueue);
+        }
     }
 }
