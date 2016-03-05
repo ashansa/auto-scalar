@@ -2,9 +2,7 @@ package se.kth.autoscalar.scaling.core;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import se.kth.autoscalar.common.monitoring.MachineMonitoringEvent;
 import se.kth.autoscalar.common.monitoring.MonitoringEvent;
-import se.kth.autoscalar.common.monitoring.ResourceMonitoringEvent;
 import se.kth.autoscalar.common.monitoring.RuleSupport;
 import se.kth.autoscalar.scaling.ScalingSuggestion;
 import se.kth.autoscalar.scaling.cost.mgt.KaramelMachineProposer;
@@ -15,6 +13,10 @@ import se.kth.autoscalar.scaling.group.GroupManager;
 import se.kth.autoscalar.scaling.group.GroupManagerImpl;
 import se.kth.autoscalar.scaling.models.MachineType;
 import se.kth.autoscalar.scaling.models.RuntimeGroupInfo;
+import se.kth.autoscalar.scaling.profile.EventProfiler;
+import se.kth.autoscalar.scaling.profile.ProfiledEvent;
+import se.kth.autoscalar.scaling.profile.ProfiledEventListener;
+import se.kth.autoscalar.scaling.profile.ProfiledResourceEvent;
 import se.kth.autoscalar.scaling.rules.Rule;
 import se.kth.autoscalar.scaling.rules.RuleManager;
 import se.kth.autoscalar.scaling.rules.RuleManagerImpl;
@@ -36,6 +38,7 @@ public class ElasticScalingManager {
 
     GroupManager groupManager;
     RuleManager ruleManager;
+    EventProfiler eventProfiler;
 
     private Map<String, RuntimeGroupInfo> activeGroupsInfo = new HashMap<String, RuntimeGroupInfo>();
     private Map<String, ArrayBlockingQueue<ScalingSuggestion>> suggestionMap = new HashMap<String, ArrayBlockingQueue<ScalingSuggestion>>();
@@ -48,6 +51,7 @@ public class ElasticScalingManager {
     public ElasticScalingManager() throws ElasticScalarException {
         ruleManager = RuleManagerImpl.getInstance();
         groupManager = GroupManagerImpl.getInstance();
+        eventProfiler = new EventProfiler();
     }
 
     public void addGroupForScaling(String groupId) throws ElasticScalarException {
@@ -73,35 +77,41 @@ public class ElasticScalingManager {
         return suggestionMap.get(groupId);
     }
 
-    public void handleEvent(String groupId, MonitoringEvent monitoringEvent,
-                            RuleSupport.Comparator comparator) throws ElasticScalarException {
-        if (monitoringEvent instanceof ResourceMonitoringEvent) {
-            handleResourceMonitoringEvent(groupId, (ResourceMonitoringEvent)monitoringEvent, comparator);
-        } else if (monitoringEvent instanceof MachineMonitoringEvent) {
-            //support later
-        }
+    public void handleEvent(String groupId, MonitoringEvent monitoringEvent) throws ElasticScalarException {
+        eventProfiler.profileEvent(groupId, monitoringEvent);
     }
 
-    private void handleResourceMonitoringEvent(String groupId, ResourceMonitoringEvent event,
-                                               RuleSupport.Comparator comparator) throws ElasticScalarException {
-        if(activeGroupsInfo.containsKey(groupId)) {
-            Rule[] matchingRules = groupManager.getMatchingRulesForGroup(groupId, event.getResourceType(), comparator, event.getCurrentValue());
-            //TODO: decide what to do based on rules and cooling time
-            int maxChangeOfMachines = 0;
 
-            for (Rule rule : matchingRules) {
-                if (maxChangeOfMachines < rule.getOperationAction())
-                    maxChangeOfMachines = rule.getOperationAction();
-            }
 
-            //ScalingSuggestion suggestion;
+    public class ProfiledResourceEventListener implements ProfiledEventListener {
 
-            if (RuleSupport.Comparator.GREATER_THAN.name().equals(comparator.name()) ||
-                    RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.name().equals(comparator.name())) {
+        public void handleEvent(ProfiledEvent profiledEvent) throws ElasticScalarException {
+            if (profiledEvent instanceof ProfiledResourceEvent) {
+                ProfiledResourceEvent event = (ProfiledResourceEvent)profiledEvent;
+                if(activeGroupsInfo.containsKey(event.getGroupId())) {
+                    Rule[] matchingRules = groupManager.getMatchingRulesForGroup(event.getGroupId(), event.getResourceType(),
+                            event.getComparator(), event.getValue());
+                    //TODO: decide what to do based on rules and cooling time
+                    int maxChangeOfMachines = 0;
 
-                scaleOutInternalQueue.add(groupId.concat(":").concat(String.valueOf(maxChangeOfMachines)));
-            } else {
-                scaleInInternalQueue.add(groupId.concat(":").concat(String.valueOf(maxChangeOfMachines)));
+                    for (Rule rule : matchingRules) {
+                        if (maxChangeOfMachines < rule.getOperationAction())
+                            maxChangeOfMachines = rule.getOperationAction();
+                    }
+
+                    //ScalingSuggestion suggestion;
+
+                    if (RuleSupport.Comparator.GREATER_THAN.name().equals(event.getComparator().name()) ||
+                            RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.name().equals(event.getComparator().name())) {
+
+                        scaleOutInternalQueue.add(event.getGroupId().concat(":").concat(String.valueOf(maxChangeOfMachines)));
+                    } else {
+                        scaleInInternalQueue.add(event.getGroupId().concat(":").concat(String.valueOf(maxChangeOfMachines)));
+                    }
+                } else {
+                    throw new ElasticScalarException("Resource event cannot be handled. Group is not in active scaling groups." +
+                            " Group Id: " + event.getGroupId());
+                }
             }
         }
     }

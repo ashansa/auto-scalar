@@ -9,7 +9,7 @@ import se.kth.autoscalar.common.monitoring.ResourceMonitoringEvent;
  * @version $Id$
  * @since 1.0
  */
-public class ResourceMonitoringListener {
+public class MonitoringListener {
 
   public void onHighCPU(String groupId, ResourceMonitoringEvent event) {
 
