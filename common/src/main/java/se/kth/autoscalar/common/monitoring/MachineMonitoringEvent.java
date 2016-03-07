@@ -14,4 +14,18 @@ package se.kth.autoscalar.common.monitoring;
  */
 public class MachineMonitoringEvent extends MonitoringEvent {
 
+    public enum Status {
+        KILLED, AT_END_OF_BILLING_PERIOD
+    }
+
+    private Status status;
+    private String machineId;
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public String getMachineId() {
+        return machineId;
+    }
 }

@@ -1,7 +1,5 @@
 package se.kth.drools;
 
-import se.kth.autoscalar.api.AutoScalarAPI;
-import se.kth.autoscalar.api.AutoScalarImpl;
 import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
 
 ;
@@ -27,7 +25,7 @@ public class Message {
   }
 
   public void trigger() throws ElasticScalarException {
-    AutoScalarAPI api = new AutoScalarImpl();
+    //AutoScalarAPI api = new AutoScalarAPI();
     //call action
     //api.deleteGroup("test");
   }

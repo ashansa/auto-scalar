@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import se.kth.autoscalar.common.monitoring.MonitoringEvent;
 import se.kth.autoscalar.common.monitoring.RuleSupport;
+import se.kth.autoscalar.scaling.MonitoringListener;
 import se.kth.autoscalar.scaling.ScalingSuggestion;
 import se.kth.autoscalar.scaling.cost.mgt.KaramelMachineProposer;
 import se.kth.autoscalar.scaling.cost.mgt.MachineProposer;
@@ -13,13 +14,8 @@ import se.kth.autoscalar.scaling.group.GroupManager;
 import se.kth.autoscalar.scaling.group.GroupManagerImpl;
 import se.kth.autoscalar.scaling.models.MachineType;
 import se.kth.autoscalar.scaling.models.RuntimeGroupInfo;
-import se.kth.autoscalar.scaling.profile.EventProfiler;
-import se.kth.autoscalar.scaling.profile.ProfiledEvent;
-import se.kth.autoscalar.scaling.profile.ProfiledEventListener;
-import se.kth.autoscalar.scaling.profile.ProfiledResourceEvent;
+import se.kth.autoscalar.scaling.profile.*;
 import se.kth.autoscalar.scaling.rules.Rule;
-import se.kth.autoscalar.scaling.rules.RuleManager;
-import se.kth.autoscalar.scaling.rules.RuleManagerImpl;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,8 +33,9 @@ public class ElasticScalingManager {
     Log log = LogFactory.getLog(ElasticScalingManager.class);
 
     GroupManager groupManager;
-    RuleManager ruleManager;
+    //RuleManager ruleManager;
     EventProfiler eventProfiler;
+    MonitoringListener monitoringListener;
 
     private Map<String, RuntimeGroupInfo> activeGroupsInfo = new HashMap<String, RuntimeGroupInfo>();
     private Map<String, ArrayBlockingQueue<ScalingSuggestion>> suggestionMap = new HashMap<String, ArrayBlockingQueue<ScalingSuggestion>>();
@@ -49,14 +46,12 @@ public class ElasticScalingManager {
     //ArrayBlockingQueue<ScalingSuggestion> suggestionsQueue = new ArrayBlockingQueue<ScalingSuggestion>(50);
 
     public ElasticScalingManager() throws ElasticScalarException {
-        ruleManager = RuleManagerImpl.getInstance();
+        //ruleManager = RuleManagerImpl.getInstance();
         groupManager = GroupManagerImpl.getInstance();
         eventProfiler = new EventProfiler();
-    }
-
-    public void addGroupForScaling(String groupId) throws ElasticScalarException {
-        if (!activeGroupsInfo.containsKey(groupId))
-            addGroupForScaling(groupId, 0);
+        eventProfiler.addListener(new ProfiledResourceEventListener());
+        //TODO add machineStatusListener
+        monitoringListener = new MonitoringListener(this);
     }
 
     public void addGroupForScaling(String groupId, int currentNumberOfMachines) throws ElasticScalarException {
@@ -112,6 +107,15 @@ public class ElasticScalingManager {
                     throw new ElasticScalarException("Resource event cannot be handled. Group is not in active scaling groups." +
                             " Group Id: " + event.getGroupId());
                 }
+            }
+        }
+    }
+
+    public class ProfiledMachineEventListener implements ProfiledEventListener {
+
+        public void handleEvent(ProfiledEvent profiledEvent) {
+            if (profiledEvent instanceof ProfiledMachineEvent) {
+
             }
         }
     }

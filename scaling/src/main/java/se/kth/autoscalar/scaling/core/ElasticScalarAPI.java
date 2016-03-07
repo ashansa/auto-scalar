@@ -1,16 +1,15 @@
-package se.kth.autoscalar.api;
+package se.kth.autoscalar.scaling.core;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import se.kth.autoscalar.common.models.MachineInfo;
-import se.kth.autoscalar.common.monitoring.RuleSupport.Comparator;
-import se.kth.autoscalar.common.monitoring.RuleSupport.ResourceType;
-import se.kth.autoscalar.exceptions.AutoScalarException;
+import se.kth.autoscalar.common.monitoring.RuleSupport;
 import se.kth.autoscalar.scaling.MonitoringListener;
-import se.kth.autoscalar.scaling.core.ElasticScalarAPI;
 import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
 import se.kth.autoscalar.scaling.group.Group;
+import se.kth.autoscalar.scaling.group.GroupManager;
+import se.kth.autoscalar.scaling.group.GroupManagerImpl;
 import se.kth.autoscalar.scaling.rules.Rule;
+import se.kth.autoscalar.scaling.rules.RuleManager;
+import se.kth.autoscalar.scaling.rules.RuleManagerImpl;
 
 import java.util.Queue;
 
@@ -21,23 +20,20 @@ import java.util.Queue;
  * @version $Id$
  * @since 1.0
  */
-public class AutoScalarAPI {
+public class ElasticScalarAPI {
 
-    Log log = LogFactory.getLog(AutoScalarAPI.class);
+    ElasticScalingManager elasticScalingManager;
+    RuleManager ruleManager;
+    GroupManager groupManager;
 
-    ElasticScalarAPI elasticScalar;
-
-    public AutoScalarAPI() throws ElasticScalarException {
-        try {
-            elasticScalar = new ElasticScalarAPI();
-        } catch (ElasticScalarException e) {
-            log.error("Error while initiating ElasticScalarAPI. " + e.getMessage());
-            throw e;
-        }
+    public ElasticScalarAPI() throws ElasticScalarException {
+        elasticScalingManager = new ElasticScalingManager();
+        ruleManager = RuleManagerImpl.getInstance();
+        groupManager = GroupManagerImpl.getInstance();
     }
 
-    public Rule createRule(String ruleName, ResourceType resourceType, Comparator comparator, float thresholdPercentage, int operationAction) throws ElasticScalarException {
-        throw new UnsupportedOperationException("#createRule()");
+    public Rule createRule(String ruleName, RuleSupport.ResourceType resourceType, RuleSupport.Comparator comparator, float thresholdPercentage, int operationAction) throws ElasticScalarException {
+        return ruleManager.createRule(ruleName, resourceType, comparator, thresholdPercentage, operationAction);
     }
 
     public Rule getRule(String ruleName) throws ElasticScalarException {
@@ -100,37 +96,13 @@ public class AutoScalarAPI {
         throw new UnsupportedOperationException("#removeMachineFromGroup()");
     }
 
-    public void startAutoScaling(String groupId, int currentNumberOfMachines) throws ElasticScalarException, AutoScalarException {
-
-        Group group = elasticScalar.getGroup(groupId);
-        if (group == null) {
-            String errorMsg = "Could not find a group with id " + groupId + " . A group should be created with the " +
-                    "required requirements and scaling rules before starting auto scaling on a group";
-            throw new AutoScalarException(errorMsg);
-        }
-
-        String[] rulesOfGroup = group.getRuleNames();
-        if (rulesOfGroup.length == 0) {
-            String errorMsg = "No rules have been specified to the scaling group with id " + groupId + " . Rules for the" +
-                    "group should be specified before starting auto scaling on the group.";
-            throw new AutoScalarException(errorMsg);
-        }
-
-        //TODO create RuleBase
-
-        try {
-            MonitoringListener monitoringListener = elasticScalar.startElasticScaling(groupId, currentNumberOfMachines);
-        } catch (ElasticScalarException e) {
-            log.error("Error while starting elastic scaling for group " + groupId);
-            throw e;
-        }
-
-        //TODO start monitoring the group and pass monitoringListener object to monitoring module to notify
-
+    public MonitoringListener startElasticScaling(String groupId, int currentNumberOfMachines) throws ElasticScalarException {
+        elasticScalingManager.addGroupForScaling(groupId, currentNumberOfMachines);
+        return elasticScalingManager.monitoringListener;
     }
 
-    public boolean stopAutoScaling(String groupId) {
-        throw new UnsupportedOperationException("#stopAutoScaling()");
+    public boolean stopElasticScaling(String groupId) {
+        throw new UnsupportedOperationException("#stopElasticScaling()");
     }
 
     public Queue getSuggestionQueue() {
