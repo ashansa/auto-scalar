@@ -3,7 +3,7 @@ package se.kth.autoscalar.scaling;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import se.kth.autoscalar.common.monitoring.ResourceMonitoringEvent;
-import se.kth.autoscalar.scaling.core.ElasticScalingManager;
+import se.kth.autoscalar.scaling.core.ElasticScalarAPI;
 import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
 
 /**
@@ -17,16 +17,22 @@ public class MonitoringListener {
 
     Log log = LogFactory.getLog(MonitoringListener.class);
 
-    ElasticScalingManager elasticScalingManager;
+    ElasticScalarAPI elasticScalarAPI;
+
+    public MonitoringListener() throws ElasticScalarException {
+        this.elasticScalarAPI = new ElasticScalarAPI();
+    }
+
+    /*ElasticScalingManager elasticScalingManager;
 
     public MonitoringListener(ElasticScalingManager elasticScalingManager) {
         this.elasticScalingManager = elasticScalingManager;
-    }
+    }*/
 
     /*start of resource monitoring related methods*/
     public void onHighCPU(String groupId, ResourceMonitoringEvent event) throws ElasticScalarException {
         try {
-            elasticScalingManager.handleEvent(groupId, event);
+            elasticScalarAPI.handleEvent(groupId, event);
         } catch (ElasticScalarException e) {
             log.error("Error while handling onHighCPU event for group: " + groupId + " . " + e.getMessage());
             throw e;

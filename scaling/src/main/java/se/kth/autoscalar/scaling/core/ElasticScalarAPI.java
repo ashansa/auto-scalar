@@ -1,8 +1,12 @@
 package se.kth.autoscalar.scaling.core;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import se.kth.autoscalar.common.models.MachineInfo;
+import se.kth.autoscalar.common.monitoring.MonitoringEvent;
 import se.kth.autoscalar.common.monitoring.RuleSupport;
 import se.kth.autoscalar.scaling.MonitoringListener;
+import se.kth.autoscalar.scaling.ScalingSuggestion;
 import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
 import se.kth.autoscalar.scaling.group.Group;
 import se.kth.autoscalar.scaling.group.GroupManager;
@@ -11,7 +15,8 @@ import se.kth.autoscalar.scaling.rules.Rule;
 import se.kth.autoscalar.scaling.rules.RuleManager;
 import se.kth.autoscalar.scaling.rules.RuleManagerImpl;
 
-import java.util.Queue;
+import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * Created with IntelliJ IDEA.
@@ -21,6 +26,8 @@ import java.util.Queue;
  * @since 1.0
  */
 public class ElasticScalarAPI {
+
+    Log log = LogFactory.getLog(ElasticScalarAPI.class);
 
     ElasticScalingManager elasticScalingManager;
     RuleManager ruleManager;
@@ -37,55 +44,65 @@ public class ElasticScalarAPI {
     }
 
     public Rule getRule(String ruleName) throws ElasticScalarException {
-        throw new UnsupportedOperationException("#getRule()");
+        return ruleManager.getRule(ruleName);
     }
 
     public void updateRule(String ruleName, Rule rule) throws ElasticScalarException {
-        throw new UnsupportedOperationException("#updateRule()");
+        ruleManager.updateRule(ruleName, rule);
     }
 
     public void deleteRule(String ruleName) throws ElasticScalarException {
-        throw new UnsupportedOperationException("#deleteRule()");
+        ruleManager.deleteRule(ruleName);
     }
 
     public boolean isRuleExists(String ruleName) throws ElasticScalarException {
-        throw new UnsupportedOperationException("#isRuleExists()");
+        return ruleManager.isRuleExists(ruleName);
     }
 
-    public boolean isRuleInUse(String ruleName) {
-        throw new UnsupportedOperationException("#isRuleInUse()");
+    public boolean isRuleInUse(String ruleName) throws ElasticScalarException {
+        return ruleManager.isRuleExists(ruleName);
     }
 
     public String[] getRuleUsage(String ruleName) throws ElasticScalarException {
-        throw new UnsupportedOperationException("#getRuleUsage()");
+        return ruleManager.getRuleUsage(ruleName);
     }
 
-    public Group createGroup(String groupName, int minInstances, int maxInstances, int coolingTimeUp, int coolingTimeDown, String[] ruleNames) throws ElasticScalarException {
-        throw new UnsupportedOperationException("#createGroup()");
+    public Group createGroup(String groupName, int minInstances, int maxInstances, int coolingTimeUp, int coolingTimeDown,
+                             String[] ruleNames, Map<Group.ResourceRequirement, Integer> minResourceReq, float reliabilityReq)
+            throws ElasticScalarException {
+
+        if (isGroupExists(groupName)) {
+            String errorMsg = "A group already exists with name " + groupName + " . Group name should be unique";
+            log.error(errorMsg);
+            throw new ElasticScalarException(errorMsg);
+        }
+        return groupManager.createGroup(groupName, minInstances, maxInstances, coolingTimeUp, coolingTimeDown, ruleNames,
+                minResourceReq, reliabilityReq);
     }
 
     public boolean isGroupExists(String groupName) throws ElasticScalarException {
-        throw new UnsupportedOperationException("#isGroupExists()");
+        return groupManager.isGroupExists(groupName);
     }
 
     public Group getGroup(String groupName) throws ElasticScalarException {
-        throw new UnsupportedOperationException("#getGroup()");
+        return groupManager.getGroup(groupName);
     }
 
     public void addRuleToGroup(String groupName, String ruleName) throws ElasticScalarException {
-        throw new UnsupportedOperationException("#addRuleToGroup()");
+        groupManager.addRuleToGroup(groupName, ruleName);
     }
 
+    //The list of rules in the group will not be updated with this method
     public void updateGroup(String groupName, Group group) throws ElasticScalarException {
-        throw new UnsupportedOperationException("#updateGroup()");
+        groupManager.updateGroup(groupName, group);
     }
 
     public void removeRuleFromGroup(String groupName, String ruleName) throws ElasticScalarException {
-        throw new UnsupportedOperationException("#removeRuleFromGroup()");
+        groupManager.removeRuleFromGroup(groupName, ruleName);
     }
 
     public void deleteGroup(String groupName) throws ElasticScalarException {
-        throw new UnsupportedOperationException("#deleteGroup()");
+        groupManager.deleteGroup(groupName);
     }
 
     public MachineInfo addMachineToGroup(String groupId, String machineId, String sshKeyPath, String IP, int sshPort, String userName) {
@@ -101,11 +118,15 @@ public class ElasticScalarAPI {
         return elasticScalingManager.monitoringListener;
     }
 
-    public boolean stopElasticScaling(String groupId) {
-        throw new UnsupportedOperationException("#stopElasticScaling()");
+    public void stopElasticScaling(String groupId) {
+        elasticScalingManager.removeGroupFromScaling(groupId);
     }
 
-    public Queue getSuggestionQueue() {
-        throw new UnsupportedOperationException("#getSuggestionQueue()");
+    public ArrayBlockingQueue<ScalingSuggestion> getSuggestionQueue(String groupId) {
+        return elasticScalingManager.getSuggestions(groupId);
+    }
+
+    public void handleEvent(String groupId, MonitoringEvent monitoringEvent) throws ElasticScalarException {
+        elasticScalingManager.getEventProfiler().profileEvent(groupId, monitoringEvent);
     }
 }

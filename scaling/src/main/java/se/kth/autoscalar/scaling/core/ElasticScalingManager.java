@@ -51,7 +51,7 @@ public class ElasticScalingManager {
         eventProfiler = new EventProfiler();
         eventProfiler.addListener(new ProfiledResourceEventListener());
         //TODO add machineStatusListener
-        monitoringListener = new MonitoringListener(this);
+        monitoringListener = new MonitoringListener();
     }
 
     public void addGroupForScaling(String groupId, int currentNumberOfMachines) throws ElasticScalarException {
@@ -160,5 +160,9 @@ public class ElasticScalingManager {
             suggestionsQueue.add(suggestion);
             suggestionMap.put(groupId, suggestionsQueue);
         }
+    }
+
+    public EventProfiler getEventProfiler() {
+        return eventProfiler;
     }
 }
