@@ -3,6 +3,7 @@ package se.kth.autoscalar.scaling.group;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import se.kth.autoscalar.scaling.exceptions.DBConnectionFailureException;
+import se.kth.autoscalar.scaling.exceptions.ManageGroupException;
 import se.kth.autoscalar.scaling.utils.DBUtil;
 
 import java.sql.Connection;
@@ -29,6 +30,10 @@ public class GroupDAO {
     private static final String MAX_INSTANCES_COLUMN = "MAX_INSTANCES";
     private static final String COOLING_TIME_UP_COLUMN = "COOLING_TIME_UP";
     private static final String COOLING_TIME_DOWN_COLUMN = "COOLING_TIME_DOWN";
+    private static final String MIN_VCPUS_COLUMN = "MIN_VCPUS_COLUMN";
+    private static final String MIN_RAM_COLUMN = "MIN_RAM_COLUMN";
+    private static final String MIN_STORAGE_COLUMN = "MIN_STORAGE_COLUMN";
+    private static final String RELIABILITY_COLUMN = "RELIABILITY";
 
     private static final String GROUP_RULE_MAPPING_TABLE = "Group_Rule";
     private static final String RULE_NAME_COLUMN = "RULE_NAME";
@@ -82,6 +87,10 @@ public class GroupDAO {
                     append(MAX_INSTANCES_COLUMN).append(" INT NOT NULL, ").
                     append(COOLING_TIME_UP_COLUMN).append(" INT NOT NULL, ").
                     append(COOLING_TIME_DOWN_COLUMN).append(" INT NOT NULL, ").
+                    append(MIN_VCPUS_COLUMN).append(" INT NOT NULL, ").
+                    append(MIN_RAM_COLUMN).append(" INT NOT NULL, ").
+                    append(MIN_STORAGE_COLUMN).append(" INT NOT NULL, ").
+                    append(RELIABILITY_COLUMN).append(" FLOAT NOT NULL, ").
                     append(" UNIQUE (").append(GROUP_NAME_COLUMN).append(")").
                     append(")");
 
@@ -123,14 +132,22 @@ public class GroupDAO {
             //group info and group-rule mapping will be managed through two different tables
 
             //adding group entry
-            String insertGroupQuery = "insert into " + GROUP_TABLE + " VALUES (?,?,?,?,?)";
-            PreparedStatement createGrouptatement = dbConnection.prepareStatement(insertGroupQuery);
-            createGrouptatement.setString(1, group.getGroupName());
-            createGrouptatement.setInt(2, group.getMinInstances());
-            createGrouptatement.setInt(3, group.getMaxInstances());
-            createGrouptatement.setInt(4, group.getCoolingTimeUp());
-            createGrouptatement.setInt(5, group.getCoolingTimeDown());
-            createGrouptatement.executeUpdate();
+            String insertGroupQuery = "insert into " + GROUP_TABLE + " VALUES (?,?,?,?,?,?,?,?,?)";
+            PreparedStatement createGroupStatement = dbConnection.prepareStatement(insertGroupQuery);
+            createGroupStatement.setString(1, group.getGroupName());
+            createGroupStatement.setInt(2, group.getMinInstances());
+            createGroupStatement.setInt(3, group.getMaxInstances());
+            createGroupStatement.setInt(4, group.getCoolingTimeUp());
+            createGroupStatement.setInt(5, group.getCoolingTimeDown());
+
+            Map<Group.ResourceRequirement, Integer> minReqMap = group.getMinResourceReq();
+            createGroupStatement.setInt(6, minReqMap.get(Group.ResourceRequirement.NUMBER_OF_VCPUS));
+            createGroupStatement.setInt(7, minReqMap.get(Group.ResourceRequirement.RAM));
+            createGroupStatement.setInt(8, minReqMap.get(Group.ResourceRequirement.STORAGE));
+
+            createGroupStatement.setFloat(9, group.getReliabilityReq());
+
+            createGroupStatement.executeUpdate();
 
             for (String ruleName : group.getRuleNames()) {
                 addGroupRuleMapping(group.getGroupName(), ruleName);
@@ -170,7 +187,7 @@ public class GroupDAO {
         }
     }
 
-    public Group getGroup(String groupName) throws SQLException {
+    public Group getGroup(String groupName) throws SQLException, ManageGroupException {
 
         ResultSet resultSet = retrieveGroup(groupName);
 
@@ -184,26 +201,36 @@ public class GroupDAO {
                 int coolingTimeUp = resultSet.getInt(COOLING_TIME_UP_COLUMN);
                 int coolingTimeDown = resultSet.getInt(COOLING_TIME_DOWN_COLUMN);
 
+                Map<Group.ResourceRequirement, Integer> minReqMap = new HashMap<Group.ResourceRequirement, Integer>();
+                minReqMap.put(Group.ResourceRequirement.NUMBER_OF_VCPUS, resultSet.getInt(MIN_VCPUS_COLUMN));
+                minReqMap.put(Group.ResourceRequirement.RAM, resultSet.getInt(MIN_RAM_COLUMN));
+                minReqMap.put(Group.ResourceRequirement.STORAGE, resultSet.getInt(MIN_STORAGE_COLUMN));
+
+                float reliability = resultSet.getFloat(RELIABILITY_COLUMN);
+
                 String[] rulesOfGroup = getRuleNamesForGroup(groupName);
 
                 //TODO config db to have new parameters
                 return new Group(groupName, minInstances, maxInstances, coolingTimeUp, coolingTimeDown, rulesOfGroup,
-                        getDefaultMinResourceReq(), 2.0f);
+                        minReqMap, reliability);
             }
         } catch (SQLException e) {
             log.error("Error while retrieving the attributes for group " + groupName);
+            throw e;
+        } catch (ManageGroupException e) {
+            log.error("Error while creating group object with the values retried from database");
             throw e;
         }
         return null;
     }
 
-    private Map<Group.ResourceRequirement, Integer> getDefaultMinResourceReq() {
+ /*   private Map<Group.ResourceRequirement, Integer> getDefaultMinResourceReq() {
         Map<Group.ResourceRequirement, Integer> minReq = new HashMap<Group.ResourceRequirement, Integer>();
         minReq.put(Group.ResourceRequirement.NUMBER_OF_VCPUS, 4);
         minReq.put(Group.ResourceRequirement.RAM, 4);
         minReq.put(Group.ResourceRequirement.STORAGE, 50);
         return minReq;
-    }
+    }*/
 
     /*
     The list of rules in the group will not be updated with this method
@@ -214,7 +241,9 @@ public class GroupDAO {
         updateQuery.append(GROUP_TABLE).append(" set ").
                 append(GROUP_NAME_COLUMN).append(" = ?, ").append(MIN_INSTANCES_COLUMN).append(" = ?, ").
                 append(MAX_INSTANCES_COLUMN).append(" = ?, ").append(COOLING_TIME_UP_COLUMN).append(" = ?, ").
-                append(COOLING_TIME_DOWN_COLUMN).append(" = ? where ").append(GROUP_NAME_COLUMN).append(" = ?");
+                append(COOLING_TIME_DOWN_COLUMN).append(" = ?, ").append(MIN_VCPUS_COLUMN).append(" = ?, ").
+                append(MIN_RAM_COLUMN).append(" = ?, ").append(MIN_STORAGE_COLUMN).append(" = ?, ").
+                append(RELIABILITY_COLUMN).append(" = ? where ").append(GROUP_NAME_COLUMN).append(" = ?");
 
         try {
             PreparedStatement updateRuleStatement = dbConnection.prepareStatement(updateQuery.toString());
@@ -223,7 +252,15 @@ public class GroupDAO {
             updateRuleStatement.setInt(3, group.getMaxInstances());
             updateRuleStatement.setInt(4, group.getCoolingTimeUp());
             updateRuleStatement.setInt(5, group.getCoolingTimeDown());
-            updateRuleStatement.setString(6, groupName);
+
+            Map<Group.ResourceRequirement, Integer> minReqMap = group.getMinResourceReq();
+            updateRuleStatement.setInt(6, minReqMap.get(Group.ResourceRequirement.NUMBER_OF_VCPUS));
+            updateRuleStatement.setInt(7, minReqMap.get(Group.ResourceRequirement.RAM));
+            updateRuleStatement.setInt(8, minReqMap.get(Group.ResourceRequirement.STORAGE));
+
+            updateRuleStatement.setFloat(9, group.getReliabilityReq());
+            updateRuleStatement.setString(10, groupName);
+
             updateRuleStatement.executeUpdate();
             return true;
         } catch (SQLException e) {

@@ -2,9 +2,9 @@ package se.kth.autoscalar.scaling.group;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import se.kth.autoscalar.common.models.MachineInfo;
 import se.kth.autoscalar.common.monitoring.RuleSupport;
 import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
+import se.kth.autoscalar.scaling.exceptions.ManageGroupException;
 import se.kth.autoscalar.scaling.rules.Rule;
 import se.kth.autoscalar.scaling.rules.RuleManager;
 import se.kth.autoscalar.scaling.rules.RuleManagerImpl;
@@ -76,6 +76,8 @@ public class GroupManagerImpl implements GroupManager {
             return groupDAO.getGroup(groupName);
         } catch (SQLException e) {
             throw new ElasticScalarException("Error while getting the group: " + groupName, e.getCause());
+        } catch (ManageGroupException e) {
+            throw new ElasticScalarException("Error while getting the group: " + groupName, e.getCause());
         }
     }
 
@@ -142,13 +144,4 @@ public class GroupManagerImpl implements GroupManager {
         return validRuleNames.toArray(new String[validRuleNames.size()]);
     }
 
-    //TODO implement
-    public void addMachineToGroup(MachineInfo machineInfo) {
-        throw new UnsupportedOperationException("#addVMToGroup()");
-    }
-
-    //TODO implement
-    public void removeMachineFromGroup(MachineInfo model) {
-        throw new UnsupportedOperationException("#removeMachineFromGroup()");
-    }
 }

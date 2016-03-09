@@ -37,4 +37,9 @@ public interface SystemMonitorManager {
     boolean restartMonitoring(String machineId);
 
     boolean stopMonitoring(String machineId);
+
+    //create MachineInfo
+    public MachineInfo addMachineForMonitoring(String groupId, String machineId, String sshKeyPath, String IP, int sshPort, String userName);
+
+    public void removeMachineFromMonitoring(MachineInfo model);
 }

@@ -105,6 +105,9 @@ public class ElasticScalarAPI {
         groupManager.deleteGroup(groupName);
     }
 
+    /*
+    Since scalar work on events, ssh info is not needed
+     */
     public MachineInfo addMachineToGroup(String groupId, String machineId, String sshKeyPath, String IP, int sshPort, String userName) {
         throw new UnsupportedOperationException("#addVMToGroup()");
     }

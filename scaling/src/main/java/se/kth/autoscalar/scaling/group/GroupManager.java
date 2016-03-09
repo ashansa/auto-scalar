@@ -1,6 +1,5 @@
 package se.kth.autoscalar.scaling.group;
 
-import se.kth.autoscalar.common.models.MachineInfo;
 import se.kth.autoscalar.common.monitoring.RuleSupport;
 import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
 import se.kth.autoscalar.scaling.rules.Rule;
@@ -31,12 +30,9 @@ public interface GroupManager{
 
     String[] getRulesForGroup(String groupName) throws ElasticScalarException;
 
-    public Rule[] getMatchingRulesForGroup(String groupName, RuleSupport.ResourceType resourceType,
+    Rule[] getMatchingRulesForGroup(String groupName, RuleSupport.ResourceType resourceType,
                                            RuleSupport.Comparator comparator, float currentValue) throws ElasticScalarException;
 
     void deleteGroup(String groupName) throws ElasticScalarException;
 
-    void addMachineToGroup(MachineInfo machineInfo);
-
-    void removeMachineFromGroup(MachineInfo model);
 }

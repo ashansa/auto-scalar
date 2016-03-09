@@ -16,6 +16,8 @@ public class KaramelMachineProposer implements MachineProposer {
 
     public MachineType[] getMachineProposals(String groupId, Map<Group.ResourceRequirement, Integer> minimumResourceReq,
                                              int noOfMachines, float reliabilityPercentage) {
-        throw new UnsupportedOperationException("#getMachineProposals()");
+
+        //TODO call Kandy and get proposal
+        return new MachineType[]{new MachineType("us-west-2", "t1.micro"), new MachineType("us-west-2", "t1.medium")};
     }
 }

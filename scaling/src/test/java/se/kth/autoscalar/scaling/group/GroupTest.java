@@ -16,6 +16,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.fail;
 
@@ -46,13 +47,19 @@ public class GroupTest {
         double random = Math.random();
         String groupName = groupBaseName + String.valueOf((int)(random * 10));
 
+        Map<Group.ResourceRequirement, Integer> minReq = new HashMap<Group.ResourceRequirement, Integer>();
+        minReq.put(Group.ResourceRequirement.NUMBER_OF_VCPUS, 4);
+        minReq.put(Group.ResourceRequirement.RAM, 8);
+        minReq.put(Group.ResourceRequirement.STORAGE, 50);
+
         //test group exists
         Assert.assertFalse(groupManager.isGroupExists(groupName));
 
         // test create group with non existant rule
         try {
+
             groupManager.createGroup( groupName, (int)(random * 10),
-                    (int)(random * 100), coolingTimeOut, coolingTimeIn, new String[]{"wrongRule"}, new HashMap<Group.ResourceRequirement, Integer>(), 2.0f);
+                    (int)(random * 100), coolingTimeOut, coolingTimeIn, new String[]{"wrongRule"}, minReq, 2.0f);
 
             fail("Expected exception not thrown");
 
@@ -66,7 +73,7 @@ public class GroupTest {
         Assert.assertNotNull(rule);
 
         Group group = groupManager.createGroup(groupName, (int)(random * 10),
-                (int)(random * 100), coolingTimeOut, coolingTimeIn, new String[]{rule.getRuleName()}, new HashMap<Group.ResourceRequirement, Integer>(), 2.0f);
+                (int)(random * 100), coolingTimeOut, coolingTimeIn, new String[]{rule.getRuleName()}, minReq, 2.0f);
         Assert.assertNotNull(group);
 
         //test exists

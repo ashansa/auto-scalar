@@ -2,6 +2,7 @@ package se.kth.autoscalar.scaling.group;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import se.kth.autoscalar.scaling.exceptions.ManageGroupException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,7 +37,7 @@ public class Group {
     private float reliabilityReq;
 
     public Group(String name, int minInstances, int maxInstances, int coolingTimeUp, int coolingTimeDown,
-                 String[] ruleNames, Map<ResourceRequirement, Integer> minResourceReq, float reliabilityReq) {
+                 String[] ruleNames, Map<ResourceRequirement, Integer> minResourceReq, float reliabilityReq) throws ManageGroupException {
         this.groupName = name;
         this.minInstances = minInstances;
         this.maxInstances = maxInstances;
@@ -50,7 +51,9 @@ public class Group {
             this.ruleNames = new ArrayList<String>();
         }
 
+        validateMinResourceReq(minResourceReq);
         this.minResourceReq = minResourceReq;
+
         this.reliabilityReq = reliabilityReq;
     }
 
@@ -112,5 +115,15 @@ public class Group {
 
     public enum ResourceRequirement {
         NUMBER_OF_VCPUS, RAM, STORAGE
+    }
+
+    private void validateMinResourceReq(Map<ResourceRequirement, Integer> minResourceReq) throws ManageGroupException {
+        //should contain all the ResourceRequirements
+        if (!(minResourceReq.containsKey(ResourceRequirement.NUMBER_OF_VCPUS) && minResourceReq.containsKey(ResourceRequirement.RAM) &&
+                minResourceReq.containsKey(ResourceRequirement.STORAGE))) {
+            String msg = "Minimum requirements shouls specify limits for all the required resource types.";
+            log.error(msg);
+            throw new ManageGroupException(msg);
+        }
     }
 }
