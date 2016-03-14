@@ -116,7 +116,7 @@ public class GroupManagerImpl implements GroupManager {
     public Rule[] getMatchingRulesForGroup(String groupName, RuleSupport.ResourceType resourceType,
                                            RuleSupport.Comparator comparator, float currentValue) throws ElasticScalarException {
         String[] rulesOfGroup = getRulesForGroup(groupName);
-        Rule[] matchingRules = ruleManager.getMatchingRulesForConstraints(rulesOfGroup, resourceType, null, currentValue );
+        Rule[] matchingRules = ruleManager.getMatchingRulesForConstraints(rulesOfGroup, resourceType, comparator, currentValue );
         return matchingRules;
     }
 
@@ -144,4 +144,7 @@ public class GroupManagerImpl implements GroupManager {
         return validRuleNames.toArray(new String[validRuleNames.size()]);
     }
 
+    public void deleteTables() throws SQLException {
+        groupDAO.tempMethodDeleteTables();
+    }
 }

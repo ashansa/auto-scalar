@@ -5,7 +5,6 @@ import org.apache.commons.logging.LogFactory;
 import se.kth.autoscalar.common.monitoring.RuleSupport.Comparator;
 import se.kth.autoscalar.common.monitoring.RuleSupport.ResourceType;
 import se.kth.autoscalar.scaling.exceptions.DBConnectionFailureException;
-import se.kth.autoscalar.scaling.rules.Rule;
 import se.kth.autoscalar.scaling.utils.DBUtil;
 
 import java.sql.Connection;
@@ -66,7 +65,7 @@ public class RuleDAO {
             createTableQuery.append(RULE_TABLE).append("(").
                     append(RULE_NAME_COLUMN).append(" VARCHAR(50) NOT NULL, ").
                     append(RESOURCE_TYPE_COLUMN).append(" VARCHAR(50) NOT NULL, ").
-                    append(COMPARATOR_COLUMN).append(" VARCHAR(20) NOT NULL, ").
+                    append(COMPARATOR_COLUMN).append(" VARCHAR(50) NOT NULL, ").
                     append(THRESHOLD_COLUMN).append(" FLOAT NOT NULL, ").
                     append(ACTION_COLUMN).append(" INT NOT NULL,").
                     append(" UNIQUE (").append(RULE_NAME_COLUMN).append(")").
@@ -246,6 +245,10 @@ public class RuleDAO {
         ArrayList<String> groupsUsingRule = new ArrayList<String>();
         //add elements
         return groupsUsingRule.toArray(new String[groupsUsingRule.size()]);
+    }
+
+    public void tempMethodDeleteTable() throws SQLException {
+        dbConnection.prepareStatement("DROP TABLE IF EXISTS " + RULE_TABLE).executeUpdate();
     }
 
 }

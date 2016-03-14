@@ -4,6 +4,8 @@ import se.kth.autoscalar.common.monitoring.RuleSupport.Comparator;
 import se.kth.autoscalar.common.monitoring.RuleSupport.ResourceType;
 import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
 
+import java.sql.SQLException;
+
 /**
  * Created with IntelliJ IDEA.
  *
@@ -29,4 +31,6 @@ public interface RuleManager {
     String[] getRuleUsage(String ruleName) throws ElasticScalarException;
 
     Rule[] getMatchingRulesForConstraints(String[] ruleNames, ResourceType resourceType, Comparator comparator, float currentValue);
+
+    void deleteTables() throws SQLException;
 }

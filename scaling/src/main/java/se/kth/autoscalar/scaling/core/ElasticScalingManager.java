@@ -36,6 +36,7 @@ public class ElasticScalingManager {
     //RuleManager ruleManager;
     EventProfiler eventProfiler;
     MonitoringListener monitoringListener;
+    ScaleOutDecisionMaker scaleOutDecisionMaker;
 
     private Map<String, RuntimeGroupInfo> activeGroupsInfo = new HashMap<String, RuntimeGroupInfo>();
     private Map<String, ArrayBlockingQueue<ScalingSuggestion>> suggestionMap = new HashMap<String, ArrayBlockingQueue<ScalingSuggestion>>();
@@ -50,6 +51,8 @@ public class ElasticScalingManager {
         groupManager = GroupManagerImpl.getInstance();
         eventProfiler = new EventProfiler();
         eventProfiler.addListener(new ProfiledResourceEventListener());
+        scaleOutDecisionMaker = new ScaleOutDecisionMaker();
+        (new Thread(scaleOutDecisionMaker)).start();
         //TODO add machineStatusListener
         monitoringListener = new MonitoringListener(elasticScalarAPI);
     }

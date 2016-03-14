@@ -4,6 +4,7 @@ import se.kth.autoscalar.common.monitoring.RuleSupport;
 import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
 import se.kth.autoscalar.scaling.rules.Rule;
 
+import java.sql.SQLException;
 import java.util.Map;
 
 
@@ -35,4 +36,5 @@ public interface GroupManager{
 
     void deleteGroup(String groupName) throws ElasticScalarException;
 
+    void deleteTables() throws SQLException;
 }

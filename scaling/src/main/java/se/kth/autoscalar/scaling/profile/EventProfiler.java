@@ -26,7 +26,7 @@ public class EventProfiler {
 
     Log log = LogFactory.getLog(EventProfiler.class);
 
-    //<groupId> <MonitoringEvent ArrayList> maps
+    //<groupId:eventType> <MonitoringEvent ArrayList> maps    //ie of key: group_8:resourceEvent
     private Map<String, ArrayList<MonitoringEvent>> eventsToBeProfiled = new HashMap<String, ArrayList<MonitoringEvent>>();
     private Map<String, ArrayList<MonitoringEvent>> eventsToBeProfiledTempMap = new HashMap<String, ArrayList<MonitoringEvent>>();
 
@@ -62,7 +62,7 @@ public class EventProfiler {
                                 //as first step, just adding every event to profiled events queue
                                 //TODO do profiling and add the result
                                 ResourceMonitoringEvent event = (ResourceMonitoringEvent) monitoringEvent;
-                                ProfiledEvent profiledEvent = new ProfiledResourceEvent(profiledEventKey, event.getResourceType(),
+                                ProfiledEvent profiledEvent = new ProfiledResourceEvent(getGroupId(profiledEventKey), event.getResourceType(),
                                         event.getComparator(), event.getCurrentValue());
                                 notifyListeners(profiledEvent);
                             }

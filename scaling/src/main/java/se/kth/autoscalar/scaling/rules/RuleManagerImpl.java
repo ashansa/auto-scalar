@@ -139,4 +139,7 @@ public class RuleManagerImpl implements RuleManager {
         return matchingRules.toArray(new Rule[matchingRules.size()]);
     }
 
+    public void deleteTables() throws SQLException {
+        ruleDAO.tempMethodDeleteTable();
+    }
 }

@@ -397,4 +397,9 @@ public class GroupDAO {
             throw e;
         }
     }
+
+    public void tempMethodDeleteTables() throws SQLException {
+        dbConnection.prepareStatement("DROP TABLE IF EXISTS " + GROUP_TABLE).executeUpdate();
+        dbConnection.prepareStatement("DROP TABLE IF EXISTS " + GROUP_RULE_MAPPING_TABLE).executeUpdate();
+    }
 }

@@ -1,5 +1,6 @@
 package se.kth.autoscalar.scaling;
 
+import junit.framework.Assert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -11,6 +12,7 @@ import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
 import se.kth.autoscalar.scaling.group.Group;
 import se.kth.autoscalar.scaling.rules.Rule;
 
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -49,21 +51,75 @@ public class ElasticScalingTest {
         MonitoringListener listener = elasticScalarAPI.startElasticScaling(group.getGroupName(), 2);
         //TODO pass the listener to monitoring component and it should send events based on rules
 
-        //temporary mocking the monitoring events
+        //temporary mocking the monitoring events for scale out 1 machine
         ResourceMonitoringEvent resourceMonitoringEvent = new ResourceMonitoringEvent(ResourceType.CPU_PERCENTAGE,
                 RuleSupport.Comparator.GREATER_THAN, (int)(random * 100) + 1);
         listener.onHighCPU(groupName, resourceMonitoringEvent);
 
         ArrayBlockingQueue<ScalingSuggestion>  suggestions = elasticScalarAPI.getSuggestionQueue(groupName);
+
+        int count = 0;
+        while (suggestions == null) {
+            suggestions = elasticScalarAPI.getSuggestionQueue(groupName);
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                System.out.println("CPU_PERCENTAGE:testElasticScaling thread sleep while getting suggestions interrupted.............");
+            }
+            count++;
+            if (count > 20) {
+                new AssertionError("CPU_PERCENTAGE:No suggestion received during one minute");
+            }
+        }
         try {
             ScalingSuggestion suggestion = suggestions.take();
             switch (suggestion.getScalingDirection()) {
                 //TODO validate suggestion
                 case SCALE_IN:
-                    System.out.println("...........got scale in suggesion...........");
+                    System.out.println("...........CPU_PERCENTAGE: got scale in suggestion...........");
+                    new AssertionError("CPU_PERCENTAGE: Events were to trigger scale out and retrieved a scale in suggestion");
                     break;
                 case SCALE_OUT:
-                    System.out.println("...........got scale down suggestion...........");
+                    Assert.assertEquals(1, suggestion.getScaleOutSuggestions().size());
+                    System.out.println("...........CPU_PERCENTAGE: got scale down suggestion...........");
+                    break;
+            }
+        } catch (InterruptedException e) {
+            throw new IllegalStateException(e);
+        }
+
+
+        //temporary mocking the monitoring events for scale out 2 machine
+        resourceMonitoringEvent = new ResourceMonitoringEvent(ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.
+                GREATER_THAN_OR_EQUAL, (int)(random * 100) + 3);
+        listener.onHighRam(groupName, resourceMonitoringEvent);
+
+        suggestions = elasticScalarAPI.getSuggestionQueue(groupName);
+        count = 0;
+
+        while (suggestions == null) {
+            suggestions = elasticScalarAPI.getSuggestionQueue(groupName);
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                System.out.println("RAM_PERCENTAGE: testElasticScaling thread sleep while getting suggestions interrupted.............");
+            }
+            count++;
+            if (count > 20) {
+                new AssertionError("RAM_PERCENTAGE: No suggestion received during one minute");
+            }
+        }
+        try {
+            ScalingSuggestion suggestion = suggestions.take();
+            switch (suggestion.getScalingDirection()) {
+                //TODO validate suggestion
+                case SCALE_IN:
+                    System.out.println("...........RAM_PERCENTAGE: got scale in suggestion...........");
+                    new AssertionError("RAM_PERCENTAGE: Events were to trigger scale out and retrieved a scale in suggestion");
+                    break;
+                case SCALE_OUT:
+                    Assert.assertEquals(2, suggestion.getScaleOutSuggestions().size());
+                    System.out.println("...........RAM_PERCENTAGE: got scale down suggestion...........");
                     break;
             }
         } catch (InterruptedException e) {
@@ -94,9 +150,9 @@ public class ElasticScalingTest {
             random = Math.random();
             groupName = GROUP_BASE_NAME + String.valueOf((int) (random * 10));
             rule = elasticScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int) (random * 10)),
-                    ResourceType.CPU_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN, (int) (random * 100), 1);
+                    ResourceType.CPU_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN, (float) (random * 100), 1);
             rule2 = elasticScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 1),
-                    ResourceType.CPU_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN, (int)(random * 100), 1);
+                    ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (float) ((random * 100) + 2) , 2);
 
             Map<Group.ResourceRequirement, Integer> minReq = new HashMap<Group.ResourceRequirement, Integer>();
             minReq.put(Group.ResourceRequirement.NUMBER_OF_VCPUS, 4);
@@ -114,8 +170,10 @@ public class ElasticScalingTest {
 
     @AfterClass
     public static void cleanup() throws ElasticScalarException {
-        /*elasticScalarAPI.deleteRule(rule.getRuleName());
-        elasticScalarAPI.deleteRule(rule2.getRuleName());
-        elasticScalarAPI.deleteGroup(group.getGroupName());*/
+        try {
+            elasticScalarAPI.tempMethodDeleteTables();
+        } catch (SQLException e) {
+            throw new IllegalStateException(e);
+        }
     }
 }

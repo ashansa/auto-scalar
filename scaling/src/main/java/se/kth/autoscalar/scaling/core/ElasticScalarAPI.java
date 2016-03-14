@@ -15,6 +15,7 @@ import se.kth.autoscalar.scaling.rules.Rule;
 import se.kth.autoscalar.scaling.rules.RuleManager;
 import se.kth.autoscalar.scaling.rules.RuleManagerImpl;
 
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 
@@ -131,5 +132,10 @@ public class ElasticScalarAPI {
 
     public void handleEvent(String groupId, MonitoringEvent monitoringEvent) throws ElasticScalarException {
         elasticScalingManager.getEventProfiler().profileEvent(groupId, monitoringEvent);
+    }
+
+    public void tempMethodDeleteTables() throws SQLException {
+        ruleManager.deleteTables();
+        groupManager.deleteTables();
     }
 }

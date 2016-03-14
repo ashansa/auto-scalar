@@ -43,8 +43,13 @@ public class MonitoringListener {
 
     }
 
-    public void onHighRam(String groupId, ResourceMonitoringEvent event) {
-
+    public void onHighRam(String groupId, ResourceMonitoringEvent event) throws ElasticScalarException {
+        try {
+            elasticScalarAPI.handleEvent(groupId, event);
+        } catch (ElasticScalarException e) {
+            log.error("Error while handling onHighCPU event for group: " + groupId + " . " + e.getMessage());
+            throw e;
+        }
     }
 
     public void onLowRam(String groupId, ResourceMonitoringEvent event) {

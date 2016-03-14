@@ -18,6 +18,13 @@ public class KaramelMachineProposer implements MachineProposer {
                                              int noOfMachines, float reliabilityPercentage) {
 
         //TODO call Kandy and get proposal
-        return new MachineType[]{new MachineType("us-west-2", "t1.micro"), new MachineType("us-west-2", "t1.medium")};
+        MachineType[] machineTypes = new MachineType[noOfMachines];
+        for (int i = 0; i < noOfMachines; ++i) {
+            if (i%3 ==0)   //just to have different types to test
+                machineTypes[i] = new MachineType("us-west-2", "t1.micro");
+            else
+                machineTypes[i] = new MachineType("us-west-2", "t1.medium");
+        }
+        return machineTypes;
     }
 }
