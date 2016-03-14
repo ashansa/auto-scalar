@@ -45,13 +45,13 @@ public class ElasticScalingManager {
     //private ArrayList<String> activeESGroups = new ArrayList<String>();
     //ArrayBlockingQueue<ScalingSuggestion> suggestionsQueue = new ArrayBlockingQueue<ScalingSuggestion>(50);
 
-    public ElasticScalingManager() throws ElasticScalarException {
+    public ElasticScalingManager(ElasticScalarAPI elasticScalarAPI) throws ElasticScalarException {
         //ruleManager = RuleManagerImpl.getInstance();
         groupManager = GroupManagerImpl.getInstance();
         eventProfiler = new EventProfiler();
         eventProfiler.addListener(new ProfiledResourceEventListener());
         //TODO add machineStatusListener
-        monitoringListener = new MonitoringListener();
+        monitoringListener = new MonitoringListener(elasticScalarAPI);
     }
 
     public void addGroupForScaling(String groupId, int currentNumberOfMachines) throws ElasticScalarException {

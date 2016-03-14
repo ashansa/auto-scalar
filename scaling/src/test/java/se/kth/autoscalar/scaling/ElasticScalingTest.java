@@ -2,17 +2,18 @@ package se.kth.autoscalar.scaling;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Test;
+import se.kth.autoscalar.common.monitoring.ResourceMonitoringEvent;
 import se.kth.autoscalar.common.monitoring.RuleSupport;
 import se.kth.autoscalar.common.monitoring.RuleSupport.ResourceType;
+import se.kth.autoscalar.scaling.core.ElasticScalarAPI;
 import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
 import se.kth.autoscalar.scaling.group.Group;
-import se.kth.autoscalar.scaling.group.GroupManager;
-import se.kth.autoscalar.scaling.group.GroupManagerImpl;
 import se.kth.autoscalar.scaling.rules.Rule;
-import se.kth.autoscalar.scaling.rules.RuleManager;
-import se.kth.autoscalar.scaling.rules.RuleManagerImpl;
 
 import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * Created with IntelliJ IDEA.
@@ -23,8 +24,7 @@ import java.util.HashMap;
  */
 public class ElasticScalingTest {
 
-    private static GroupManager groupManager;
-    private static RuleManager ruleManager;
+    private static ElasticScalarAPI elasticScalarAPI;
     private String GROUP_BASE_NAME = "my_group";
     private String RULE_BASE_NAME = "my_rule";
     private int coolingTimeOut = 60;
@@ -34,14 +34,44 @@ public class ElasticScalingTest {
     Rule rule;
     Rule rule2;
     Group group;
+    String groupName;
 
     @BeforeClass
     public static void init() throws ElasticScalarException {
-        groupManager = GroupManagerImpl.getInstance();
-        ruleManager = RuleManagerImpl.getInstance();
+        elasticScalarAPI = new ElasticScalarAPI();
     }
 
-    public void setMonitoringInfo() {
+    @Test
+    public void testElasticScaling() throws ElasticScalarException {
+
+        setRulesNGroup();
+        //TODO should set rules in monitoring component
+        MonitoringListener listener = elasticScalarAPI.startElasticScaling(group.getGroupName(), 2);
+        //TODO pass the listener to monitoring component and it should send events based on rules
+
+        //temporary mocking the monitoring events
+        ResourceMonitoringEvent resourceMonitoringEvent = new ResourceMonitoringEvent(ResourceType.CPU_PERCENTAGE,
+                RuleSupport.Comparator.GREATER_THAN, (int)(random * 100) + 1);
+        listener.onHighCPU(groupName, resourceMonitoringEvent);
+
+        ArrayBlockingQueue<ScalingSuggestion>  suggestions = elasticScalarAPI.getSuggestionQueue(groupName);
+        try {
+            ScalingSuggestion suggestion = suggestions.take();
+            switch (suggestion.getScalingDirection()) {
+                //TODO validate suggestion
+                case SCALE_IN:
+                    System.out.println("...........got scale in suggesion...........");
+                    break;
+                case SCALE_OUT:
+                    System.out.println("...........got scale down suggestion...........");
+                    break;
+            }
+        } catch (InterruptedException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+   /* public void setMonitoringInfo() {
         HashMap<String, Number> systemInfo = new HashMap<String, Number>();
         systemInfo.put(ResourceType.CPU_PERCENTAGE.name(), 50.5);
         systemInfo.put(ResourceType.RAM_PERCENTAGE.name(), 85);
@@ -56,20 +86,25 @@ public class ElasticScalingTest {
         systemReq.put("Min_CPUs", 4 );
         systemReq.put("Min_Ram", 8);
         systemReq.put("Min_Storage", 100);
-    }
+    }*/
 
-    private void setGroupNRules() {
+    private void setRulesNGroup() {
 
         try {
             random = Math.random();
-            String groupName = GROUP_BASE_NAME + String.valueOf((int) (random * 10));
-            rule = ruleManager.createRule(RULE_BASE_NAME + String.valueOf((int) (random * 10)),
+            groupName = GROUP_BASE_NAME + String.valueOf((int) (random * 10));
+            rule = elasticScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int) (random * 10)),
                     ResourceType.CPU_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN, (int) (random * 100), 1);
-            rule2 = ruleManager.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 1),
+            rule2 = elasticScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 1),
                     ResourceType.CPU_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN, (int)(random * 100), 1);
 
-            group = groupManager.createGroup(groupName, (int)(random * 10),
-                    (int)(random * 100), coolingTimeOut, coolingTimeIn, new String[]{rule.getRuleName(), rule2.getRuleName()}, new HashMap<Group.ResourceRequirement, Integer>(), 2.0f);
+            Map<Group.ResourceRequirement, Integer> minReq = new HashMap<Group.ResourceRequirement, Integer>();
+            minReq.put(Group.ResourceRequirement.NUMBER_OF_VCPUS, 4);
+            minReq.put(Group.ResourceRequirement.RAM, 8);
+            minReq.put(Group.ResourceRequirement.STORAGE, 50);
+
+            group = elasticScalarAPI.createGroup(groupName, (int)(random * 10), (int)(random * 100), coolingTimeOut,
+                    coolingTimeIn, new String[]{rule.getRuleName(), rule2.getRuleName()}, minReq, 2.0f);
 
         } catch (ElasticScalarException e) {
             throw new IllegalStateException(e);
@@ -78,9 +113,9 @@ public class ElasticScalingTest {
     }
 
     @AfterClass
-    public void cleanup() throws ElasticScalarException {
-        ruleManager.deleteRule(rule.getRuleName());
-        ruleManager.deleteRule(rule2.getRuleName());
-        groupManager.deleteGroup(group.getGroupName());
+    public static void cleanup() throws ElasticScalarException {
+        /*elasticScalarAPI.deleteRule(rule.getRuleName());
+        elasticScalarAPI.deleteRule(rule2.getRuleName());
+        elasticScalarAPI.deleteGroup(group.getGroupName());*/
     }
 }

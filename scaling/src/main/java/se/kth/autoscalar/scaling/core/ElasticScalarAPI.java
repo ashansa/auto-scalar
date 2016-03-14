@@ -34,7 +34,7 @@ public class ElasticScalarAPI {
     GroupManager groupManager;
 
     public ElasticScalarAPI() throws ElasticScalarException {
-        elasticScalingManager = new ElasticScalingManager();
+        elasticScalingManager = new ElasticScalingManager(this);
         ruleManager = RuleManagerImpl.getInstance();
         groupManager = GroupManagerImpl.getInstance();
     }

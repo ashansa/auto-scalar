@@ -19,8 +19,8 @@ public class MonitoringListener {
 
     ElasticScalarAPI elasticScalarAPI;
 
-    public MonitoringListener() throws ElasticScalarException {
-        this.elasticScalarAPI = new ElasticScalarAPI();
+    public MonitoringListener(ElasticScalarAPI elasticScalarAPI) throws ElasticScalarException {
+        this.elasticScalarAPI = elasticScalarAPI;
     }
 
     /*ElasticScalingManager elasticScalingManager;

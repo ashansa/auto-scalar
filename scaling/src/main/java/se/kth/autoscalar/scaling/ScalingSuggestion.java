@@ -19,9 +19,9 @@ public class ScalingSuggestion {
         SCALE_IN, SCALE_OUT;
     }
 
-    ScalingDirection scalingDirection;
-    ArrayList<MachineType> scaleOutSuggestions = null;
-    ArrayList<String> scaleInSuggestions = null;
+    private ScalingDirection scalingDirection;
+    private ArrayList<MachineType> scaleOutSuggestions = null;
+    private ArrayList<String> scaleInSuggestions = null;
 
   /*  public ScalingSuggestion(ScalingDirection direction) {
         scalingDirection = direction;
@@ -61,5 +61,17 @@ public class ScalingSuggestion {
 
     public void addMachineIdTobeRemoved(String machineId) {
         scaleInSuggestions.add(machineId);
+    }
+
+    public ScalingDirection getScalingDirection() {
+        return scalingDirection;
+    }
+
+    public ArrayList<MachineType> getScaleOutSuggestions() {
+        return scaleOutSuggestions;
+    }
+
+    public ArrayList<String> getScaleInSuggestions() {
+        return scaleInSuggestions;
     }
 }
