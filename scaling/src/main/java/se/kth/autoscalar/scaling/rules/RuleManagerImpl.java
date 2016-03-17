@@ -107,13 +107,25 @@ public class RuleManagerImpl implements RuleManager {
         }
     }
 
-    public Rule[] getMatchingRulesForConstraints(String[] ruleNames, ResourceType resourceType, Comparator comparator, float currentValue) {
+    public Rule[] getMatchingRulesForConstraints(String[] ruleNames, ResourceType eventResourceType, Comparator eventComparator, float eventValue) {
         ArrayList<Rule> matchingRules = new ArrayList<Rule>();
         for (String ruleName : ruleNames) {
             try {
                 Rule rule = getRule(ruleName);
-                if (rule.getResourceType().name().equals(resourceType.name()) && rule.getComparator().name().equals(comparator.name())) {
-                    switch (comparator) {
+                //if (rule.getResourceType().name().equals(resourceType.name()) && rule.getComparator().name().equals(comparator.name())) {
+                if (rule.getResourceType().name().equals(eventResourceType.name())) {
+                    if (Comparator.GREATER_THAN.equals(eventComparator) || Comparator.GREATER_THAN_OR_EQUAL.equals(eventComparator)) {
+                        if (eventValue > rule.getThreshold())
+                            matchingRules.add(rule);
+                        else if (eventValue == rule.getThreshold() && Comparator.GREATER_THAN_OR_EQUAL.equals(rule.getComparator()))
+                            matchingRules.add(rule);
+                    } else if (Comparator.LESS_THAN.equals(eventComparator) || Comparator.LESS_THAN_OR_EQUAL.equals(eventComparator)) {
+                        if (eventValue < rule.getThreshold())
+                            matchingRules.add(rule);
+                        else if (eventValue == rule.getThreshold() && Comparator.LESS_THAN_OR_EQUAL.equals(rule.getComparator()))
+                            matchingRules.add(rule);
+                    }
+                    /*switch (comparator) {
                         case GREATER_THAN:
                             if (currentValue > rule.getThreshold())
                                 matchingRules.add(rule);
@@ -130,7 +142,7 @@ public class RuleManagerImpl implements RuleManager {
                             if (currentValue <= rule.getThreshold())
                                 matchingRules.add(rule);
                             break;
-                    }
+                    }*/
                 }
             } catch (ElasticScalarException e) {
                 log.error("Error while retrieving the rule for name " + ruleName);

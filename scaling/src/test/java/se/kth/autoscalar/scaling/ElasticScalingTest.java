@@ -33,8 +33,9 @@ public class ElasticScalingTest {
     private int coolingTimeIn = 300;
 
     double random;
-    Rule rule;
+    Rule rule1;
     Rule rule2;
+    Rule newRule;
     Group group;
     String groupName;
 
@@ -52,10 +53,52 @@ public class ElasticScalingTest {
         //TODO pass the listener to monitoring component and it should send events based on rules
 
         //temporary mocking the monitoring events for scale out 1 machine
-        ResourceMonitoringEvent resourceMonitoringEvent = new ResourceMonitoringEvent(ResourceType.CPU_PERCENTAGE,
-                RuleSupport.Comparator.GREATER_THAN, (int)(random * 100) + 1);
-        listener.onHighCPU(groupName, resourceMonitoringEvent);
+        ResourceMonitoringEvent cpuEvent = new ResourceMonitoringEvent(ResourceType.CPU_PERCENTAGE,
+                RuleSupport.Comparator.GREATER_THAN, (float) ((random * 100) + 5));
+        listener.onHighCPU(groupName, cpuEvent);
+        testCPURules(1);
 
+        //temporary mocking the monitoring events for scale out 2 machine
+        ResourceMonitoringEvent ramEvent = new ResourceMonitoringEvent(ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.
+                GREATER_THAN_OR_EQUAL, (int)(random * 100) + 3);
+        listener.onHighRam(groupName, ramEvent);
+
+        testRAMRules(2);
+
+        //threshold is lower than rule1, still ask to add 2 instances. So ES should add 2 instances
+        newRule =  elasticScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 2),
+                ResourceType.CPU_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (float) ((random * 100) + 0.5f) , 2);
+        elasticScalarAPI.addRuleToGroup(groupName, newRule.getRuleName());
+        listener.onHighCPU(groupName, cpuEvent);
+        testCPURules(2);
+
+    }
+
+    private void setRulesNGroup() {
+
+        try {
+            random = Math.random();
+            groupName = GROUP_BASE_NAME + String.valueOf((int) (random * 10));
+            rule1 = elasticScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int) (random * 10)),
+                    ResourceType.CPU_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN, (float) (random * 100), 1);
+            rule2 = elasticScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 1),
+                    ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (float) ((random * 100) + 2) , 2);
+
+            Map<Group.ResourceRequirement, Integer> minReq = new HashMap<Group.ResourceRequirement, Integer>();
+            minReq.put(Group.ResourceRequirement.NUMBER_OF_VCPUS, 4);
+            minReq.put(Group.ResourceRequirement.RAM, 8);
+            minReq.put(Group.ResourceRequirement.STORAGE, 50);
+
+            group = elasticScalarAPI.createGroup(groupName, (int)(random * 10), (int)(random * 100), coolingTimeOut,
+                    coolingTimeIn, new String[]{rule1.getRuleName(), rule2.getRuleName()}, minReq, 2.0f);
+
+        } catch (ElasticScalarException e) {
+            throw new IllegalStateException(e);
+        }
+
+    }
+
+    private void testCPURules(int expectedMachines) {
         ArrayBlockingQueue<ScalingSuggestion>  suggestions = elasticScalarAPI.getSuggestionQueue(groupName);
 
         int count = 0;
@@ -80,22 +123,20 @@ public class ElasticScalingTest {
                     new AssertionError("CPU_PERCENTAGE: Events were to trigger scale out and retrieved a scale in suggestion");
                     break;
                 case SCALE_OUT:
-                    Assert.assertEquals(1, suggestion.getScaleOutSuggestions().size());
-                    System.out.println("...........CPU_PERCENTAGE: got scale down suggestion...........");
+                    Assert.assertEquals(expectedMachines, suggestion.getScaleOutSuggestions().size());
+                    System.out.println("...........CPU_PERCENTAGE: got scale out suggestion...........");
                     break;
             }
         } catch (InterruptedException e) {
             throw new IllegalStateException(e);
         }
+    }
 
-
-        //temporary mocking the monitoring events for scale out 2 machine
-        resourceMonitoringEvent = new ResourceMonitoringEvent(ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.
-                GREATER_THAN_OR_EQUAL, (int)(random * 100) + 3);
-        listener.onHighRam(groupName, resourceMonitoringEvent);
+    private void testRAMRules(int expectedMachines) {
+        ArrayBlockingQueue<ScalingSuggestion>  suggestions = elasticScalarAPI.getSuggestionQueue(groupName);
 
         suggestions = elasticScalarAPI.getSuggestionQueue(groupName);
-        count = 0;
+        int count = 0;
 
         while (suggestions == null) {
             suggestions = elasticScalarAPI.getSuggestionQueue(groupName);
@@ -118,8 +159,8 @@ public class ElasticScalingTest {
                     new AssertionError("RAM_PERCENTAGE: Events were to trigger scale out and retrieved a scale in suggestion");
                     break;
                 case SCALE_OUT:
-                    Assert.assertEquals(2, suggestion.getScaleOutSuggestions().size());
-                    System.out.println("...........RAM_PERCENTAGE: got scale down suggestion...........");
+                    Assert.assertEquals(expectedMachines, suggestion.getScaleOutSuggestions().size());
+                    System.out.println("...........RAM_PERCENTAGE: got scale out suggestion...........");
                     break;
             }
         } catch (InterruptedException e) {
@@ -127,7 +168,7 @@ public class ElasticScalingTest {
         }
     }
 
-   /* public void setMonitoringInfo() {
+    /* public void setMonitoringInfo() {
         HashMap<String, Number> systemInfo = new HashMap<String, Number>();
         systemInfo.put(ResourceType.CPU_PERCENTAGE.name(), 50.5);
         systemInfo.put(ResourceType.RAM_PERCENTAGE.name(), 85);
@@ -143,30 +184,6 @@ public class ElasticScalingTest {
         systemReq.put("Min_Ram", 8);
         systemReq.put("Min_Storage", 100);
     }*/
-
-    private void setRulesNGroup() {
-
-        try {
-            random = Math.random();
-            groupName = GROUP_BASE_NAME + String.valueOf((int) (random * 10));
-            rule = elasticScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int) (random * 10)),
-                    ResourceType.CPU_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN, (float) (random * 100), 1);
-            rule2 = elasticScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 1),
-                    ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (float) ((random * 100) + 2) , 2);
-
-            Map<Group.ResourceRequirement, Integer> minReq = new HashMap<Group.ResourceRequirement, Integer>();
-            minReq.put(Group.ResourceRequirement.NUMBER_OF_VCPUS, 4);
-            minReq.put(Group.ResourceRequirement.RAM, 8);
-            minReq.put(Group.ResourceRequirement.STORAGE, 50);
-
-            group = elasticScalarAPI.createGroup(groupName, (int)(random * 10), (int)(random * 100), coolingTimeOut,
-                    coolingTimeIn, new String[]{rule.getRuleName(), rule2.getRuleName()}, minReq, 2.0f);
-
-        } catch (ElasticScalarException e) {
-            throw new IllegalStateException(e);
-        }
-
-    }
 
     @AfterClass
     public static void cleanup() throws ElasticScalarException {

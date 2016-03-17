@@ -21,7 +21,8 @@ public class Group {
 
     private String groupName;
     private int minInstances;
-    private int maxInstances;
+    private int maxInstances;  //TODO may be this should he the max cost at a given time (cost of many SIs is less than one onDemand)
+    //TODO: int billingPeriod; // in minutes
     private ArrayList<String> ruleNames;
 
     //minimum time interval in seconds between two scale up actions
