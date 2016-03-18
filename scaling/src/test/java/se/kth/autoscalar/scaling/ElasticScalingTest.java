@@ -26,7 +26,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class ElasticScalingTest {
 
     private static ElasticScalarAPI elasticScalarAPI;
-    MonitoringListener monitoringListener;
+    private static MonitoringListener monitoringListener;
 
     private String GROUP_BASE_NAME = "my_group";
     private String RULE_BASE_NAME = "my_rule";
@@ -50,7 +50,7 @@ public class ElasticScalingTest {
 
         setRulesNGroup();
         //TODO should set rules in monitoring component
-        MonitoringListener listenerArray = elasticScalarAPI.startElasticScaling(group.getGroupName(), 2);
+        monitoringListener = elasticScalarAPI.startElasticScaling(group.getGroupName(), 2);
         //TODO pass the listener to monitoring component and it should send events based on rules
 
         //temporary mocking the monitoring events for scale out 1 machine
