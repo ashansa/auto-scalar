@@ -26,8 +26,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class ElasticScalingTest {
 
     private static ElasticScalarAPI elasticScalarAPI;
-    ResourceMonitoringListener resourceMonitoringListener;
-    MachineStatusListener machineStatusListener;
+    MonitoringListener monitoringListener;
 
     private String GROUP_BASE_NAME = "my_group";
     private String RULE_BASE_NAME = "my_rule";
@@ -51,26 +50,19 @@ public class ElasticScalingTest {
 
         setRulesNGroup();
         //TODO should set rules in monitoring component
-        MonitoringListener[] listenerArray = elasticScalarAPI.startElasticScaling(group.getGroupName(), 2);
-
-        for (MonitoringListener listener : listenerArray) {
-            if (listener instanceof ResourceMonitoringListener)
-                resourceMonitoringListener = (ResourceMonitoringListener)listener;
-            else if (listener instanceof MachineStatusListener)
-                machineStatusListener = (MachineStatusListener)listener;
-        }
+        MonitoringListener listenerArray = elasticScalarAPI.startElasticScaling(group.getGroupName(), 2);
         //TODO pass the listener to monitoring component and it should send events based on rules
 
         //temporary mocking the monitoring events for scale out 1 machine
         ResourceMonitoringEvent cpuEvent = new ResourceMonitoringEvent(ResourceType.CPU_PERCENTAGE,
                 RuleSupport.Comparator.GREATER_THAN, (float) ((random * 100) + 5));
-        resourceMonitoringListener.onHighCPU(groupName, cpuEvent);
+        monitoringListener.onHighCPU(groupName, cpuEvent);
         testCPURules(1);
 
         //temporary mocking the monitoring events for scale out 2 machine
         ResourceMonitoringEvent ramEvent = new ResourceMonitoringEvent(ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.
                 GREATER_THAN_OR_EQUAL, (int)(random * 100) + 3);
-        resourceMonitoringListener.onHighRam(groupName, ramEvent);
+        monitoringListener.onHighRam(groupName, ramEvent);
 
         testRAMRules(2);
 
@@ -78,7 +70,7 @@ public class ElasticScalingTest {
         newRule =  elasticScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 2),
                 ResourceType.CPU_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (float) ((random * 100) + 0.5f) , 2);
         elasticScalarAPI.addRuleToGroup(groupName, newRule.getRuleName());
-        resourceMonitoringListener.onHighCPU(groupName, cpuEvent);
+        monitoringListener.onHighCPU(groupName, cpuEvent);
         testCPURules(2);
 
     }
