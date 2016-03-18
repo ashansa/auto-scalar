@@ -6,11 +6,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import se.kth.autoscalar.common.monitoring.RuleSupport.Comparator;
 import se.kth.autoscalar.common.monitoring.RuleSupport.ResourceType;
+import se.kth.autoscalar.scaling.core.ElasticScalarAPI;
 import se.kth.autoscalar.scaling.exceptions.DBConnectionFailureException;
 import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
 import se.kth.autoscalar.scaling.rules.Rule;
-import se.kth.autoscalar.scaling.rules.RuleManager;
-import se.kth.autoscalar.scaling.rules.RuleManagerImpl;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -29,8 +28,9 @@ import static org.junit.Assert.fail;
  */
 public class GroupTest {
 
-    private static GroupManager groupManager;
-    private static RuleManager ruleManager;
+    private static ElasticScalarAPI elasticScalarAPI;
+//    private static GroupManager groupManager;
+//    private static RuleManager ruleManager;
     private String groupBaseName = "my_group";
     private String ruleNameBase = "my_rule";
     private int coolingTimeOut = 60;
@@ -38,8 +38,14 @@ public class GroupTest {
 
     @BeforeClass
     public static void init() throws ElasticScalarException {
-        groupManager = GroupManagerImpl.getInstance();
-        ruleManager = RuleManagerImpl.getInstance();
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            throw new IllegalStateException(e);
+        }
+        elasticScalarAPI = new ElasticScalarAPI();
+//        groupManager = GroupManagerImpl.getInstance();
+//        ruleManager = RuleManagerImpl.getInstance();
     }
 
     @Test
@@ -53,12 +59,12 @@ public class GroupTest {
         minReq.put(Group.ResourceRequirement.STORAGE, 50);
 
         //test group exists
-        Assert.assertFalse(groupManager.isGroupExists(groupName));
+        Assert.assertFalse(elasticScalarAPI.isGroupExists(groupName));
 
         // test create group with non existant rule
         try {
 
-            groupManager.createGroup( groupName, (int)(random * 10),
+            elasticScalarAPI.createGroup( groupName, (int)(random * 10),
                     (int)(random * 100), coolingTimeOut, coolingTimeIn, new String[]{"wrongRule"}, minReq, 2.0f);
 
             fail("Expected exception not thrown");
@@ -68,56 +74,56 @@ public class GroupTest {
         }
 
         //test create group
-        Rule rule = ruleManager.createRule(ruleNameBase + String.valueOf((int)(random * 10)),
+        Rule rule = elasticScalarAPI.createRule(ruleNameBase + String.valueOf((int)(random * 10)),
                 ResourceType.CPU_PERCENTAGE, Comparator.GREATER_THAN, (int)(random * 100), 1);
         Assert.assertNotNull(rule);
 
-        Group group = groupManager.createGroup(groupName, (int)(random * 10),
+        Group group = elasticScalarAPI.createGroup(groupName, (int)(random * 10),
                 (int)(random * 100), coolingTimeOut, coolingTimeIn, new String[]{rule.getRuleName()}, minReq, 2.0f);
         Assert.assertNotNull(group);
 
         //test exists
-        Assert.assertTrue(groupManager.isGroupExists(groupName));
+        Assert.assertTrue(elasticScalarAPI.isGroupExists(groupName));
 
         //test get
-        Group retrievedGroup = groupManager.getGroup(groupName);
+        Group retrievedGroup = elasticScalarAPI.getGroup(groupName);
         Assert.assertNotNull(retrievedGroup);
 
         //test update
         Group groupToUpdate = retrievedGroup;
         groupToUpdate.setCoolingTimeUp(coolingTimeOut + 10);
-        groupManager.updateGroup(groupName, groupToUpdate);
+        elasticScalarAPI.updateGroup(groupName, groupToUpdate);
 
-        Group updated = groupManager.getGroup(groupName);
+        Group updated = elasticScalarAPI.getGroup(groupName);
         Assert.assertEquals(groupToUpdate.getCoolingTimeUp(), updated.getCoolingTimeUp());
 
         //test add rule
-        Rule rule2 = ruleManager.createRule(ruleNameBase + String.valueOf((int)(random * 10) + 1),
+        Rule rule2 = elasticScalarAPI.createRule(ruleNameBase + String.valueOf((int)(random * 10) + 1),
                 ResourceType.CPU_PERCENTAGE, Comparator.GREATER_THAN, (int)(random * 100), 1);
-        ArrayList<String> rulesOfGroup = new ArrayList<String>(Arrays.asList(groupManager.getGroup(groupName).getRuleNames()));
+        ArrayList<String> rulesOfGroup = new ArrayList<String>(Arrays.asList(elasticScalarAPI.getGroup(groupName).getRuleNames()));
         Assert.assertFalse(rulesOfGroup.contains(rule2.getRuleName()));
 
-        groupManager.addRuleToGroup(groupName, rule2.getRuleName());
-        ArrayList<String> newRulesOfGroup = new ArrayList<String>(Arrays.asList(groupManager.getGroup(groupName).getRuleNames()));
+        elasticScalarAPI.addRuleToGroup(groupName, rule2.getRuleName());
+        ArrayList<String> newRulesOfGroup = new ArrayList<String>(Arrays.asList(elasticScalarAPI.getGroup(groupName).getRuleNames()));
         Assert.assertTrue(newRulesOfGroup.contains(rule2.getRuleName()));
 
         //test rule usages
-        String[] groups = ruleManager.getRuleUsage(rule2.getRuleName());
+        String[] groups = elasticScalarAPI.getRuleUsage(rule2.getRuleName());
         Assert.assertTrue(groups.length > 0);
 
         //test remove rule
-        groupManager.removeRuleFromGroup(groupName, rule2.getRuleName());
-        ArrayList<String> ruleRemovedGroup = new ArrayList<String>(Arrays.asList(groupManager.getGroup(groupName).getRuleNames()));
+        elasticScalarAPI.removeRuleFromGroup(groupName, rule2.getRuleName());
+        ArrayList<String> ruleRemovedGroup = new ArrayList<String>(Arrays.asList(elasticScalarAPI.getGroup(groupName).getRuleNames()));
         Assert.assertFalse(ruleRemovedGroup.contains(rule2.getRuleName()));
 
-        String[] groups2 = ruleManager.getRuleUsage(rule2.getRuleName());
+        String[] groups2 = elasticScalarAPI.getRuleUsage(rule2.getRuleName());
         Assert.assertFalse(groups2.length > 0);
 
         //test delete
-        groupManager.deleteGroup(groupName);
-        Assert.assertFalse(groupManager.isGroupExists(groupName));
-        ruleManager.deleteRule(rule.getRuleName());
-        ruleManager.deleteRule(rule2.getRuleName());
+        elasticScalarAPI.deleteGroup(groupName);
+        Assert.assertFalse(elasticScalarAPI.isGroupExists(groupName));
+        elasticScalarAPI.deleteRule(rule.getRuleName());
+        elasticScalarAPI.deleteRule(rule2.getRuleName());
     }
 
     @AfterClass

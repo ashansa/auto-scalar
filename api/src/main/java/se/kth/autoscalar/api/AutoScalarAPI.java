@@ -119,7 +119,7 @@ public class AutoScalarAPI {
         //TODO create RuleBase
 
         try {
-            MonitoringListener monitoringListener = elasticScalar.startElasticScaling(groupId, currentNumberOfMachines);
+            MonitoringListener[] monitoringListeners = elasticScalar.startElasticScaling(groupId, currentNumberOfMachines);
         } catch (ElasticScalarException e) {
             log.error("Error while starting elastic scaling for group " + groupId);
             throw e;

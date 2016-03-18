@@ -4,7 +4,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import se.kth.autoscalar.common.monitoring.MonitoringEvent;
 import se.kth.autoscalar.common.monitoring.RuleSupport;
+import se.kth.autoscalar.scaling.MachineStatusListener;
 import se.kth.autoscalar.scaling.MonitoringListener;
+import se.kth.autoscalar.scaling.ResourceMonitoringListener;
 import se.kth.autoscalar.scaling.ScalingSuggestion;
 import se.kth.autoscalar.scaling.cost.mgt.KaramelMachineProposer;
 import se.kth.autoscalar.scaling.cost.mgt.MachineProposer;
@@ -17,6 +19,7 @@ import se.kth.autoscalar.scaling.models.RuntimeGroupInfo;
 import se.kth.autoscalar.scaling.profile.*;
 import se.kth.autoscalar.scaling.rules.Rule;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -35,7 +38,8 @@ public class ElasticScalingManager {
     GroupManager groupManager;
     //RuleManager ruleManager;
     EventProfiler eventProfiler;
-    MonitoringListener monitoringListener;
+    ArrayList<MonitoringListener> listenerArray = new ArrayList<MonitoringListener>();
+    //ResourceMonitoringListener resourceMonitoringListener;
     ScaleOutDecisionMaker scaleOutDecisionMaker;
 
     private Map<String, RuntimeGroupInfo> activeGroupsInfo = new HashMap<String, RuntimeGroupInfo>();
@@ -54,7 +58,8 @@ public class ElasticScalingManager {
         scaleOutDecisionMaker = new ScaleOutDecisionMaker();
         (new Thread(scaleOutDecisionMaker)).start();
         //TODO add machineStatusListener
-        monitoringListener = new MonitoringListener(elasticScalarAPI);
+        listenerArray.add(new ResourceMonitoringListener(elasticScalarAPI));
+        listenerArray.add(new MachineStatusListener(elasticScalarAPI));
     }
 
     public void addGroupForScaling(String groupId, int currentNumberOfMachines) throws ElasticScalarException {
@@ -79,6 +84,9 @@ public class ElasticScalingManager {
         eventProfiler.profileEvent(groupId, monitoringEvent);
     }
 
+    public MonitoringListener[] getMonitoringListeners() {
+        return listenerArray.toArray(new MonitoringListener[listenerArray.size()]);
+    }
 
 
     public class ProfiledResourceEventListener implements ProfiledEventListener {

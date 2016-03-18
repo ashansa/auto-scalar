@@ -12,7 +12,6 @@ import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
 import se.kth.autoscalar.scaling.group.Group;
 import se.kth.autoscalar.scaling.rules.Rule;
 
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -27,16 +26,19 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class ElasticScalingTest {
 
     private static ElasticScalarAPI elasticScalarAPI;
+    ResourceMonitoringListener resourceMonitoringListener;
+    MachineStatusListener machineStatusListener;
+
     private String GROUP_BASE_NAME = "my_group";
     private String RULE_BASE_NAME = "my_rule";
     private int coolingTimeOut = 60;
     private int coolingTimeIn = 300;
 
     double random;
-    Rule rule1;
-    Rule rule2;
-    Rule newRule;
-    Group group;
+    static Rule rule1;
+    static Rule rule2;
+    static Rule newRule;
+    static Group group;
     String groupName;
 
     @BeforeClass
@@ -49,19 +51,26 @@ public class ElasticScalingTest {
 
         setRulesNGroup();
         //TODO should set rules in monitoring component
-        MonitoringListener listener = elasticScalarAPI.startElasticScaling(group.getGroupName(), 2);
+        MonitoringListener[] listenerArray = elasticScalarAPI.startElasticScaling(group.getGroupName(), 2);
+
+        for (MonitoringListener listener : listenerArray) {
+            if (listener instanceof ResourceMonitoringListener)
+                resourceMonitoringListener = (ResourceMonitoringListener)listener;
+            else if (listener instanceof MachineStatusListener)
+                machineStatusListener = (MachineStatusListener)listener;
+        }
         //TODO pass the listener to monitoring component and it should send events based on rules
 
         //temporary mocking the monitoring events for scale out 1 machine
         ResourceMonitoringEvent cpuEvent = new ResourceMonitoringEvent(ResourceType.CPU_PERCENTAGE,
                 RuleSupport.Comparator.GREATER_THAN, (float) ((random * 100) + 5));
-        listener.onHighCPU(groupName, cpuEvent);
+        resourceMonitoringListener.onHighCPU(groupName, cpuEvent);
         testCPURules(1);
 
         //temporary mocking the monitoring events for scale out 2 machine
         ResourceMonitoringEvent ramEvent = new ResourceMonitoringEvent(ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.
                 GREATER_THAN_OR_EQUAL, (int)(random * 100) + 3);
-        listener.onHighRam(groupName, ramEvent);
+        resourceMonitoringListener.onHighRam(groupName, ramEvent);
 
         testRAMRules(2);
 
@@ -69,7 +78,7 @@ public class ElasticScalingTest {
         newRule =  elasticScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 2),
                 ResourceType.CPU_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (float) ((random * 100) + 0.5f) , 2);
         elasticScalarAPI.addRuleToGroup(groupName, newRule.getRuleName());
-        listener.onHighCPU(groupName, cpuEvent);
+        resourceMonitoringListener.onHighCPU(groupName, cpuEvent);
         testCPURules(2);
 
     }
@@ -104,11 +113,11 @@ public class ElasticScalingTest {
         int count = 0;
         while (suggestions == null) {
             suggestions = elasticScalarAPI.getSuggestionQueue(groupName);
-            try {
+           /* try {
                 Thread.sleep(3000);
             } catch (InterruptedException e) {
                 System.out.println("CPU_PERCENTAGE:testElasticScaling thread sleep while getting suggestions interrupted.............");
-            }
+            }*/
             count++;
             if (count > 20) {
                 new AssertionError("CPU_PERCENTAGE:No suggestion received during one minute");
@@ -140,11 +149,11 @@ public class ElasticScalingTest {
 
         while (suggestions == null) {
             suggestions = elasticScalarAPI.getSuggestionQueue(groupName);
-            try {
+           /* try {
                 Thread.sleep(3000);
             } catch (InterruptedException e) {
                 System.out.println("RAM_PERCENTAGE: testElasticScaling thread sleep while getting suggestions interrupted.............");
-            }
+            }*/
             count++;
             if (count > 20) {
                 new AssertionError("RAM_PERCENTAGE: No suggestion received during one minute");
@@ -187,10 +196,10 @@ public class ElasticScalingTest {
 
     @AfterClass
     public static void cleanup() throws ElasticScalarException {
-        try {
-            elasticScalarAPI.tempMethodDeleteTables();
-        } catch (SQLException e) {
-            throw new IllegalStateException(e);
-        }
+        //elasticScalarAPI.tempMethodDeleteTables();
+        elasticScalarAPI.deleteRule(rule1.getRuleName());
+        elasticScalarAPI.deleteRule(rule2.getRuleName());
+        elasticScalarAPI.deleteRule(newRule.getRuleName());
+        elasticScalarAPI.deleteGroup(group.getGroupName());
     }
 }

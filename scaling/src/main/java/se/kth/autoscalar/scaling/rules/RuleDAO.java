@@ -236,7 +236,7 @@ public class RuleDAO {
             ResultSet resultSet = selectRuleStatement.executeQuery(); //there will be only 1 result since ruleName is unique
             return resultSet;
         } catch (SQLException e) {
-            log.error("Error occourred while retrieving the rule with name " + ruleName);
+            log.error("Error occourred while retrieving the rule with name " + ruleName + " . " + e.getMessage());
             throw e;
         }
     }

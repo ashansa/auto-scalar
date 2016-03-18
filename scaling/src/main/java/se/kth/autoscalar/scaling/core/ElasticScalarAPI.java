@@ -117,9 +117,9 @@ public class ElasticScalarAPI {
         throw new UnsupportedOperationException("#removeMachineFromGroup()");
     }
 
-    public MonitoringListener startElasticScaling(String groupId, int currentNumberOfMachines) throws ElasticScalarException {
+    public MonitoringListener[] startElasticScaling(String groupId, int currentNumberOfMachines) throws ElasticScalarException {
         elasticScalingManager.addGroupForScaling(groupId, currentNumberOfMachines);
-        return elasticScalingManager.monitoringListener;
+        return elasticScalingManager.getMonitoringListeners();
     }
 
     public void stopElasticScaling(String groupId) {

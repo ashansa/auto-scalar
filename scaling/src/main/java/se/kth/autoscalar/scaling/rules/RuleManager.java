@@ -30,7 +30,7 @@ public interface RuleManager {
 
     String[] getRuleUsage(String ruleName) throws ElasticScalarException;
 
-    Rule[] getMatchingRulesForConstraints(String[] ruleNames, ResourceType resourceType, Comparator comparator, float currentValue);
+    Rule[] getMatchingRulesForConstraints(String[] ruleNames, ResourceType eventResourceType, Comparator eventComparator, float currentValue);
 
     void deleteTables() throws SQLException;
 }
