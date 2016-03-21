@@ -51,9 +51,27 @@ public class EventProfiler {
             @Override
             public void run() {
                 isProcessingInProgress = true;
-                ArrayList<MonitoringEvent> eventsOfATypeToProfileInGroup;
+                ArrayList<MonitoringEvent> events;
 
+                eventsToBeProfiled = processMachineEvents(eventsToBeProfiled);
+
+                //process remaining resource events
                 for (String eventKey : eventsToBeProfiled.keySet()) {
+                    events = eventsToBeProfiled.get(eventKey); //this is only one type of events in a group
+                    //since the machine monitoring events are already processed, only the resource events will be remaining to be processed
+                    if (eventKey.endsWith(RESOURCE_EVENT)) {
+                        for (MonitoringEvent monitoringEvent : events) {
+                            //as first step, just adding every event to profiled events queue
+                            //TODO do profiling and add the result without  adding every event to profiled events queue
+                            ResourceMonitoringEvent event = (ResourceMonitoringEvent) monitoringEvent;
+                            ProfiledEvent profiledEvent = new ProfiledResourceEvent(getGroupId(eventKey), event.getResourceType(),
+                                    event.getComparator(), event.getCurrentValue());
+                            notifyListeners(profiledEvent);
+                        }
+                    }
+                }
+
+                /*for (String eventKey : eventsToBeProfiled.keySet()) {
                     try {
                         eventsOfATypeToProfileInGroup = eventsToBeProfiled.get(eventKey); //this is only one type of events in a group
                         //since key concatenates event type too
@@ -69,24 +87,9 @@ public class EventProfiler {
                             }
                         } else if (eventKey.endsWith(MACHINE_EVENT)) {
 
-                            MachineMonitoringEvent[] machineMonitoringEvents = eventsOfATypeToProfileInGroup.toArray(
-                                    new MachineMonitoringEvent[eventsOfATypeToProfileInGroup.size()]);
-
-                            String groupId = getGroupId(eventKey);
-                            ArrayList<MonitoringEvent> resourceMonitoringEventsOfGroup = eventsToBeProfiled.
-                                    get(getProfiledEventKey(groupId, ResourceMonitoringEvent.class));
-
-                            //temporary getting first event and create profiled event out of it.
-                            // TODO profile all resource events and create the profiled resource event. Should be done for if(eventKey.endsWith(RESOURCE_EVENT))
-                            ResourceMonitoringEvent resE = (ResourceMonitoringEvent) resourceMonitoringEventsOfGroup.get(0);
-                            ProfiledResourceEvent profiledResourceEvent = new ProfiledResourceEvent(groupId, resE.getResourceType(), resE.getComparator(), resE.getCurrentValue());
-
-                            ProfiledMachineEvent profiledMachineEvent = new ProfiledMachineEvent(groupId, machineMonitoringEvents, profiledResourceEvent);
-                            notifyListeners(profiledMachineEvent);
-
                             for (MonitoringEvent monitoringEvent : eventsOfATypeToProfileInGroup) {
 
-                            /*boolean isUnderUtilized = false;
+                            boolean isUnderUtilized = false;
                             ProfiledEvent profiledEvent = null;
                             for (MonitoringEvent monitoringEvent : eventsOfATypeToProfileInGroup) {
 
@@ -120,15 +123,14 @@ public class EventProfiler {
 
                                 } else if (MachineMonitoringEvent.Status.KILLED.name().equals(event.getStatus().name())) {
                                     //support later
-                                }*/
-
+                                }
                             }
                         }
                     } catch (ClassCastException e) {
                         log.error("Error while casting the event to specific type. ProfiledEventKey: " +
                                 eventKey + " . " + e.getMessage());
                     }
-                }
+                }*/
                 try {
                     lock.lock();
                     //after processing is done, add events added to temp map to eventsToBeProcessed so that they will
@@ -143,8 +145,32 @@ public class EventProfiler {
         }, 1000, 1000);
     }
 
-    private void processMachineEvents(Map<String, ArrayList<MonitoringEvent>> eventsToBeProfiled) {
+    private Map<String, ArrayList<MonitoringEvent>> processMachineEvents(Map<String, ArrayList<MonitoringEvent>> eventsToBeProfiled) {
+        Set<String> keys = new HashSet<String>();
+        keys.addAll(eventsToBeProfiled.keySet());
+        for (String eventKey : keys) {
+            if (eventKey.endsWith(MACHINE_EVENT)) {
+                ArrayList<MonitoringEvent> machineEventsInGroup = eventsToBeProfiled.get(eventKey);
 
+                String groupId = getGroupId(eventKey);
+                String resourceEventKeyOfGroup = getProfiledEventKey(groupId, ResourceMonitoringEvent.class);
+                ArrayList<MonitoringEvent> resourceEventsInGroup = eventsToBeProfiled.get(resourceEventKeyOfGroup);
+                ProfiledResourceEvent profiledResourceEvent = null;
+
+                if (resourceEventsInGroup != null) {
+                    //TODO consider all resource events and create the profiled resource event. (CAN use same method as if(eventKey.endsWith(RESOURCE_EVENT))
+                    ResourceMonitoringEvent resE = (ResourceMonitoringEvent) resourceEventsInGroup.get(0);
+                    profiledResourceEvent = new ProfiledResourceEvent(groupId, resE.getResourceType(), resE.getComparator(), resE.getCurrentValue());
+                    eventsToBeProfiled.remove(resourceEventKeyOfGroup);
+                }
+
+                ProfiledMachineEvent profiledMachineEvent = new ProfiledMachineEvent(groupId, machineEventsInGroup.toArray(
+                        new MachineMonitoringEvent[machineEventsInGroup.size()]), profiledResourceEvent);
+                notifyListeners(profiledMachineEvent);
+                eventsToBeProfiled.remove(eventKey);
+            }
+        }
+        return eventsToBeProfiled;
     }
 
     private void notifyListeners(ProfiledEvent profiledEvent) {

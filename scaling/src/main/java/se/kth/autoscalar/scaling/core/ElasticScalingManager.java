@@ -97,8 +97,6 @@ public class ElasticScalingManager {
                 ProfiledResourceEvent event = (ProfiledResourceEvent)profiledEvent;
                 if(activeGroupsInfo.containsKey(event.getGroupId())) {
                     int maxChangeOfMachines = getNumberOfMachineChanges(event);
-                    //ScalingSuggestion suggestion;
-                    //TODO handle scale out and in with maxChangeOfMachines being positive and negative
 
                     /*if (RuleSupport.Comparator.GREATER_THAN.name().equals(event.getComparator().name()) ||
                             RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.name().equals(event.getComparator().name())) {*/

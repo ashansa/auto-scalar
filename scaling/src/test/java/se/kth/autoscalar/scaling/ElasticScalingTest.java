@@ -84,6 +84,7 @@ public class ElasticScalingTest {
         ///////TODO test low end testRAMRules(2, ScalingSuggestion.ScalingDirection.SCALE_IN);
 
         elasticScalarAPI.deleteGroup(ramGreater.getRuleName());
+        elasticScalarAPI.deleteRule(ramGreater.getRuleName());
         elasticScalarAPI.deleteRule(ramLess.getRuleName());
         elasticScalarAPI.deleteRule(ramLessEq.getRuleName());
 
