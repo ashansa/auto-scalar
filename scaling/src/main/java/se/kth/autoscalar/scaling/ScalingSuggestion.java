@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
- *
+ * ScalingSuggestion will be added per group
  * @author Ashansa Perera
  * @version $Id$
  * @since 1.0
@@ -20,8 +20,8 @@ public class ScalingSuggestion {
     }
 
     private ScalingDirection scalingDirection;
-    private ArrayList<MachineType> scaleOutSuggestions = null;
-    private ArrayList<String> scaleInSuggestions = null;
+    private ArrayList<MachineType> scaleOutSuggestions = null;   //machine types that should be added
+    private ArrayList<String> scaleInSuggestions = null;   //machine IDs that should be removed
 
   /*  public ScalingSuggestion(ScalingDirection direction) {
         scalingDirection = direction;

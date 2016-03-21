@@ -18,14 +18,25 @@ public class MachineMonitoringEvent extends MonitoringEvent {
         KILLED, AT_END_OF_BILLING_PERIOD
     }
 
-    private Status status;
+    private String groupId;
     private String machineId;
+    private Status status;
 
-    public Status getStatus() {
-        return status;
+    public MachineMonitoringEvent(String groupId, String machineId, Status status) {
+        this.groupId = groupId;
+        this.machineId = machineId;
+        this.status = status;
+    }
+
+    public String getGroupId() {
+        return groupId;
     }
 
     public String getMachineId() {
         return machineId;
+    }
+
+    public Status getStatus() {
+        return status;
     }
 }
