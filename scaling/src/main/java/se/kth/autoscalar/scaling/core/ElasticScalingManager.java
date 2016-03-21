@@ -38,6 +38,7 @@ public class ElasticScalingManager {
     //ArrayList<MonitoringListener> listenerArray = new ArrayList<MonitoringListener>();
     MonitoringListener monitoringListener;
     ScaleOutDecisionMaker scaleOutDecisionMaker;
+    ScaleInDecisionMaker scaleInDecisionMaker;
 
     private Map<String, RuntimeGroupInfo> activeGroupsInfo = new HashMap<String, RuntimeGroupInfo>();
     private Map<String, ArrayBlockingQueue<ScalingSuggestion>> suggestionMap = new HashMap<String, ArrayBlockingQueue<ScalingSuggestion>>();
@@ -53,6 +54,7 @@ public class ElasticScalingManager {
         eventProfiler = new EventProfiler();
         eventProfiler.addListener(new ProfiledResourceEventListener());
         scaleOutDecisionMaker = new ScaleOutDecisionMaker();
+        scaleInDecisionMaker = new ScaleInDecisionMaker();
         monitoringListener = new MonitoringListener(elasticScalarAPI);
 
         //starting decision maker threads
@@ -94,6 +96,61 @@ public class ElasticScalingManager {
             if (profiledEvent instanceof ProfiledResourceEvent) {
                 ProfiledResourceEvent event = (ProfiledResourceEvent)profiledEvent;
                 if(activeGroupsInfo.containsKey(event.getGroupId())) {
+                    int maxChangeOfMachines = getNumberOfMachineChanges(event);
+                    //ScalingSuggestion suggestion;
+                    //TODO handle scale out and in with maxChangeOfMachines being positive and negative
+
+                    /*if (RuleSupport.Comparator.GREATER_THAN.name().equals(event.getComparator().name()) ||
+                            RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.name().equals(event.getComparator().name())) {*/
+                    if (maxChangeOfMachines > 0) {
+                        scaleOutInternalQueue.add(event.getGroupId().concat(":").concat(String.valueOf(maxChangeOfMachines)));
+                    } else {
+                        scaleInInternalQueue.add(event.getGroupId().concat(":").concat(String.valueOf(maxChangeOfMachines)));
+                    }
+                } else {
+                    throw new ElasticScalarException("Resource event cannot be handled. Group is not in active scaling groups." +
+                            " Group Id: " + event.getGroupId());
+                }
+            }
+        }
+    }
+
+    private int getNumberOfMachineChanges(ProfiledResourceEvent event) throws ElasticScalarException {
+        Rule[] matchingRules = groupManager.getMatchingRulesForGroup(event.getGroupId(), event.getResourceType(),
+                event.getComparator(), event.getValue());
+        //TODO: decide what to do based on rules and cooling time
+        int maxChangeOfMachines = 0;
+
+        if(RuleSupport.Comparator.GREATER_THAN.equals(event.getComparator()) || RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.equals(event.getComparator())) {
+            //will keep the maximum machine additions
+            for (Rule rule : matchingRules) {
+                if (maxChangeOfMachines < rule.getOperationAction())
+                    maxChangeOfMachines = rule.getOperationAction();
+            }
+        } else if(RuleSupport.Comparator.LESS_THAN.equals(event.getComparator()) || RuleSupport.Comparator.LESS_THAN_OR_EQUAL.equals(event.getComparator())) {
+            //will keep the maximum machine removals
+            for (Rule rule : matchingRules) {
+                if (maxChangeOfMachines > rule.getOperationAction())
+                    maxChangeOfMachines = rule.getOperationAction();
+            }
+        }
+        return maxChangeOfMachines;
+    }
+
+    public class ProfiledMachineEventListener implements ProfiledEventListener {
+
+        public void handleEvent(ProfiledEvent profiledEvent) {
+            if (profiledEvent instanceof ProfiledMachineEvent) {
+                ProfiledMachineEvent event = (ProfiledMachineEvent)profiledEvent;
+                /*if(activeGroupsInfo.containsKey(event.getGroupId())) {
+                    switch (event.getStatus()) {
+                        case AT_END_OF_BILLING_PERIOD:
+                            handleBillingPeriodEndEvent(event);
+                            break;
+                        case KILLED:
+                            handleMachineKilledEvent(event);
+                            break;
+                    }
                     Rule[] matchingRules = groupManager.getMatchingRulesForGroup(event.getGroupId(), event.getResourceType(),
                             event.getComparator(), event.getValue());
                     //TODO: decide what to do based on rules and cooling time
@@ -116,17 +173,16 @@ public class ElasticScalingManager {
                 } else {
                     throw new ElasticScalarException("Resource event cannot be handled. Group is not in active scaling groups." +
                             " Group Id: " + event.getGroupId());
-                }
+                }*/
             }
         }
-    }
 
-    public class ProfiledMachineEventListener implements ProfiledEventListener {
+        private void handleBillingPeriodEndEvent(ProfiledMachineEvent event) {
 
-        public void handleEvent(ProfiledEvent profiledEvent) {
-            if (profiledEvent instanceof ProfiledMachineEvent) {
+        }
 
-            }
+        private void handleMachineKilledEvent(ProfiledMachineEvent event) {
+
         }
     }
 
@@ -170,6 +226,34 @@ public class ElasticScalingManager {
             suggestionsQueue.add(suggestion);
             suggestionMap.put(groupId, suggestionsQueue);
         }
+    }
+
+    private class ScaleInDecisionMaker implements Runnable {
+
+        MachineProposer machineProposer = new KaramelMachineProposer();  //TODO: get 'which proposer to use' from a config file
+
+        public void run() {
+            String groupId = "";
+            int noOfMachines;
+            Group group;
+            while (true) {
+                try {
+                    String suggestion = scaleInInternalQueue.take(); //suggestion is in the form <groupId>:<noOfMachines>
+                    groupId = suggestion.substring(0,suggestion.lastIndexOf(":"));
+                    noOfMachines = Integer.parseInt(suggestion.substring(suggestion.lastIndexOf(":") + 1, suggestion.length()));
+
+                   /* group = groupManager.getGroup(groupId);
+                    Map<Group.ResourceRequirement, Integer> minResourceReq = group.getMinResourceReq();
+                    MachineType[] machineProposals = machineProposer.getMachineProposals(groupId, minResourceReq,
+                            noOfMachines, group.getReliabilityReq());
+                    addMachinesToSuggestions(groupId, machineProposals);*/
+
+                } catch (InterruptedException e) {
+                    log.error("Error while retrieving item from scaleOutInternalQueue. " + e.getMessage());
+                }
+            }
+        }
+
     }
 
     public EventProfiler getEventProfiler() {

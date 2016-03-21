@@ -5,7 +5,6 @@ import org.apache.commons.logging.LogFactory;
 import se.kth.autoscalar.common.monitoring.MachineMonitoringEvent;
 import se.kth.autoscalar.common.monitoring.MonitoringEvent;
 import se.kth.autoscalar.common.monitoring.ResourceMonitoringEvent;
-import se.kth.autoscalar.common.monitoring.RuleSupport;
 import se.kth.autoscalar.scaling.core.ElasticScalingManager;
 import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
 
@@ -52,25 +51,46 @@ public class EventProfiler {
             @Override
             public void run() {
                 isProcessingInProgress = true;
-                ArrayList<MonitoringEvent> eventsToProfileInGroup;
-                for (String profiledEventKey : eventsToBeProfiled.keySet()) {
+                ArrayList<MonitoringEvent> eventsOfATypeToProfileInGroup;
+
+                for (String eventKey : eventsToBeProfiled.keySet()) {
                     try {
-                        eventsToProfileInGroup = eventsToBeProfiled.get(profiledEventKey); //this is only one type of events in a group
+                        eventsOfATypeToProfileInGroup = eventsToBeProfiled.get(eventKey); //this is only one type of events in a group
                         //since key concatenates event type too
-                        if (profiledEventKey.endsWith(RESOURCE_EVENT)) {
-                            for (MonitoringEvent monitoringEvent : eventsToProfileInGroup) {
+                        if (eventKey.endsWith(RESOURCE_EVENT)) {
+                            for (MonitoringEvent monitoringEvent : eventsOfATypeToProfileInGroup) {
                                 //as first step, just adding every event to profiled events queue
                                 //TODO do profiling and add the result
+                                //if event key ends with RESOURCE_EVENT, all events in the list are ResourceMonitoringEvent
                                 ResourceMonitoringEvent event = (ResourceMonitoringEvent) monitoringEvent;
-                                ProfiledEvent profiledEvent = new ProfiledResourceEvent(getGroupId(profiledEventKey), event.getResourceType(),
+                                ProfiledEvent profiledEvent = new ProfiledResourceEvent(getGroupId(eventKey), event.getResourceType(),
                                         event.getComparator(), event.getCurrentValue());
                                 notifyListeners(profiledEvent);
                             }
-                        } else if (profiledEventKey.endsWith(MACHINE_EVENT)) {
+                        } else if (eventKey.endsWith(MACHINE_EVENT)) {
 
-                            boolean isUnderUtilized = false;
+                            MachineMonitoringEvent[] machineMonitoringEvents = eventsOfATypeToProfileInGroup.toArray(
+                                    new MachineMonitoringEvent[eventsOfATypeToProfileInGroup.size()]);
+
+                            String groupId = getGroupId(eventKey);
+                            ArrayList<MonitoringEvent> resourceMonitoringEventsOfGroup = eventsToBeProfiled.
+                                    get(getProfiledEventKey(groupId, ResourceMonitoringEvent.class));
+
+                            //temporary getting first event and create profiled event out of it.
+                            // TODO profile all resource events and create the profiled resource event. Should be done for if(eventKey.endsWith(RESOURCE_EVENT))
+                            ResourceMonitoringEvent resE = (ResourceMonitoringEvent) resourceMonitoringEventsOfGroup.get(0);
+                            ProfiledResourceEvent profiledResourceEvent = new ProfiledResourceEvent(groupId, resE.getResourceType(), resE.getComparator(), resE.getCurrentValue());
+
+                            ProfiledMachineEvent profiledMachineEvent = new ProfiledMachineEvent(groupId, machineMonitoringEvents, profiledResourceEvent);
+                            notifyListeners(profiledMachineEvent);
+
+                            for (MonitoringEvent monitoringEvent : eventsOfATypeToProfileInGroup) {
+
+                            /*boolean isUnderUtilized = false;
                             ProfiledEvent profiledEvent = null;
-                            for (MonitoringEvent monitoringEvent : eventsToProfileInGroup) {
+                            for (MonitoringEvent monitoringEvent : eventsOfATypeToProfileInGroup) {
+
+                                //if event key ends with MACHINE_EVENT, all events in the list are MachineMonitoringEvents
                                 MachineMonitoringEvent event = (MachineMonitoringEvent) monitoringEvent;
 
                                 if (MachineMonitoringEvent.Status.AT_END_OF_BILLING_PERIOD.name().equals(
@@ -78,7 +98,7 @@ public class EventProfiler {
 
                                     //Profiling machines which are closer to end of billing period will be terminated
                                     //if the resources are underutilized according to client specified resource requirements
-                                    String groupId = getGroupId(profiledEventKey);
+                                    String groupId = getGroupId(eventKey);
                                     ArrayList<MonitoringEvent> resourceMonitoringEventsOfGroup = eventsToBeProfiled.
                                             get(getProfiledEventKey(groupId, ResourceMonitoringEvent.class));
 
@@ -88,7 +108,7 @@ public class EventProfiler {
                                         String eventComparator = ((ResourceMonitoringEvent) resourceEvent).getComparator().name();
                                         if (RuleSupport.Comparator.LESS_THAN.name().equals(eventComparator) ||
                                                 RuleSupport.Comparator.LESS_THAN_OR_EQUAL.name().equals(eventComparator)) {
-                                            profiledEvent = new ProfiledMachineEvent(event.getMachineId());
+                                            profiledEvent = new ProfiledMachineEvent(event.getMachineId(), MachineMonitoringEvent.Status.AT_END_OF_BILLING_PERIOD);
                                             isUnderUtilized = true;  //TODO: don't decide just by using one event in outer for loop
                                             return;
                                         }
@@ -100,13 +120,13 @@ public class EventProfiler {
 
                                 } else if (MachineMonitoringEvent.Status.KILLED.name().equals(event.getStatus().name())) {
                                     //support later
-                                }
+                                }*/
 
                             }
                         }
                     } catch (ClassCastException e) {
                         log.error("Error while casting the event to specific type. ProfiledEventKey: " +
-                                profiledEventKey + " . " + e.getMessage());
+                                eventKey + " . " + e.getMessage());
                     }
                 }
                 try {
@@ -121,6 +141,10 @@ public class EventProfiler {
                 }
             }
         }, 1000, 1000);
+    }
+
+    private void processMachineEvents(Map<String, ArrayList<MonitoringEvent>> eventsToBeProfiled) {
+
     }
 
     private void notifyListeners(ProfiledEvent profiledEvent) {
