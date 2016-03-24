@@ -137,8 +137,8 @@ public class GroupDAO {
             createGroupStatement.setString(1, group.getGroupName());
             createGroupStatement.setInt(2, group.getMinInstances());
             createGroupStatement.setInt(3, group.getMaxInstances());
-            createGroupStatement.setInt(4, group.getCoolingTimeUp());
-            createGroupStatement.setInt(5, group.getCoolingTimeDown());
+            createGroupStatement.setInt(4, group.getCoolingTimeOut());
+            createGroupStatement.setInt(5, group.getCoolingTimeIn());
 
             Map<Group.ResourceRequirement, Integer> minReqMap = group.getMinResourceReq();
             createGroupStatement.setInt(6, minReqMap.get(Group.ResourceRequirement.NUMBER_OF_VCPUS));
@@ -250,8 +250,8 @@ public class GroupDAO {
             updateRuleStatement.setString(1, groupName);
             updateRuleStatement.setInt(2, group.getMinInstances());
             updateRuleStatement.setInt(3, group.getMaxInstances());
-            updateRuleStatement.setInt(4, group.getCoolingTimeUp());
-            updateRuleStatement.setInt(5, group.getCoolingTimeDown());
+            updateRuleStatement.setInt(4, group.getCoolingTimeOut());
+            updateRuleStatement.setInt(5, group.getCoolingTimeIn());
 
             Map<Group.ResourceRequirement, Integer> minReqMap = group.getMinResourceReq();
             updateRuleStatement.setInt(6, minReqMap.get(Group.ResourceRequirement.NUMBER_OF_VCPUS));

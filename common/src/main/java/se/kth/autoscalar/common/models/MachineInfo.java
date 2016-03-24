@@ -61,7 +61,6 @@ public class MachineInfo {
 
         System.out.println(c.get(java.util.Calendar.HOUR_OF_DAY)+":"+c.get(java.util.Calendar.MINUTE)+":"+c.get(java.util.Calendar.SECOND));*/
 
-        Calendar calendar = Calendar.getInstance();
-        creationTime = calendar.getTime();
+        creationTime = Calendar.getInstance().getTime();
     }
 }

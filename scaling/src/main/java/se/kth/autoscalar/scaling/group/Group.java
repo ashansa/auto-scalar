@@ -26,10 +26,10 @@ public class Group {
     private ArrayList<String> ruleNames;
 
     //minimum time interval in seconds between two scale up actions
-    private int coolingTimeUp;
+    private int coolingTimeOut;
 
     //minimum time interval in seconds between two scale down actions
-    private int coolingTimeDown;
+    private int coolingTimeIn;
 
     //minimum resource request per machine minCPU: 4, minRAM: 8GB, minStorage: 100GB ==> all these may not be
     //considered in scaling decision, but when providing machines, we can consider all of them */
@@ -37,13 +37,13 @@ public class Group {
 
     private float reliabilityReq;
 
-    public Group(String name, int minInstances, int maxInstances, int coolingTimeUp, int coolingTimeDown,
+    public Group(String name, int minInstances, int maxInstances, int coolingTimeOut, int coolingTimeIn,
                  String[] ruleNames, Map<ResourceRequirement, Integer> minResourceReq, float reliabilityReq) throws ManageGroupException {
         this.groupName = name;
         this.minInstances = minInstances;
         this.maxInstances = maxInstances;
-        this.coolingTimeUp = coolingTimeUp;
-        this.coolingTimeDown = coolingTimeDown;
+        this.coolingTimeOut = coolingTimeOut;
+        this.coolingTimeIn = coolingTimeIn;
 
         if(ruleNames != null && ruleNames.length > 0) {
             this.ruleNames = new ArrayList<String>(Arrays.asList(ruleNames));
@@ -78,20 +78,20 @@ public class Group {
         this.maxInstances = maxInstances;
     }
 
-    public int getCoolingTimeUp() {
-        return coolingTimeUp;
+    public int getCoolingTimeOut() {
+        return coolingTimeOut;
     }
 
-    public void setCoolingTimeUp(int coolingTimeUp) {
-        this.coolingTimeUp = coolingTimeUp;
+    public void setCoolingTimeOut(int coolingTimeOut) {
+        this.coolingTimeOut = coolingTimeOut;
     }
 
-    public int getCoolingTimeDown() {
-        return coolingTimeDown;
+    public int getCoolingTimeIn() {
+        return coolingTimeIn;
     }
 
-    public void setCoolingTimeDown(int coolingTimeDown) {
-        this.coolingTimeDown = coolingTimeDown;
+    public void setCoolingTimeIn(int coolingTimeIn) {
+        this.coolingTimeIn = coolingTimeIn;
     }
 
     public String[] getRuleNames() {

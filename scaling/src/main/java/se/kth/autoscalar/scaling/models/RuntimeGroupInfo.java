@@ -1,5 +1,6 @@
 package se.kth.autoscalar.scaling.models;
 
+import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -25,28 +26,22 @@ public class RuntimeGroupInfo {
         return lastScaleInTime;
     }
 
-    public void setLastScaleInTime(Date lastScaleInTime) {
-        this.lastScaleInTime = lastScaleInTime;
-    }
-
     public Date getLastScaleOutTime() {
         return lastScaleOutTime;
-    }
-
-    public void setLastScaleOutTime(Date lastScaleOutTime) {
-        this.lastScaleOutTime = lastScaleOutTime;
     }
 
     public int getNumberOfMachinesInGroup() {
         return numberOfMachinesInGroup;
     }
 
-    public synchronized void incrementNoOfMachinesInGroup(int number) {
-        numberOfMachinesInGroup += number;
+    public synchronized void setScaleOutInfo(int numberOfMachines) {
+        numberOfMachinesInGroup += numberOfMachines;
+        lastScaleOutTime = Calendar.getInstance().getTime();
     }
 
-    public synchronized void decrementNoOfMachinesInGroup(int number) {
-        numberOfMachinesInGroup -= number;
+    public synchronized void setScaleInInfo(int numberOfMachines) {
+        numberOfMachinesInGroup -= numberOfMachines;
+        lastScaleInTime = Calendar.getInstance().getTime();
     }
 
 }

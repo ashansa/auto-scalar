@@ -91,11 +91,11 @@ public class GroupTest {
 
         //test update
         Group groupToUpdate = retrievedGroup;
-        groupToUpdate.setCoolingTimeUp(coolingTimeOut + 10);
+        groupToUpdate.setCoolingTimeOut(coolingTimeOut + 10);
         elasticScalarAPI.updateGroup(groupName, groupToUpdate);
 
         Group updated = elasticScalarAPI.getGroup(groupName);
-        Assert.assertEquals(groupToUpdate.getCoolingTimeUp(), updated.getCoolingTimeUp());
+        Assert.assertEquals(groupToUpdate.getCoolingTimeOut(), updated.getCoolingTimeOut());
 
         //test add rule
         Rule rule2 = elasticScalarAPI.createRule(ruleNameBase + String.valueOf((int)(random * 10) + 1),
