@@ -4,6 +4,7 @@ import junit.framework.Assert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import se.kth.autoscalar.common.monitoring.MachineMonitoringEvent;
 import se.kth.autoscalar.common.monitoring.ResourceMonitoringEvent;
 import se.kth.autoscalar.common.monitoring.RuleSupport;
 import se.kth.autoscalar.common.monitoring.RuleSupport.ResourceType;
@@ -15,6 +16,7 @@ import se.kth.autoscalar.scaling.rules.Rule;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created with IntelliJ IDEA.
@@ -52,6 +54,9 @@ public class ElasticScalingTest {
         monitoringListener = elasticScalarAPI.startElasticScaling(group.getGroupName(), 2);
         //TODO pass the listener to monitoring component and it should send events based on rules
 
+        /*
+        Testing with ResourceMonitoringEvent
+         */
         //temporary mocking the monitoring events for scale out 1 machine
         ResourceMonitoringEvent cpuEvent = new ResourceMonitoringEvent(ResourceType.CPU_PERCENTAGE,
                 RuleSupport.Comparator.GREATER_THAN, (float) ((random * 100) + 5));
@@ -73,15 +78,52 @@ public class ElasticScalingTest {
         testCPURules(2, ScalingSuggestion.ScalingDirection.SCALE_OUT);
 
         Rule ramLess =  elasticScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 3),
-                ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.LESS_THAN, (float) ((random * 10) + 30.5f) , 1);
+                ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.LESS_THAN, (float) ((random * 10) + 30.5f) , -1);
         Rule ramLessEq =  elasticScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 4),
-                ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.LESS_THAN_OR_EQUAL, (float) ((random * 10) + 10f) , 2);
+                ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.LESS_THAN_OR_EQUAL, (float) ((random * 10) + 10f) , -2);
         elasticScalarAPI.addRuleToGroup(groupName, ramLess.getRuleName());
         elasticScalarAPI.addRuleToGroup(groupName, ramLessEq.getRuleName());
         ramEvent = new ResourceMonitoringEvent(ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.
                 LESS_THAN_OR_EQUAL, (float) ((random * 10) + 5));
         monitoringListener.onLowRam(groupName, ramEvent);
-        ///////TODO test low end testRAMRules(2, ScalingSuggestion.ScalingDirection.SCALE_IN);
+        ///////TODO test low end --> scale in happens only at the end of billing period
+        //testRAMRules(2, ScalingSuggestion.ScalingDirection.SCALE_IN);
+
+
+        /*
+        testing with MachineMonitoringEvent
+         */
+
+        try {
+            //No suggestions should be proposed since no resource events are in the window since thread is sleeping 5sec
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            throw new IllegalStateException("Interrupted while waiting before sending the machineMonitoringEvent", e);
+        }
+
+        MachineMonitoringEvent endOfBillingEvent = new MachineMonitoringEvent(groupName,"vm1", MachineMonitoringEvent.Status.AT_END_OF_BILLING_PERIOD);
+        monitoringListener.onStateChange(groupName, endOfBillingEvent);
+        testMachineEvents(0, ScalingSuggestion.ScalingDirection.SCALE_IN);  //no machine removals since no resource monitoring events to decide on scaling
+
+        monitoringListener.onLowRam(groupName, ramEvent);
+        monitoringListener.onStateChange(groupName, endOfBillingEvent);
+        testMachineEvents(1, ScalingSuggestion.ScalingDirection.SCALE_IN);  //Even though rules tell to remove 2 machines, since only 1 machine is at end of billing, will remove only 1 machine
+
+        MachineMonitoringEvent endOfBillingEvent2 = new MachineMonitoringEvent(groupName,"vm2", MachineMonitoringEvent.Status.AT_END_OF_BILLING_PERIOD);
+        MachineMonitoringEvent killedEvent = new MachineMonitoringEvent(groupName, "vm3", MachineMonitoringEvent.Status.KILLED);
+        monitoringListener.onLowRam(groupName, ramEvent);
+        monitoringListener.onStateChange(groupName, endOfBillingEvent);
+        monitoringListener.onStateChange(groupName, endOfBillingEvent2);
+        monitoringListener.onStateChange(groupName, killedEvent);
+        testMachineEvents(1, ScalingSuggestion.ScalingDirection.SCALE_IN);  //rules say: -2. But since 1 killed and 2 end of billing, only 1 should be removed
+
+        monitoringListener.onLowRam(groupName, ramEvent);
+        monitoringListener.onStateChange(groupName, endOfBillingEvent);
+        monitoringListener.onStateChange(groupName, endOfBillingEvent2);
+        testMachineEvents(2, ScalingSuggestion.ScalingDirection.SCALE_IN);  //rules say: -2.  2 end of billing, should remove both machines
+
+        monitoringListener.onStateChange(groupName, killedEvent);
+        testMachineEvents(1, ScalingSuggestion.ScalingDirection.SCALE_OUT);
 
         elasticScalarAPI.deleteGroup(ramGreater.getRuleName());
         elasticScalarAPI.deleteRule(ramGreater.getRuleName());
@@ -155,8 +197,6 @@ public class ElasticScalingTest {
 
     private void testRAMRules(int expectedMachines, ScalingSuggestion.ScalingDirection expectedDirection) {
         ArrayBlockingQueue<ScalingSuggestion>  suggestions = elasticScalarAPI.getSuggestionQueue(groupName);
-
-        suggestions = elasticScalarAPI.getSuggestionQueue(groupName);
         int count = 0;
 
         while (suggestions == null) {
@@ -197,6 +237,52 @@ public class ElasticScalingTest {
                         break;
                     }
             }*/
+        } catch (InterruptedException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private void testMachineEvents(int expectedMachineChanges, ScalingSuggestion.ScalingDirection expectedDirection) {
+        ArrayBlockingQueue<ScalingSuggestion>  suggestionsQueue = elasticScalarAPI.getSuggestionQueue(groupName);
+
+        int count = 0;
+        while (suggestionsQueue == null) {
+            suggestionsQueue = elasticScalarAPI.getSuggestionQueue(groupName);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                System.out.println(expectedDirection.name() + " : thread sleep while getting suggestions interrupted.............");
+            }
+            count++;
+            if (count > 20) {
+                new AssertionError(expectedDirection.name() + " : No suggestion received during one minute");
+            }
+        }
+        try {
+            ScalingSuggestion suggestion = null;
+
+            if(expectedMachineChanges == 0) {
+                int tries = 0;
+
+                while (tries <= 20) {
+                    suggestion = suggestionsQueue.poll(1000, TimeUnit.MILLISECONDS);
+                    tries++;
+                }
+                Assert.assertNull(suggestion);
+                System.out.println(expectedDirection.name() + " : test pass. Expected machine changes: " + expectedMachineChanges);
+                return;
+            }
+
+            suggestion = suggestionsQueue.take();
+            Assert.assertEquals(expectedDirection, suggestion.getScalingDirection());
+
+            if (ScalingSuggestion.ScalingDirection.SCALE_IN.equals(expectedDirection))
+                Assert.assertEquals(expectedMachineChanges, suggestion.getScaleInSuggestions().size());
+            else
+                Assert.assertEquals(expectedMachineChanges, suggestion.getScaleOutSuggestions().size());
+
+            System.out.println(expectedDirection.name() + " : test pass. Expected machine changes: " + expectedMachineChanges);
+
         } catch (InterruptedException e) {
             throw new IllegalStateException(e);
         }

@@ -137,12 +137,12 @@ public class EventProfiler {
                     // be processed in the next scheduling round
                     eventsToBeProfiled = eventsToBeProfiledTempMap;
                     eventsToBeProfiledTempMap = new HashMap<String, ArrayList<MonitoringEvent>>();
-
+                    isProcessingInProgress = false;
                 } finally {
                     lock.unlock();
                 }
             }
-        }, 1000, 1000);
+        }, 1000, 5000);
     }
 
     private Map<String, ArrayList<MonitoringEvent>> processMachineEvents(Map<String, ArrayList<MonitoringEvent>> eventsToBeProfiled) {

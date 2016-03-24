@@ -55,6 +55,7 @@ public class ElasticScalingManager {
         groupManager = GroupManagerImpl.getInstance();
         eventProfiler = new EventProfiler();
         eventProfiler.addListener(new ProfiledResourceEventListener());
+        eventProfiler.addListener(new ProfiledMachineEventListener());
         scaleOutDecisionMaker = new ScaleOutDecisionMaker();
         //scaleInDecisionMaker = new ScaleInDecisionMaker();   //avoid using a different thread until there is a real need
         monitoringListener = new MonitoringListener(elasticScalarAPI);
@@ -151,46 +152,54 @@ public class ElasticScalingManager {
             if (profiledEvent instanceof ProfiledMachineEvent) {
                 ProfiledMachineEvent event = (ProfiledMachineEvent)profiledEvent;
                 if (activeGroupsInfo.containsKey(event.getGroupId())) {
-                    int maxChangeOfMachines = getNumberOfMachineChanges(event.getProfiledResourceEvent());
+                    ProfiledResourceEvent resourceEventOfGroup = event.getProfiledResourceEvent();
 
-                    if (maxChangeOfMachines > 0) {
-                        //TODO are we going to add the machinesKilled + maxChangeOfMachines to be spawned
-                        scaleOutInternalQueue.add(event.getGroupId().concat(":").concat(String.valueOf(maxChangeOfMachines)));
-                    } else {
-                        int killedInstances = 0;
-                        //int endOfBilling = 0;
-                        ArrayList<String> endOfBillingMachineIds = new ArrayList<String>();
-                        for (MachineMonitoringEvent machineEvent : event.getMachineMonitoringEvents()) {
-                            switch (machineEvent.getStatus()) {
-                                case KILLED:
-                                    killedInstances++;
-                                    break;
-                                case AT_END_OF_BILLING_PERIOD:
-                                    //endOfBilling++;
-                                    endOfBillingMachineIds.add(machineEvent.getMachineId());
-                                    break;
-                            }
+                    int killedInstances = 0;
+                    ArrayList<String> endOfBillingMachineIds = new ArrayList<String>();
+                    for (MachineMonitoringEvent machineEvent : event.getMachineMonitoringEvents()) {
+                        switch (machineEvent.getStatus()) {
+                            case KILLED:
+                                killedInstances++;
+                                break;
+                            case AT_END_OF_BILLING_PERIOD:
+                                //endOfBilling++;
+                                endOfBillingMachineIds.add(machineEvent.getMachineId());
+                                break;
                         }
-                        int machinesToBeRemoved = Math.abs(maxChangeOfMachines);
-                        if (machinesToBeRemoved > killedInstances) {
-                            machinesToBeRemoved = machinesToBeRemoved - killedInstances;
-                            if (machinesToBeRemoved >= endOfBillingMachineIds.size()) {
-                                //kill all machines at end of billing period. (we won't kill machines which are not at the
-                                //end of billing period to utilize the already payed machines
-                                addScaleInSuggestions(event.getGroupId(), endOfBillingMachineIds);
+                    }
 
-                                /* won't add to internal queue and wait for queue in while loop until there is a real need
-                                scaleInInternalQueue.addAll(endOfBillingMachineIds); */
-                            } else {
-                                //kill number of machinesToBeRemoved selected from endOfBilling set
-                                ArrayList<String> toRemoveList = new ArrayList<String>(endOfBillingMachineIds.subList(0, machinesToBeRemoved));
-                                addScaleInSuggestions(event.getGroupId(), toRemoveList);
+                    if (resourceEventOfGroup != null) {
+                        int maxChangeOfMachines = getNumberOfMachineChanges(event.getProfiledResourceEvent());
 
-                                /* won't add to internal queue and wait for queue in while loop until there is a real need
-                                scaleInInternalQueue.addAll(endOfBillingMachineIds);
-                                    scaleInInternalQueue.add(new ArrayList<String>(endOfBillingMachineIds.subList(0, machinesToBeRemoved)));*/
-                            }
-                        } // else: we are not spawning machines here since the Profiled resource event say to remove machines
+                        if (maxChangeOfMachines >= 0) {
+                            //TODO are we going to add the machinesKilled + maxChangeOfMachines to be spawned
+                            //TODO No need to add if the resource events are affected by the machine loss (killed machine it is already reflected)
+                            scaleOutInternalQueue.add(event.getGroupId().concat(":").concat(String.valueOf(maxChangeOfMachines)));
+                        } else {
+                            int machinesToBeRemoved = Math.abs(maxChangeOfMachines);
+                            if (machinesToBeRemoved > killedInstances) {
+                                machinesToBeRemoved = machinesToBeRemoved - killedInstances;
+                                if (machinesToBeRemoved >= endOfBillingMachineIds.size()) {
+                                    //kill all machines at end of billing period. (we won't kill machines which are not at the
+                                    //end of billing period to utilize the already payed machines
+                                    addScaleInSuggestions(event.getGroupId(), endOfBillingMachineIds);
+
+                                    /* won't add to internal queue and wait for queue in while loop until there is a real need
+                                    scaleInInternalQueue.addAll(endOfBillingMachineIds); */
+                                } else {
+                                    //kill number of machinesToBeRemoved selected from endOfBilling set
+                                    ArrayList<String> toRemoveList = new ArrayList<String>(endOfBillingMachineIds.subList(0, machinesToBeRemoved));
+                                    addScaleInSuggestions(event.getGroupId(), toRemoveList);
+
+                                    /* won't add to internal queue and wait for queue in while loop until there is a real need
+                                    scaleInInternalQueue.addAll(endOfBillingMachineIds);
+                                        scaleInInternalQueue.add(new ArrayList<String>(endOfBillingMachineIds.subList(0, machinesToBeRemoved)));*/
+                                }
+                            } // else: we are not spawning machines here since the Profiled resource event say to remove machines
+                        }
+                    } else {
+                        //Since no low resource consumption events are in the window (no resource events), adding machines to replace killed machines
+                        scaleOutInternalQueue.add(event.getGroupId().concat(":").concat(String.valueOf(killedInstances)));
                     }
                 }  else {
                     throw new ElasticScalarException("Machine event cannot be handled. Group is not in active scaling groups." +
