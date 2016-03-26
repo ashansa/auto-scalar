@@ -21,7 +21,6 @@ import java.util.Map;
  * @since 1.0
  */
 
-//TODO move all group related classes to scaling package
 public class GroupManagerImpl implements GroupManager {
 
     Log log = LogFactory.getLog(GroupManagerImpl.class);

@@ -130,7 +130,6 @@ public class ElasticScalingManager {
     private int getNumberOfMachineChanges(ProfiledResourceEvent event) throws ElasticScalarException {
         Rule[] matchingRules = groupManager.getMatchingRulesForGroup(event.getGroupId(), event.getResourceType(),
                 event.getComparator(), event.getValue());
-        //TODO: decide what to do based on rules and cooling time
         int maxChangeOfMachines = 0;
 
         if(RuleSupport.Comparator.GREATER_THAN.equals(event.getComparator()) || RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.equals(event.getComparator())) {
@@ -200,8 +199,7 @@ public class ElasticScalingManager {
                 int maxChangeOfMachines = getNumberOfMachineChanges(event.getProfiledResourceEvent());
 
                 if (maxChangeOfMachines >= 0) {
-                    //TODO are we going to add the machinesKilled + maxChangeOfMachines to be spawned ? YES because Assumption1
-                    //Evaluate the possibility of scaling out with coolDown period
+                    //Adding the machinesKilled + maxChangeOfMachines to be spawned: because Assumption1
                     int machinesToBeAdded = maxChangeOfMachines + killedInstances;
                     boolean inCoolDownPeriod = isInCoolDownPeriod(event.getGroupId(), ScalingSuggestion.ScalingDirection.SCALE_OUT);
 
@@ -259,15 +257,11 @@ public class ElasticScalingManager {
                 int maxChangeOfMachines = getNumberOfMachineChanges(event.getProfiledResourceEvent());
 
                 if (maxChangeOfMachines >= 0) {
-                    //TODO are we going to add the machinesKilled + maxChangeOfMachines to be spawned ? NO because
-                    //TODO No need to add because we assume the resource events are affected by the machine loss (killed machine it is already reflected)
-
-                    //Evaluate the possibility of scaling out with coolDown period
+                    //adding only the maxChangeOfMachines to be spawned. because: Assumption2
                     boolean inCoolDownPeriod = isInCoolDownPeriod(event.getGroupId(), ScalingSuggestion.ScalingDirection.SCALE_OUT);
 
                     if (!inCoolDownPeriod) {
                         scaleOutInternalQueue.add(event.getGroupId().concat(":").concat(String.valueOf(maxChangeOfMachines)));
-                        //runtimeGroupInfo.setScaleOutInfo(maxChangeOfMachines);
                         machineChanges = maxChangeOfMachines;
                     }
 

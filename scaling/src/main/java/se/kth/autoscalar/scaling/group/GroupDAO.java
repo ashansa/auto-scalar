@@ -207,10 +207,8 @@ public class GroupDAO {
                 minReqMap.put(Group.ResourceRequirement.STORAGE, resultSet.getInt(MIN_STORAGE_COLUMN));
 
                 float reliability = resultSet.getFloat(RELIABILITY_COLUMN);
-
                 String[] rulesOfGroup = getRuleNamesForGroup(groupName);
 
-                //TODO config db to have new parameters
                 return new Group(groupName, minInstances, maxInstances, coolingTimeUp, coolingTimeDown, rulesOfGroup,
                         minReqMap, reliability);
             }

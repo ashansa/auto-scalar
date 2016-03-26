@@ -71,66 +71,6 @@ public class EventProfiler {
                     }
                 }
 
-                /*for (String eventKey : eventsToBeProfiled.keySet()) {
-                    try {
-                        eventsOfATypeToProfileInGroup = eventsToBeProfiled.get(eventKey); //this is only one type of events in a group
-                        //since key concatenates event type too
-                        if (eventKey.endsWith(RESOURCE_EVENT)) {
-                            for (MonitoringEvent monitoringEvent : eventsOfATypeToProfileInGroup) {
-                                //as first step, just adding every event to profiled events queue
-                                //TODO do profiling and add the result
-                                //if event key ends with RESOURCE_EVENT, all events in the list are ResourceMonitoringEvent
-                                ResourceMonitoringEvent event = (ResourceMonitoringEvent) monitoringEvent;
-                                ProfiledEvent profiledEvent = new ProfiledResourceEvent(getGroupId(eventKey), event.getResourceType(),
-                                        event.getComparator(), event.getCurrentValue());
-                                notifyListeners(profiledEvent);
-                            }
-                        } else if (eventKey.endsWith(MACHINE_EVENT)) {
-
-                            for (MonitoringEvent monitoringEvent : eventsOfATypeToProfileInGroup) {
-
-                            boolean isUnderUtilized = false;
-                            ProfiledEvent profiledEvent = null;
-                            for (MonitoringEvent monitoringEvent : eventsOfATypeToProfileInGroup) {
-
-                                //if event key ends with MACHINE_EVENT, all events in the list are MachineMonitoringEvents
-                                MachineMonitoringEvent event = (MachineMonitoringEvent) monitoringEvent;
-
-                                if (MachineMonitoringEvent.Status.AT_END_OF_BILLING_PERIOD.name().equals(
-                                        event.getStatus().name())) {
-
-                                    //Profiling machines which are closer to end of billing period will be terminated
-                                    //if the resources are underutilized according to client specified resource requirements
-                                    String groupId = getGroupId(eventKey);
-                                    ArrayList<MonitoringEvent> resourceMonitoringEventsOfGroup = eventsToBeProfiled.
-                                            get(getProfiledEventKey(groupId, ResourceMonitoringEvent.class));
-
-
-                                    //TODO profile and decide whether to kill the machine or not
-                                    for (MonitoringEvent resourceEvent : resourceMonitoringEventsOfGroup) {
-                                        String eventComparator = ((ResourceMonitoringEvent) resourceEvent).getComparator().name();
-                                        if (RuleSupport.Comparator.LESS_THAN.name().equals(eventComparator) ||
-                                                RuleSupport.Comparator.LESS_THAN_OR_EQUAL.name().equals(eventComparator)) {
-                                            profiledEvent = new ProfiledMachineEvent(event.getMachineId(), MachineMonitoringEvent.Status.AT_END_OF_BILLING_PERIOD);
-                                            isUnderUtilized = true;  //TODO: don't decide just by using one event in outer for loop
-                                            return;
-                                        }
-                                    }
-
-                                    if (isUnderUtilized == true && profiledEvent != null) {
-                                        notifyListeners(profiledEvent);
-                                    }
-
-                                } else if (MachineMonitoringEvent.Status.KILLED.name().equals(event.getStatus().name())) {
-                                    //support later
-                                }
-                            }
-                        }
-                    } catch (ClassCastException e) {
-                        log.error("Error while casting the event to specific type. ProfiledEventKey: " +
-                                eventKey + " . " + e.getMessage());
-                    }
-                }*/
                 try {
                     lock.lock();
                     //after processing is done, add events added to temp map to eventsToBeProcessed so that they will
