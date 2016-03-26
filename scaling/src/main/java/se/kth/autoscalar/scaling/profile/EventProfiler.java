@@ -82,7 +82,7 @@ public class EventProfiler {
                     lock.unlock();
                 }
             }
-        }, 1000, 5000);
+        }, 1000, 2000);
     }
 
     private Map<String, ArrayList<MonitoringEvent>> processMachineEvents(Map<String, ArrayList<MonitoringEvent>> eventsToBeProfiled) {

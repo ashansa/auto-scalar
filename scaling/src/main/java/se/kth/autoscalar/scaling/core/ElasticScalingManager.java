@@ -99,14 +99,12 @@ public class ElasticScalingManager {
             if (profiledEvent instanceof ProfiledResourceEvent) {
                 ProfiledResourceEvent event = (ProfiledResourceEvent)profiledEvent;
                 if(activeGroupsInfo.containsKey(event.getGroupId())) {
-                    int maxChangeOfMachines = getNumberOfMachineChanges(event);
+                    boolean inCoolDownPeriod = isInCoolDownPeriod(event.getGroupId(), ScalingSuggestion.ScalingDirection.SCALE_OUT);
 
-                    if (maxChangeOfMachines > 0) {
-
-                        //Evaluate the possibility of scaling out with cooldown period
-                        boolean inCoolDownPeriod = isInCoolDownPeriod(event.getGroupId(), ScalingSuggestion.ScalingDirection.SCALE_OUT);
-
-                        if (!inCoolDownPeriod) {
+                    if (!inCoolDownPeriod) {
+                        int maxChangeOfMachines = getNumberOfMachineChanges(event);
+                        if (maxChangeOfMachines > 0) {
+                            //Evaluate the possibility of scaling out with cooldown period
                             RuntimeGroupInfo runtimeGroupInfo = activeGroupsInfo.get(event.getGroupId());
                             scaleOutInternalQueue.add(event.getGroupId().concat(":").concat(String.valueOf(maxChangeOfMachines)));
                             runtimeGroupInfo.setScaleOutInfo(maxChangeOfMachines);
