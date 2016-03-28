@@ -1,5 +1,7 @@
 package se.kth.autoscalar.scaling.models;
 
+import java.util.Map;
+
 /**
  * Created with IntelliJ IDEA.
  *
@@ -9,38 +11,24 @@ package se.kth.autoscalar.scaling.models;
  */
 public class MachineType {
 
-    String region;
-    String instanceType;
-    boolean isABiddingInstance;
-    float bid;
+    private boolean isPreemptible;
+    private Map<String,String> properties;
 
-    public MachineType(String region, String instanceType) {
-        this.region = region;
-        this.instanceType = instanceType;
+    public MachineType(boolean isPreemptible, Map<String,String> properties) {
+        this.isPreemptible = isPreemptible;
+        this.properties = properties;
     }
 
-    public String getRegion() {
-        return region;
+    public boolean isPreemptible() {
+        return isPreemptible;
     }
 
-    public String getInstanceType() {
-        return instanceType;
+    public void addProperty(String key, String value) {
+        properties.put(key, value);
     }
 
-    public boolean isABiddingInstance() {
-        return isABiddingInstance;
-    }
-
-    public void setABiddingInstance(boolean ABiddingInstance) {
-        isABiddingInstance = ABiddingInstance;
-    }
-
-    public float getBid() {
-        return bid;
-    }
-
-    public void setBid(float bid) {
-        this.bid = bid;
+    public Map<String, String> getProperties() {
+        return properties;
     }
 
 }

@@ -3,7 +3,6 @@ package se.kth.autoscalar.scaling.core;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import se.kth.autoscalar.common.monitoring.MachineMonitoringEvent;
-import se.kth.autoscalar.common.monitoring.MonitoringEvent;
 import se.kth.autoscalar.common.monitoring.RuleSupport;
 import se.kth.autoscalar.scaling.MonitoringListener;
 import se.kth.autoscalar.scaling.ScalingSuggestion;
@@ -82,10 +81,6 @@ public class ElasticScalingManager {
 
     public ArrayBlockingQueue<ScalingSuggestion> getSuggestions(String groupId) {
         return suggestionMap.get(groupId);
-    }
-
-    public void handleEvent(String groupId, MonitoringEvent monitoringEvent) throws ElasticScalarException {
-        eventProfiler.profileEvent(groupId, monitoringEvent);
     }
 
     public MonitoringListener getMonitoringListener() {
@@ -190,8 +185,8 @@ public class ElasticScalingManager {
 
                     RuntimeGroupInfo runtimeGroupInfo = activeGroupsInfo.get(event.getGroupId());
 
-                    int machineChangesDone = handleWithAssumption2(endOfBillingMachineIds, event);
-                    //int machineChangesDone = handleWithAssumption1(killedInstances, endOfBillingMachineIds, event);
+                    //int machineChangesDone = handleWithAssumption2(endOfBillingMachineIds, event);
+                    int machineChangesDone = handleWithAssumption1(killedInstances, endOfBillingMachineIds, event);
                     if (machineChangesDone > 0) {
                         runtimeGroupInfo.setScaleOutInfo(machineChangesDone);
                         runtimeGroupInfo.setScaleInInfo(killedInstances);
