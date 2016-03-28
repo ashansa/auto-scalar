@@ -16,12 +16,13 @@ import java.util.List;
 public class ScalingSuggestion {
 
     public enum ScalingDirection {
-        SCALE_IN, SCALE_OUT;
+        SCALE_IN, SCALE_OUT, TMP_SCALEIN;
     }
 
     private ScalingDirection scalingDirection;
     private ArrayList<MachineType> scaleOutSuggestions = null;   //machine types that should be added
     private ArrayList<String> scaleInSuggestions = null;   //machine IDs that should be removed
+    private int scaleInNumber;   //number of machines be removed
 
   /*  public ScalingSuggestion(ScalingDirection direction) {
         scalingDirection = direction;
@@ -53,6 +54,11 @@ public class ScalingSuggestion {
             List<String> suggestions = Arrays.<String>asList(scaleInSuggestion);
             scaleInSuggestions = new ArrayList<String>(suggestions);
         }
+    }
+
+    public ScalingSuggestion(int numberToRemove) {
+        scalingDirection = ScalingDirection.TMP_SCALEIN;
+        scaleInNumber = numberToRemove;
     }
 
     public void addSuggestionsToScaleOut(MachineType machineType) {

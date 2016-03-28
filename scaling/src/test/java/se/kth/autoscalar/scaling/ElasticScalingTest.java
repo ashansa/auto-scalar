@@ -46,7 +46,7 @@ public class ElasticScalingTest {
         elasticScalarAPI = new ElasticScalarAPI();
     }
 
-    @Test
+    //@Test
     public void testElasticScalingAssumption1() throws ElasticScalarException {
         System.out.println("=============== test with Assumption 1 =============");
         System.out.println("=============== resource events are not affected by killed machines =============");
@@ -135,7 +135,7 @@ public class ElasticScalingTest {
 
     }
 
-    //@Test
+    @Test
     public void testElasticScalingAssumption2() throws ElasticScalarException {
 
         System.out.println("=============== test with Assumption 2 =============");

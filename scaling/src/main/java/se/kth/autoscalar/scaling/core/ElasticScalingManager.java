@@ -40,6 +40,8 @@ public class ElasticScalingManager {
     ScaleOutDecisionMaker scaleOutDecisionMaker;
     //ScaleInDecisionMaker scaleInDecisionMaker;
 
+    private boolean optimizedScaleInTmp = true;
+
     private Map<String, RuntimeGroupInfo> activeGroupsInfo = new HashMap<String, RuntimeGroupInfo>();
     private Map<String, ArrayBlockingQueue<ScalingSuggestion>> suggestionMap = new HashMap<String, ArrayBlockingQueue<ScalingSuggestion>>();
     private ArrayBlockingQueue<String> scaleOutInternalQueue = new ArrayBlockingQueue<String>(1000); //String with the form   <groupId>:<noOfMachines>
@@ -98,19 +100,37 @@ public class ElasticScalingManager {
         public void handleEvent(ProfiledEvent profiledEvent) throws ElasticScalarException {
             if (profiledEvent instanceof ProfiledResourceEvent) {
                 ProfiledResourceEvent event = (ProfiledResourceEvent)profiledEvent;
-                if(activeGroupsInfo.containsKey(event.getGroupId())) {
-                    boolean inCoolDownPeriod = isInCoolDownPeriod(event.getGroupId(), ScalingSuggestion.ScalingDirection.SCALE_OUT);
+                String groupId = event.getGroupId();
+                if(activeGroupsInfo.containsKey(groupId)) {
+                    boolean inCoolDownPeriod = isInCoolDownPeriod(groupId, ScalingSuggestion.ScalingDirection.SCALE_OUT);
 
                     if (!inCoolDownPeriod) {
                         int maxChangeOfMachines = getNumberOfMachineChanges(event);
                         if (maxChangeOfMachines > 0) {
-                            //Evaluate the possibility of scaling out with cooldown period
-                            RuntimeGroupInfo runtimeGroupInfo = activeGroupsInfo.get(event.getGroupId());
-                            scaleOutInternalQueue.add(event.getGroupId().concat(":").concat(String.valueOf(maxChangeOfMachines)));
+                            RuntimeGroupInfo runtimeGroupInfo = activeGroupsInfo.get(groupId);
+                            scaleOutInternalQueue.add(groupId.concat(":").concat(String.valueOf(maxChangeOfMachines)));
                             runtimeGroupInfo.setScaleOutInfo(maxChangeOfMachines);
+                        } else {
+                            if (optimizedScaleInTmp) {
+                                //no else part
+                                // Scale in will trigger only at the end of a billing period of a machine. This is handled by ProfiledMachineEventListener
+                            } else {
+                                RuntimeGroupInfo runtimeGroupInfo = activeGroupsInfo.get(groupId);
+                                ScalingSuggestion suggestion = new ScalingSuggestion(maxChangeOfMachines);
+
+                                ArrayBlockingQueue<ScalingSuggestion> suggestionsQueue;
+                                if (suggestionMap.containsKey(groupId)) {
+                                    suggestionsQueue = suggestionMap.get(groupId);
+                                } else {
+                                    suggestionsQueue = new ArrayBlockingQueue<ScalingSuggestion>(50);   //TODO: make 50 configurable
+                                }
+                                suggestionsQueue.add(suggestion);
+                                suggestionMap.put(groupId, suggestionsQueue);
+
+                                runtimeGroupInfo.setScaleInInfo(maxChangeOfMachines);
+                            }
                         }
-                    }   //no else part
-                        // Scale in will trigger only at the end of a billing period of a machine. This is handled by ProfiledMachineEventListener
+                    }
                 } else {
                     throw new ElasticScalarException("Resource event cannot be handled. Group is not in active scaling groups." +
                             " Group Id: " + event.getGroupId());
@@ -168,17 +188,16 @@ public class ElasticScalingManager {
                         }
                     }
 
-                    //update the killed machines in runtime group info
                     RuntimeGroupInfo runtimeGroupInfo = activeGroupsInfo.get(event.getGroupId());
 
-                    //int machineChanges = handleWithAssumption2(endOfBillingMachineIds, event);
-                    int machineChanges = handleWithAssumption1(killedInstances, endOfBillingMachineIds, event);
-                    if (machineChanges > 0) {
-                        runtimeGroupInfo.setScaleOutInfo(machineChanges);
+                    int machineChangesDone = handleWithAssumption2(endOfBillingMachineIds, event);
+                    //int machineChangesDone = handleWithAssumption1(killedInstances, endOfBillingMachineIds, event);
+                    if (machineChangesDone > 0) {
+                        runtimeGroupInfo.setScaleOutInfo(machineChangesDone);
                         runtimeGroupInfo.setScaleInInfo(killedInstances);
-                    } else if (machineChanges < 0){
-                        //TODO may need to change this based on assumption 1 or 2
-                        runtimeGroupInfo.setScaleInInfo(machineChanges + killedInstances);
+                    } else if (machineChangesDone < 0){
+                        //TODO may need to change this based on assumption 1 or 2 : I think no need since machineChangesDone is returned based on assumption
+                        runtimeGroupInfo.setScaleInInfo(machineChangesDone + killedInstances);
                     }
                 } else {
                     throw new ElasticScalarException("Machine event cannot be handled. Group is not in active scaling groups." +
@@ -190,46 +209,34 @@ public class ElasticScalingManager {
         //Assumption1: effect of killed machines are not reflected in resource events
         private int handleWithAssumption1(int killedInstances, ArrayList<String> endOfBillingMachineIds, ProfiledMachineEvent event) throws ElasticScalarException {
             ProfiledResourceEvent resourceEventOfGroup = event.getProfiledResourceEvent();
-            RuntimeGroupInfo runtimeGroupInfo = activeGroupsInfo.get(event.getGroupId());
+            String groupId = event.getGroupId();
+            RuntimeGroupInfo runtimeGroupInfo = activeGroupsInfo.get(groupId);
             int machineChanges = 0;
 
             if (resourceEventOfGroup != null) {
                 int maxChangeOfMachines = getNumberOfMachineChanges(event.getProfiledResourceEvent());
 
-                if (maxChangeOfMachines >= 0) {
+                if (maxChangeOfMachines > 0) {
                     //Adding the machinesKilled + maxChangeOfMachines to be spawned: because Assumption1
                     int machinesToBeAdded = maxChangeOfMachines + killedInstances;
-                    boolean inCoolDownPeriod = isInCoolDownPeriod(event.getGroupId(), ScalingSuggestion.ScalingDirection.SCALE_OUT);
+                    boolean inCoolDownPeriod = isInCoolDownPeriod(groupId, ScalingSuggestion.ScalingDirection.SCALE_OUT);
 
                     if (!inCoolDownPeriod) {
-                        scaleOutInternalQueue.add(event.getGroupId().concat(":").concat(String.valueOf(machinesToBeAdded)));
+                        scaleOutInternalQueue.add(groupId.concat(":").concat(String.valueOf(machinesToBeAdded)));
                         machineChanges = machinesToBeAdded;
                     }
-                } else {
+                } else if (maxChangeOfMachines < 0) {
                     int machinesToBeRemoved = Math.abs(maxChangeOfMachines);
                     if (machinesToBeRemoved > killedInstances) {
-                        if (!isInCoolDownPeriod(event.getGroupId(), ScalingSuggestion.ScalingDirection.SCALE_IN)) {
+                        if (!isInCoolDownPeriod(groupId, ScalingSuggestion.ScalingDirection.SCALE_IN)) {
                             machinesToBeRemoved = machinesToBeRemoved - killedInstances;
-                            if (machinesToBeRemoved >= endOfBillingMachineIds.size()) {
-                                //kill all machines at end of billing period. (we won't kill machines which are not at the
-                                //end of billing period to utilize the already payed machines
-                                addScaleInSuggestions(event.getGroupId(), endOfBillingMachineIds);
-                                machineChanges = (-1) * endOfBillingMachineIds.size();
-
-                                /*won 't add to internal queue and wait for queue in while loop until there is a real need
-                                scaleInInternalQueue.addAll(endOfBillingMachineIds);  */
-                            } else {
-                                //kill number of machinesToBeRemoved selected from endOfBilling set
-                                ArrayList<String> toRemoveList = new ArrayList<String>(endOfBillingMachineIds.subList(0, machinesToBeRemoved));
-                                addScaleInSuggestions(event.getGroupId(), toRemoveList);
-                                machineChanges = (-1) * toRemoveList.size();
-                            }
+                            machineChanges = handleScaleIn(groupId, machinesToBeRemoved, endOfBillingMachineIds);
                         } //will not scale in since in cooldown period
                     } else {
                         int machinesToBeAdded = killedInstances - machinesToBeRemoved;
-                        boolean inCoolDownPeriod = isInCoolDownPeriod(event.getGroupId(), ScalingSuggestion.ScalingDirection.SCALE_OUT);
+                        boolean inCoolDownPeriod = isInCoolDownPeriod(groupId, ScalingSuggestion.ScalingDirection.SCALE_OUT);
                         if (!inCoolDownPeriod) {
-                            scaleOutInternalQueue.add(event.getGroupId().concat(":").concat(String.valueOf(machinesToBeAdded)));
+                            scaleOutInternalQueue.add(groupId.concat(":").concat(String.valueOf(machinesToBeAdded)));
                             machineChanges = machinesToBeAdded;
                         }
                     }
@@ -248,47 +255,69 @@ public class ElasticScalingManager {
         //Assumption2: effect of killed machines are reflected in resource events. Hence can act on what rules propose
         private int handleWithAssumption2(ArrayList<String> endOfBillingMachineIds, ProfiledMachineEvent event) throws ElasticScalarException {
             ProfiledResourceEvent resourceEventOfGroup = event.getProfiledResourceEvent();
-            RuntimeGroupInfo runtimeGroupInfo = activeGroupsInfo.get(event.getGroupId());
+            String groupId = event.getGroupId();
+            RuntimeGroupInfo runtimeGroupInfo = activeGroupsInfo.get(groupId);
             int machineChanges = 0;
 
             if (resourceEventOfGroup != null) {
                 int maxChangeOfMachines = getNumberOfMachineChanges(event.getProfiledResourceEvent());
 
-                if (maxChangeOfMachines >= 0) {
+                if (maxChangeOfMachines > 0) {
                     //adding only the maxChangeOfMachines to be spawned. because: Assumption2
-                    boolean inCoolDownPeriod = isInCoolDownPeriod(event.getGroupId(), ScalingSuggestion.ScalingDirection.SCALE_OUT);
+                    boolean inCoolDownPeriod = isInCoolDownPeriod(groupId, ScalingSuggestion.ScalingDirection.SCALE_OUT);
 
                     if (!inCoolDownPeriod) {
-                        scaleOutInternalQueue.add(event.getGroupId().concat(":").concat(String.valueOf(maxChangeOfMachines)));
+                        scaleOutInternalQueue.add(groupId.concat(":").concat(String.valueOf(maxChangeOfMachines)));
                         machineChanges = maxChangeOfMachines;
                     }
 
-                } else {
+                } else if (maxChangeOfMachines < 0) {
                     int machinesToBeRemoved = Math.abs(maxChangeOfMachines);
-                    if (!isInCoolDownPeriod(event.getGroupId(), ScalingSuggestion.ScalingDirection.SCALE_IN)) {
-                        if (machinesToBeRemoved >= endOfBillingMachineIds.size()) {
-                            //kill all machines at end of billing period. (we won't kill machines which are not at the
-                            //end of billing period to utilize the already payed machines
-                            addScaleInSuggestions(event.getGroupId(), endOfBillingMachineIds);
-                            machineChanges = (-1) * endOfBillingMachineIds.size();
-                            //runtimeGroupInfo.setScaleInInfo(endOfBillingMachineIds.size());
-
-                        /* won't add to internal queue and wait for queue in while loop until there is a real need
-                                    scaleInInternalQueue.addAll(endOfBillingMachineIds); */
-                        } else {
-                            //kill number of machinesToBeRemoved selected from endOfBilling set
-                            ArrayList<String> toRemoveList = new ArrayList<String>(endOfBillingMachineIds.subList(0, machinesToBeRemoved));
-                            addScaleInSuggestions(event.getGroupId(), toRemoveList);
-                            machineChanges = (-1) * toRemoveList.size();
-
-                            //runtimeGroupInfo.setScaleInInfo(toRemoveList.size());
-                        /* won't add to internal queue and wait for queue in while loop until there is a real need
-                            scaleInInternalQueue.addAll(endOfBillingMachineIds);
-                            scaleInInternalQueue.add(new ArrayList<String>(endOfBillingMachineIds.subList(0, machinesToBeRemoved)));*/
-                        }
+                    if (!isInCoolDownPeriod(groupId, ScalingSuggestion.ScalingDirection.SCALE_IN)) {
+                        machineChanges = handleScaleIn(groupId, machinesToBeRemoved, endOfBillingMachineIds);
                     }
                 }
             }//else do nothing. Since no resource events: load not high or low
+            return machineChanges;
+        }
+
+        private int handleScaleIn(String groupId, int machinesToBeRemoved, ArrayList<String> endOfBillingMachineIds) {
+            int machineChanges = 0;
+            if (optimizedScaleInTmp) {
+                if (machinesToBeRemoved >= endOfBillingMachineIds.size()) {
+                    //kill all machines at end of billing period. (we won't kill machines which are not at the
+                    //end of billing period to utilize the already payed machines
+                    addScaleInSuggestions(groupId, endOfBillingMachineIds);
+                    machineChanges = (-1) * endOfBillingMachineIds.size();
+                    //runtimeGroupInfo.setScaleInInfo(endOfBillingMachineIds.size());
+
+                        /* won't add to internal queue and wait for queue in while loop until there is a real need
+                                    scaleInInternalQueue.addAll(endOfBillingMachineIds); */
+                } else {
+                    //kill number of machinesToBeRemoved selected from endOfBilling set
+                    ArrayList<String> toRemoveList = new ArrayList<String>(endOfBillingMachineIds.subList(0, machinesToBeRemoved));
+                    addScaleInSuggestions(groupId, toRemoveList);
+                    machineChanges = (-1) * toRemoveList.size();
+
+                    //runtimeGroupInfo.setScaleInInfo(toRemoveList.size());
+                        /* won't add to internal queue and wait for queue in while loop until there is a real need
+                            scaleInInternalQueue.addAll(endOfBillingMachineIds);
+                            scaleInInternalQueue.add(new ArrayList<String>(endOfBillingMachineIds.subList(0, machinesToBeRemoved)));*/
+                }
+            } else {
+                ScalingSuggestion suggestion = new ScalingSuggestion((-1) * machinesToBeRemoved);
+
+                ArrayBlockingQueue<ScalingSuggestion> suggestionsQueue;
+                if (suggestionMap.containsKey(groupId)) {
+                    suggestionsQueue = suggestionMap.get(groupId);
+                } else {
+                    suggestionsQueue = new ArrayBlockingQueue<ScalingSuggestion>(50);   //TODO: make 50 configurable
+                }
+                suggestionsQueue.add(suggestion);
+                suggestionMap.put(groupId, suggestionsQueue);
+                machineChanges = (-1) * machinesToBeRemoved;
+            }
+
             return machineChanges;
         }
 
