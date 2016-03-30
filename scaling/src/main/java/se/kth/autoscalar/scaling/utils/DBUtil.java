@@ -71,6 +71,46 @@ public class DBUtil {
         }
     }
 
+    public static Connection getInMemoryDBConnection() throws DBConnectionFailureException {
+        Properties prop = new Properties();
+        InputStream in = null;
+        try {
+            //in = getClass().getClassLoader().getResourceAsStream(DB_PROPERTY_FILE);
+            in = new FileInputStream(new File(DB_PROPERTY_FILE));
+            prop.load(in);
+            in.close();
+
+        } catch (FileNotFoundException e) {
+            DBConnectionFailureException exception = handleDBConnectionException(e.getMessage(), e);
+            throw exception;
+        } catch (IOException e) {
+            DBConnectionFailureException exception = handleDBConnectionException("Error occurred while reading " +
+                    DB_PROPERTY_FILE, e);
+            throw exception;
+        }
+
+        try {
+
+            Class.forName("org.hsqldb.jdbcDriver");
+            String dbName = prop.getProperty("db.name");
+
+            //Connection connection = DriverManager.getConnection(connectionURL, username, password);
+            Connection connection =  DriverManager.getConnection("jdbc:hsqldb:mem:" + dbName, "SA", "");  //creates ruleDB if not exists
+
+            log.info("DB connection successful to " + dbName + " with user SA");
+            return connection;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            DBConnectionFailureException exception = handleDBConnectionException(
+                    "Error occurred while connecting to database.", e);
+            throw exception;
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+            DBConnectionFailureException exception = handleDBConnectionException("DB driver class not found", e);
+            throw exception;
+        }
+    }
+
     public static DBConnectionFailureException handleDBConnectionException(String msg, Exception e) {
         log.error(msg);
         e.printStackTrace();

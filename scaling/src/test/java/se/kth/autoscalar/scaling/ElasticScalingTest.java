@@ -48,7 +48,7 @@ public class ElasticScalingTest {
 
     @Test
     public void testElasticScalingAssumption1() throws ElasticScalarException {
-        System.out.println("=============== test with Assumption 1 =============");
+        System.out.println("=============== test with Assumption 1 : affects are not reflected in window =============");
         System.out.println("=============== resource events are not affected by killed machines =============");
 
         setBasicRulesNGroup();
@@ -138,7 +138,7 @@ public class ElasticScalingTest {
     //@Test
     public void testElasticScalingAssumption2() throws ElasticScalarException {
 
-        System.out.println("=============== test with Assumption 2 =============");
+        System.out.println("=============== test with Assumption 2 : affects are reflected in window. So can act just based on rules =============");
         System.out.println("=============== resource events are already affected =============");
         setBasicRulesNGroup();
         //TODO should set rules in monitoring component

@@ -50,7 +50,8 @@ public class RuleDAO {
     }
 
     private void init() throws DBConnectionFailureException {
-        dbConnection = DBUtil.getDBConnection();
+        //dbConnection = DBUtil.getDBConnection();
+        dbConnection = DBUtil.getInMemoryDBConnection();
         createTableIfNotExists();
     }
 
