@@ -291,17 +291,6 @@ public class ElasticScalingTest {
             Assert.assertEquals(expectedDirection, suggestion.getScalingDirection());
             System.out.println("CPU_PERCENTAGE: test pass");
 
-            /*switch (suggestion.getScalingDirection()) {
-                //TODO validate suggestion
-                case SCALE_IN:
-                    System.out.println("...........CPU_PERCENTAGE: got scale in suggestion...........");
-                    new AssertionError("CPU_PERCENTAGE: Events were to trigger scale out and retrieved a scale in suggestion");
-                    break;
-                case SCALE_OUT:
-                    Assert.assertEquals(expectedMachines, suggestion.getScaleOutSuggestions().size());
-                    System.out.println("...........CPU_PERCENTAGE: got scale out suggestion...........");
-                    break;
-            }*/
         } catch (InterruptedException e) {
             throw new IllegalStateException(e);
         }
@@ -346,27 +335,6 @@ public class ElasticScalingTest {
             Assert.assertEquals(expectedMachines, suggestion.getScaleOutSuggestions().size());
             Assert.assertEquals(expectedDirection, suggestion.getScalingDirection());
             System.out.println("RAM_PERCENTAGE: test pass");
-            /*switch (suggestion.getScalingDirection()) {
-                //TODO validate suggestion
-                case SCALE_IN:
-                    Assert.assertEquals(expectedMachines, suggestion.getScaleOutSuggestions().size());
-                    Assert.assertEquals(expectedDirection, suggestion.getScaleOutSuggestions());
-                    if (ScalingSuggestion.ScalingDirection.SCALE_IN.equals(expectedDirection)) {
-                        System.out.println("RAM_PERCENTAGE: matching decision");
-                        Assert.assertEquals(expectedMachines, suggestion.getScaleOutSuggestions().size());
-                    } else {
-                        new AssertionError("RAM_PERCENTAGE: Received a scale in suggestion, but was expecting " + expectedDirection.name());
-                        break;
-                    }
-                case SCALE_OUT:
-                    if (ScalingSuggestion.ScalingDirection.SCALE_OUT.equals(expectedDirection)) {
-                        System.out.println("RAM_PERCENTAGE: matching decision");
-                        Assert.assertEquals(expectedMachines, suggestion.getScaleOutSuggestions().size());
-                    } else {
-                        new AssertionError("RAM_PERCENTAGE: Received a scale out suggestion, but was expecting " + expectedDirection.name());
-                        break;
-                    }
-            }*/
         } catch (InterruptedException e) {
             throw new IllegalStateException(e);
         }
@@ -454,29 +422,10 @@ public class ElasticScalingTest {
         System.out.println("------------ Start: cooling down test ----------");
     }
 
-    /* public void setMonitoringInfo() {
-        HashMap<String, Number> systemInfo = new HashMap<String, Number>();
-        systemInfo.put(ResourceType.CPU_PERCENTAGE.name(), 50.5);
-        systemInfo.put(ResourceType.RAM_PERCENTAGE.name(), 85);
-        //can add other supported resources similarly in future and elastic scalar should iterate the list and consume
-        //ES ==> startES ==> getMonitoringInfo iteratively and set it somewhere (setMonitoringInfo) to use in ES logic
-
-        //TODO should get the VM start time when adding a VM to the ES module, in order to decide when to shut down the machine
-    }
-
-    public void testRecommendation() {
-        HashMap<String, Number> systemReq = new HashMap<String, Number>();
-        systemReq.put("Min_CPUs", 4 );
-        systemReq.put("Min_Ram", 8);
-        systemReq.put("Min_Storage", 100);
-    }*/
-
     @AfterClass
     public static void cleanup() throws ElasticScalarException {
-        //elasticScalarAPI.tempMethodDeleteTables();
         elasticScalarAPI.deleteRule(rule1.getRuleName());
         elasticScalarAPI.deleteRule(rule2.getRuleName());
-        //elasticScalarAPI.deleteRule(newRule.getRuleName());
         elasticScalarAPI.deleteGroup(group.getGroupName());
     }
 }

@@ -24,16 +24,6 @@ public class ScalingSuggestion {
     private ArrayList<String> scaleInSuggestions = null;   //machine IDs that should be removed
     private int scaleInNumber;   //number of machines be removed
 
-  /*  public ScalingSuggestion(ScalingDirection direction) {
-        scalingDirection = direction;
-
-        if (ScalingDirection.SCALE_IN.equals(scalingDirection)) {
-            scaleInSuggestions = new ArrayList<String>();
-        } else if (ScalingDirection.SCALE_OUT.equals(scalingDirection)) {
-            scaleOutSuggestions = new ArrayList<MachineType>();
-        }
-    }*/
-
     public ScalingSuggestion(MachineType[] scaleOutMachineSuggestions) {
         scalingDirection = ScalingDirection.SCALE_OUT;
 

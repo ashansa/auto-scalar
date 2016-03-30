@@ -1,17 +1,14 @@
 package se.kth.autoscalar.scaling.group;
 
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import se.kth.autoscalar.common.monitoring.RuleSupport.Comparator;
 import se.kth.autoscalar.common.monitoring.RuleSupport.ResourceType;
 import se.kth.autoscalar.scaling.core.ElasticScalarAPI;
-import se.kth.autoscalar.scaling.exceptions.DBConnectionFailureException;
 import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
 import se.kth.autoscalar.scaling.rules.Rule;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -29,8 +26,6 @@ import static org.junit.Assert.fail;
 public class GroupTest {
 
     private static ElasticScalarAPI elasticScalarAPI;
-//    private static GroupManager groupManager;
-//    private static RuleManager ruleManager;
     private String groupBaseName = "my_group";
     private String ruleNameBase = "my_rule";
     private int coolingTimeOut = 60;
@@ -44,8 +39,6 @@ public class GroupTest {
             throw new IllegalStateException(e);
         }
         elasticScalarAPI = new ElasticScalarAPI();
-//        groupManager = GroupManagerImpl.getInstance();
-//        ruleManager = RuleManagerImpl.getInstance();
     }
 
     @Test
@@ -124,24 +117,5 @@ public class GroupTest {
         Assert.assertFalse(elasticScalarAPI.isGroupExists(groupName));
         elasticScalarAPI.deleteRule(rule.getRuleName());
         elasticScalarAPI.deleteRule(rule2.getRuleName());
-    }
-
-    @AfterClass
-    public static void cleanUp() throws DBConnectionFailureException, SQLException {
-        /*System.out.println("====== cleaning up : GroupTest =========");
-        PreparedStatement statement1 = DBUtil.getDBConnection().prepareStatement("drop table Group_Rule ");
-        statement1.executeUpdate();
-        statement1.close();
-
-        PreparedStatement statement2 = DBUtil.getDBConnection().prepareStatement("drop table Rule ");
-        statement2.executeUpdate();
-        statement2.close();
-
-        PreparedStatement statement3 = DBUtil.getDBConnection().prepareStatement("drop table ScaleGroup ");
-        statement3.executeUpdate();
-        statement3.close();
-
-        System.out.println("====== cleaned up : GroupTest =========");*/
-
     }
 }

@@ -32,13 +32,9 @@ public class ElasticScalingManager {
     Log log = LogFactory.getLog(ElasticScalingManager.class);
 
     GroupManager groupManager;
-    //RuleManager ruleManager;
     EventProfiler eventProfiler;
-    //ArrayList<MonitoringListener> listenerArray = new ArrayList<MonitoringListener>();
     MonitoringListener monitoringListener;
     ScaleOutDecisionMaker scaleOutDecisionMaker;
-    //ScaleInDecisionMaker scaleInDecisionMaker;
-
     private boolean optimizedScaleInTmp = true;
 
     private Map<String, RuntimeGroupInfo> activeGroupsInfo = new HashMap<String, RuntimeGroupInfo>();
@@ -50,7 +46,6 @@ public class ElasticScalingManager {
     //ArrayBlockingQueue<ScalingSuggestion> suggestionsQueue = new ArrayBlockingQueue<ScalingSuggestion>(50);
 
     public ElasticScalingManager(ElasticScalarAPI elasticScalarAPI) throws ElasticScalarException {
-        //ruleManager = RuleManagerImpl.getInstance();
         groupManager = GroupManagerImpl.getInstance();
         eventProfiler = new EventProfiler();
         eventProfiler.addListener(new ProfiledResourceEventListener());
@@ -167,8 +162,6 @@ public class ElasticScalingManager {
             if (profiledEvent instanceof ProfiledMachineEvent) {
                 ProfiledMachineEvent event = (ProfiledMachineEvent)profiledEvent;
                 if (activeGroupsInfo.containsKey(event.getGroupId())) {
-                    //ProfiledResourceEvent resourceEventOfGroup = event.getProfiledResourceEvent();
-
                     int killedInstances = 0;
                     ArrayList<String> endOfBillingMachineIds = new ArrayList<String>();
                     for (MachineMonitoringEvent machineEvent : event.getMachineMonitoringEvents()) {
@@ -177,7 +170,6 @@ public class ElasticScalingManager {
                                 killedInstances++;
                                 break;
                             case AT_END_OF_BILLING_PERIOD:
-                                //endOfBilling++;
                                 endOfBillingMachineIds.add(machineEvent.getMachineId());
                                 break;
                         }
@@ -284,17 +276,13 @@ public class ElasticScalingManager {
                     //end of billing period to utilize the already payed machines
                     addScaleInSuggestions(groupId, endOfBillingMachineIds);
                     machineChanges = (-1) * endOfBillingMachineIds.size();
-                    //runtimeGroupInfo.setScaleInInfo(endOfBillingMachineIds.size());
-
                         /* won't add to internal queue and wait for queue in while loop until there is a real need
-                                    scaleInInternalQueue.addAll(endOfBillingMachineIds); */
+                            scaleInInternalQueue.addAll(endOfBillingMachineIds); */
                 } else {
                     //kill number of machinesToBeRemoved selected from endOfBilling set
                     ArrayList<String> toRemoveList = new ArrayList<String>(endOfBillingMachineIds.subList(0, machinesToBeRemoved));
                     addScaleInSuggestions(groupId, toRemoveList);
                     machineChanges = (-1) * toRemoveList.size();
-
-                    //runtimeGroupInfo.setScaleInInfo(toRemoveList.size());
                         /* won't add to internal queue and wait for queue in while loop until there is a real need
                             scaleInInternalQueue.addAll(endOfBillingMachineIds);
                             scaleInInternalQueue.add(new ArrayList<String>(endOfBillingMachineIds.subList(0, machinesToBeRemoved)));*/
@@ -412,33 +400,7 @@ public class ElasticScalingManager {
         }
     }
 
-    private class ScaleInDecisionMaker implements Runnable {
-
-        MachineProposer machineProposer = new KaramelMachineProposer();  //TODO: get 'which proposer to use' from a config file
-
-        public void run() {
-            String groupId = "";
-            int noOfMachines;
-            Group group;
-            while (true) {
-                try {
-                    String suggestion = scaleInInternalQueue.take(); //suggestion is in the form <groupId>:<noOfMachines>
-                    groupId = suggestion.substring(0,suggestion.lastIndexOf(":"));
-                    noOfMachines = Integer.parseInt(suggestion.substring(suggestion.lastIndexOf(":") + 1, suggestion.length()));
-
-                   /* group = groupManager.getGroup(groupId);
-                    Map<Group.ResourceRequirement, Integer> minResourceReq = group.getMinResourceReq();
-                    MachineType[] machineProposals = machineProposer.getMachineProposals(groupId, minResourceReq,
-                            noOfMachines, group.getReliabilityReq());
-                    addMachinesToSuggestions(groupId, machineProposals);*/
-
-                } catch (InterruptedException e) {
-                    log.error("Error while retrieving item from scaleOutInternalQueue. " + e.getMessage());
-                }
-            }
-        }
-
-    }
+    //add a ScaleInDecisionMaker class if required
 
     public EventProfiler getEventProfiler() {
         return eventProfiler;

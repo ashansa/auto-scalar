@@ -28,7 +28,6 @@ public class DBUtil {
         Properties prop = new Properties();
         InputStream in = null;
         try {
-            //in = getClass().getClassLoader().getResourceAsStream(DB_PROPERTY_FILE);
             in = new FileInputStream(new File(DB_PROPERTY_FILE));
             prop.load(in);
             in.close();
@@ -75,7 +74,6 @@ public class DBUtil {
         Properties prop = new Properties();
         InputStream in = null;
         try {
-            //in = getClass().getClassLoader().getResourceAsStream(DB_PROPERTY_FILE);
             in = new FileInputStream(new File(DB_PROPERTY_FILE));
             prop.load(in);
             in.close();
@@ -93,8 +91,6 @@ public class DBUtil {
 
             Class.forName("org.hsqldb.jdbcDriver");
             String dbName = prop.getProperty("db.name");
-
-            //Connection connection = DriverManager.getConnection(connectionURL, username, password);
             Connection connection =  DriverManager.getConnection("jdbc:hsqldb:mem:" + dbName, "SA", "");  //creates ruleDB if not exists
 
             log.info("DB connection successful to " + dbName + " with user SA");
@@ -115,17 +111,5 @@ public class DBUtil {
         log.error(msg);
         e.printStackTrace();
         return new DBConnectionFailureException(msg, e.getCause());
-        /*
-        try {
-            return customExceptionClass.getConstructor(String.class, Throwable.class).newInstance(msg, e.getCause());
-        } catch (NoSuchMethodException e1) {
-            throw new IllegalStateException(e1);
-        } catch (InstantiationException e1) {
-            throw new IllegalStateException(e1);
-        } catch (IllegalAccessException e1) {
-            throw new IllegalStateException(e1);
-        } catch (InvocationTargetException e1) {
-            throw new IllegalStateException(e1);
-        }*/
     }
 }

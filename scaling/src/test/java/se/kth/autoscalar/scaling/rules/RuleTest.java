@@ -83,6 +83,5 @@ public class RuleTest {
         Assert.assertEquals(ruleNameBase + String.valueOf((int)(random * 10)), retrievedRule.getRuleName());
         Assert.assertEquals(cpu, retrievedRule.getResourceType());
         Assert.assertEquals(greaterThan, retrievedRule.getComparator());
-        //Assert.assertEquals((((int)(random * 100)), (int)(retrievedRule.getThreshold())));
     }
 }
