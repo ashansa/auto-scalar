@@ -2,9 +2,9 @@ package se.kth.autoscalar.scaling.core;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import se.kth.autoscalar.common.models.MachineInfo;
-import se.kth.autoscalar.common.monitoring.MonitoringEvent;
-import se.kth.autoscalar.common.monitoring.RuleSupport;
+import se.kth.autoscalar.scaling.models.MachineInfo;
+import se.kth.autoscalar.scaling.monitoring.MonitoringEvent;
+import se.kth.autoscalar.scaling.monitoring.RuleSupport;
 import se.kth.autoscalar.scaling.MonitoringListener;
 import se.kth.autoscalar.scaling.ScalingSuggestion;
 import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
@@ -26,15 +26,15 @@ import java.util.concurrent.ArrayBlockingQueue;
  * @version $Id$
  * @since 1.0
  */
-public class ElasticScalarAPI {
+public class AutoScalarAPI {
 
-    Log log = LogFactory.getLog(ElasticScalarAPI.class);
+    Log log = LogFactory.getLog(AutoScalarAPI.class);
 
     AutoScalingManager autoScalingManager;
     RuleManager ruleManager;
     GroupManager groupManager;
 
-    public ElasticScalarAPI() throws AutoScalarException {
+    public AutoScalarAPI() throws AutoScalarException {
         autoScalingManager = new AutoScalingManager(this);
         ruleManager = RuleManagerImpl.getInstance();
         groupManager = GroupManagerImpl.getInstance();

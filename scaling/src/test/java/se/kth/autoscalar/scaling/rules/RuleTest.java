@@ -3,8 +3,8 @@ package se.kth.autoscalar.scaling.rules;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import se.kth.autoscalar.common.monitoring.RuleSupport.Comparator;
-import se.kth.autoscalar.common.monitoring.RuleSupport.ResourceType;
+import se.kth.autoscalar.scaling.monitoring.RuleSupport.Comparator;
+import se.kth.autoscalar.scaling.monitoring.RuleSupport.ResourceType;
 import se.kth.autoscalar.scaling.exceptions.DBConnectionFailureException;
 import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 

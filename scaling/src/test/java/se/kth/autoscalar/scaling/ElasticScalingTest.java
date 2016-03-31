@@ -4,11 +4,11 @@ import junit.framework.Assert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import se.kth.autoscalar.common.monitoring.MachineMonitoringEvent;
-import se.kth.autoscalar.common.monitoring.ResourceMonitoringEvent;
-import se.kth.autoscalar.common.monitoring.RuleSupport;
-import se.kth.autoscalar.common.monitoring.RuleSupport.ResourceType;
-import se.kth.autoscalar.scaling.core.ElasticScalarAPI;
+import se.kth.autoscalar.scaling.monitoring.MachineMonitoringEvent;
+import se.kth.autoscalar.scaling.monitoring.ResourceMonitoringEvent;
+import se.kth.autoscalar.scaling.monitoring.RuleSupport;
+import se.kth.autoscalar.scaling.monitoring.RuleSupport.ResourceType;
+import se.kth.autoscalar.scaling.core.AutoScalarAPI;
 import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 import se.kth.autoscalar.scaling.group.Group;
 import se.kth.autoscalar.scaling.rules.Rule;
@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class ElasticScalingTest {
 
-    private static ElasticScalarAPI elasticScalarAPI;
+    private static AutoScalarAPI autoScalarAPI;
     private static MonitoringListener monitoringListener;
 
     private String GROUP_BASE_NAME = "my_group";
@@ -43,7 +43,7 @@ public class ElasticScalingTest {
 
     @BeforeClass
     public static void init() throws AutoScalarException {
-        elasticScalarAPI = new ElasticScalarAPI();
+        autoScalarAPI = new AutoScalarAPI();
     }
 
     @Test
@@ -53,7 +53,7 @@ public class ElasticScalingTest {
 
         setBasicRulesNGroup();
         //TODO should set rules in monitoring component
-        monitoringListener = elasticScalarAPI.startElasticScaling(group.getGroupName(), 2);
+        monitoringListener = autoScalarAPI.startElasticScaling(group.getGroupName(), 2);
         //TODO pass the listener to monitoring component and it should send events based on rules
 
         /*
@@ -73,18 +73,18 @@ public class ElasticScalingTest {
         testRAMRules(2, ScalingSuggestion.ScalingDirection.SCALE_OUT);
 
         //threshold is lower than rule1, still ask to add 2 instances. So ES should add 2 instances
-        Rule cpuGreatEq =  elasticScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 2),
+        Rule cpuGreatEq =  autoScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 2),
                 ResourceType.CPU_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (float) ((random * 100) + 0.5f) , 2);
-        elasticScalarAPI.addRuleToGroup(groupName, cpuGreatEq.getRuleName());
+        autoScalarAPI.addRuleToGroup(groupName, cpuGreatEq.getRuleName());
         monitoringListener.onHighCPU(groupName, cpuEvent);
         testCPURules(2, ScalingSuggestion.ScalingDirection.SCALE_OUT);
 
-        Rule ramLess =  elasticScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 3),
+        Rule ramLess =  autoScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 3),
                 ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.LESS_THAN, (float) ((random * 10) + 30.5f) , -1);
-        Rule ramLessEq =  elasticScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 4),
+        Rule ramLessEq =  autoScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 4),
                 ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.LESS_THAN_OR_EQUAL, (float) ((random * 10) + 10f) , -2);
-        elasticScalarAPI.addRuleToGroup(groupName, ramLess.getRuleName());
-        elasticScalarAPI.addRuleToGroup(groupName, ramLessEq.getRuleName());
+        autoScalarAPI.addRuleToGroup(groupName, ramLess.getRuleName());
+        autoScalarAPI.addRuleToGroup(groupName, ramLessEq.getRuleName());
         ramEvent = new ResourceMonitoringEvent(ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.
                 LESS_THAN_OR_EQUAL, (float) ((random * 10) + 5));
         monitoringListener.onLowRam(groupName, ramEvent);
@@ -128,10 +128,10 @@ public class ElasticScalingTest {
 
         testCoolingTime();
 
-        elasticScalarAPI.deleteGroup(cpuGreatEq.getRuleName());
-        elasticScalarAPI.deleteRule(cpuGreatEq.getRuleName());
-        elasticScalarAPI.deleteRule(ramLess.getRuleName());
-        elasticScalarAPI.deleteRule(ramLessEq.getRuleName());
+        autoScalarAPI.deleteGroup(cpuGreatEq.getRuleName());
+        autoScalarAPI.deleteRule(cpuGreatEq.getRuleName());
+        autoScalarAPI.deleteRule(ramLess.getRuleName());
+        autoScalarAPI.deleteRule(ramLessEq.getRuleName());
 
     }
 
@@ -142,7 +142,7 @@ public class ElasticScalingTest {
         System.out.println("=============== resource events are already affected =============");
         setBasicRulesNGroup();
         //TODO should set rules in monitoring component
-        monitoringListener = elasticScalarAPI.startElasticScaling(group.getGroupName(), 2);
+        monitoringListener = autoScalarAPI.startElasticScaling(group.getGroupName(), 2);
         //TODO pass the listener to monitoring component and it should send events based on rules
 
         /*
@@ -162,18 +162,18 @@ public class ElasticScalingTest {
         testRAMRules(2, ScalingSuggestion.ScalingDirection.SCALE_OUT);
 
         //threshold is lower than rule1, still ask to add 2 instances. So ES should add 2 instances
-        Rule ramGreater =  elasticScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 2),
+        Rule ramGreater =  autoScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 2),
                 ResourceType.CPU_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (float) ((random * 100) + 0.5f) , 2);
-        elasticScalarAPI.addRuleToGroup(groupName, ramGreater.getRuleName());
+        autoScalarAPI.addRuleToGroup(groupName, ramGreater.getRuleName());
         monitoringListener.onHighCPU(groupName, cpuEvent);
         testCPURules(2, ScalingSuggestion.ScalingDirection.SCALE_OUT);
 
-        Rule ramLess =  elasticScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 3),
+        Rule ramLess =  autoScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 3),
                 ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.LESS_THAN, (float) ((random * 10) + 30.5f) , -1);
-        Rule ramLessEq =  elasticScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 4),
+        Rule ramLessEq =  autoScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 4),
                 ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.LESS_THAN_OR_EQUAL, (float) ((random * 10) + 10f) , -2);
-        elasticScalarAPI.addRuleToGroup(groupName, ramLess.getRuleName());
-        elasticScalarAPI.addRuleToGroup(groupName, ramLessEq.getRuleName());
+        autoScalarAPI.addRuleToGroup(groupName, ramLess.getRuleName());
+        autoScalarAPI.addRuleToGroup(groupName, ramLessEq.getRuleName());
         ramEvent = new ResourceMonitoringEvent(ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.
                 LESS_THAN_OR_EQUAL, (float) ((random * 10) + 5));
         monitoringListener.onLowRam(groupName, ramEvent);
@@ -219,10 +219,10 @@ public class ElasticScalingTest {
 
         testCoolingTime();
 
-        elasticScalarAPI.deleteGroup(ramGreater.getRuleName());
-        elasticScalarAPI.deleteRule(ramGreater.getRuleName());
-        elasticScalarAPI.deleteRule(ramLess.getRuleName());
-        elasticScalarAPI.deleteRule(ramLessEq.getRuleName());
+        autoScalarAPI.deleteGroup(ramGreater.getRuleName());
+        autoScalarAPI.deleteRule(ramGreater.getRuleName());
+        autoScalarAPI.deleteRule(ramLess.getRuleName());
+        autoScalarAPI.deleteRule(ramLessEq.getRuleName());
 
     }
 
@@ -231,9 +231,9 @@ public class ElasticScalingTest {
         try {
             random = Math.random();
             groupName = GROUP_BASE_NAME + String.valueOf((int) (random * 10));
-            rule1 = elasticScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int) (random * 10)),
+            rule1 = autoScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int) (random * 10)),
                     ResourceType.CPU_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN, (float) (random * 100), 1);
-            rule2 = elasticScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 1),
+            rule2 = autoScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 1),
                     ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (float) ((random * 100) + 2) , 2);
 
             Map<Group.ResourceRequirement, Integer> minReq = new HashMap<Group.ResourceRequirement, Integer>();
@@ -241,7 +241,7 @@ public class ElasticScalingTest {
             minReq.put(Group.ResourceRequirement.RAM, 8);
             minReq.put(Group.ResourceRequirement.STORAGE, 50);
 
-            group = elasticScalarAPI.createGroup(groupName, (int)(random * 10), (int)(random * 100), coolingTimeOut,
+            group = autoScalarAPI.createGroup(groupName, (int)(random * 10), (int)(random * 100), coolingTimeOut,
                     coolingTimeIn, new String[]{rule1.getRuleName(), rule2.getRuleName()}, minReq, 2.0f);
 
         } catch (AutoScalarException e) {
@@ -251,11 +251,11 @@ public class ElasticScalingTest {
     }
 
     private void testCPURules(int expectedMachines, ScalingSuggestion.ScalingDirection expectedDirection) {
-        ArrayBlockingQueue<ScalingSuggestion>  suggestionQueue = elasticScalarAPI.getSuggestionQueue(groupName);
+        ArrayBlockingQueue<ScalingSuggestion>  suggestionQueue = autoScalarAPI.getSuggestionQueue(groupName);
 
         int count = 0;
         while (suggestionQueue == null) {
-            suggestionQueue = elasticScalarAPI.getSuggestionQueue(groupName);
+            suggestionQueue = autoScalarAPI.getSuggestionQueue(groupName);
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -297,11 +297,11 @@ public class ElasticScalingTest {
     }
 
     private void testRAMRules(int expectedMachines, ScalingSuggestion.ScalingDirection expectedDirection) {
-        ArrayBlockingQueue<ScalingSuggestion>  suggestionsQueue = elasticScalarAPI.getSuggestionQueue(groupName);
+        ArrayBlockingQueue<ScalingSuggestion>  suggestionsQueue = autoScalarAPI.getSuggestionQueue(groupName);
         int count = 0;
 
         while (suggestionsQueue == null) {
-            suggestionsQueue = elasticScalarAPI.getSuggestionQueue(groupName);
+            suggestionsQueue = autoScalarAPI.getSuggestionQueue(groupName);
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -341,11 +341,11 @@ public class ElasticScalingTest {
     }
 
     private void testMachineEvents(int expectedMachineChanges, ScalingSuggestion.ScalingDirection expectedDirection, int waitingTime) {
-        ArrayBlockingQueue<ScalingSuggestion>  suggestionsQueue = elasticScalarAPI.getSuggestionQueue(groupName);
+        ArrayBlockingQueue<ScalingSuggestion>  suggestionsQueue = autoScalarAPI.getSuggestionQueue(groupName);
 
         int count = 0;
         while (suggestionsQueue == null) {
-            suggestionsQueue = elasticScalarAPI.getSuggestionQueue(groupName);
+            suggestionsQueue = autoScalarAPI.getSuggestionQueue(groupName);
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -405,7 +405,7 @@ public class ElasticScalingTest {
         Group updatedGroup = group;
         updatedGroup.setCoolingTimeIn(100);
         updatedGroup.setCoolingTimeOut(100);
-        elasticScalarAPI.updateGroup(groupName, updatedGroup);
+        autoScalarAPI.updateGroup(groupName, updatedGroup);
 
         ResourceMonitoringEvent cpuEvent = new ResourceMonitoringEvent(ResourceType.CPU_PERCENTAGE,
                 RuleSupport.Comparator.GREATER_THAN, (float) ((random * 100) + 5));
@@ -424,8 +424,8 @@ public class ElasticScalingTest {
 
     @AfterClass
     public static void cleanup() throws AutoScalarException {
-        elasticScalarAPI.deleteRule(rule1.getRuleName());
-        elasticScalarAPI.deleteRule(rule2.getRuleName());
-        elasticScalarAPI.deleteGroup(group.getGroupName());
+        autoScalarAPI.deleteRule(rule1.getRuleName());
+        autoScalarAPI.deleteRule(rule2.getRuleName());
+        autoScalarAPI.deleteGroup(group.getGroupName());
     }
 }

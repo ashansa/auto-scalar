@@ -1,4 +1,4 @@
-package se.kth.autoscalar.common.monitoring;
+package se.kth.autoscalar.scaling.monitoring;
 
 /**
  * Created with IntelliJ IDEA.

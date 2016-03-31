@@ -2,7 +2,7 @@ package se.kth.autoscalar.scaling.group;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import se.kth.autoscalar.common.monitoring.RuleSupport;
+import se.kth.autoscalar.scaling.monitoring.RuleSupport;
 import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 import se.kth.autoscalar.scaling.exceptions.ManageGroupException;
 import se.kth.autoscalar.scaling.rules.Rule;

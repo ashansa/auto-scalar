@@ -3,9 +3,9 @@ package se.kth.autoscalar.scaling.group;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import se.kth.autoscalar.common.monitoring.RuleSupport.Comparator;
-import se.kth.autoscalar.common.monitoring.RuleSupport.ResourceType;
-import se.kth.autoscalar.scaling.core.ElasticScalarAPI;
+import se.kth.autoscalar.scaling.monitoring.RuleSupport.Comparator;
+import se.kth.autoscalar.scaling.monitoring.RuleSupport.ResourceType;
+import se.kth.autoscalar.scaling.core.AutoScalarAPI;
 import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 import se.kth.autoscalar.scaling.rules.Rule;
 
@@ -25,7 +25,7 @@ import static org.junit.Assert.fail;
  */
 public class GroupTest {
 
-    private static ElasticScalarAPI elasticScalarAPI;
+    private static AutoScalarAPI autoScalarAPI;
     private String groupBaseName = "my_group";
     private String ruleNameBase = "my_rule";
     private int coolingTimeOut = 60;
@@ -38,7 +38,7 @@ public class GroupTest {
         } catch (InterruptedException e) {
             throw new IllegalStateException(e);
         }
-        elasticScalarAPI = new ElasticScalarAPI();
+        autoScalarAPI = new AutoScalarAPI();
     }
 
     @Test
@@ -52,12 +52,12 @@ public class GroupTest {
         minReq.put(Group.ResourceRequirement.STORAGE, 50);
 
         //test group exists
-        Assert.assertFalse(elasticScalarAPI.isGroupExists(groupName));
+        Assert.assertFalse(autoScalarAPI.isGroupExists(groupName));
 
         // test create group with non existant rule
         try {
 
-            elasticScalarAPI.createGroup( groupName, (int)(random * 10),
+            autoScalarAPI.createGroup( groupName, (int)(random * 10),
                     (int)(random * 100), coolingTimeOut, coolingTimeIn, new String[]{"wrongRule"}, minReq, 2.0f);
 
             fail("Expected exception not thrown");
@@ -67,55 +67,55 @@ public class GroupTest {
         }
 
         //test create group
-        Rule rule = elasticScalarAPI.createRule(ruleNameBase + String.valueOf((int)(random * 10)),
+        Rule rule = autoScalarAPI.createRule(ruleNameBase + String.valueOf((int)(random * 10)),
                 ResourceType.CPU_PERCENTAGE, Comparator.GREATER_THAN, (int)(random * 100), 1);
         Assert.assertNotNull(rule);
 
-        Group group = elasticScalarAPI.createGroup(groupName, (int)(random * 10),
+        Group group = autoScalarAPI.createGroup(groupName, (int)(random * 10),
                 (int)(random * 100), coolingTimeOut, coolingTimeIn, new String[]{rule.getRuleName()}, minReq, 2.0f);
         Assert.assertNotNull(group);
 
         //test exists
-        Assert.assertTrue(elasticScalarAPI.isGroupExists(groupName));
+        Assert.assertTrue(autoScalarAPI.isGroupExists(groupName));
 
         //test get
-        Group retrievedGroup = elasticScalarAPI.getGroup(groupName);
+        Group retrievedGroup = autoScalarAPI.getGroup(groupName);
         Assert.assertNotNull(retrievedGroup);
 
         //test update
         Group groupToUpdate = retrievedGroup;
         groupToUpdate.setCoolingTimeOut(coolingTimeOut + 10);
-        elasticScalarAPI.updateGroup(groupName, groupToUpdate);
+        autoScalarAPI.updateGroup(groupName, groupToUpdate);
 
-        Group updated = elasticScalarAPI.getGroup(groupName);
+        Group updated = autoScalarAPI.getGroup(groupName);
         Assert.assertEquals(groupToUpdate.getCoolingTimeOut(), updated.getCoolingTimeOut());
 
         //test add rule
-        Rule rule2 = elasticScalarAPI.createRule(ruleNameBase + String.valueOf((int)(random * 10) + 1),
+        Rule rule2 = autoScalarAPI.createRule(ruleNameBase + String.valueOf((int)(random * 10) + 1),
                 ResourceType.CPU_PERCENTAGE, Comparator.GREATER_THAN, (int)(random * 100), 1);
-        ArrayList<String> rulesOfGroup = new ArrayList<String>(Arrays.asList(elasticScalarAPI.getGroup(groupName).getRuleNames()));
+        ArrayList<String> rulesOfGroup = new ArrayList<String>(Arrays.asList(autoScalarAPI.getGroup(groupName).getRuleNames()));
         Assert.assertFalse(rulesOfGroup.contains(rule2.getRuleName()));
 
-        elasticScalarAPI.addRuleToGroup(groupName, rule2.getRuleName());
-        ArrayList<String> newRulesOfGroup = new ArrayList<String>(Arrays.asList(elasticScalarAPI.getGroup(groupName).getRuleNames()));
+        autoScalarAPI.addRuleToGroup(groupName, rule2.getRuleName());
+        ArrayList<String> newRulesOfGroup = new ArrayList<String>(Arrays.asList(autoScalarAPI.getGroup(groupName).getRuleNames()));
         Assert.assertTrue(newRulesOfGroup.contains(rule2.getRuleName()));
 
         //test rule usages
-        String[] groups = elasticScalarAPI.getRuleUsage(rule2.getRuleName());
+        String[] groups = autoScalarAPI.getRuleUsage(rule2.getRuleName());
         Assert.assertTrue(groups.length > 0);
 
         //test remove rule
-        elasticScalarAPI.removeRuleFromGroup(groupName, rule2.getRuleName());
-        ArrayList<String> ruleRemovedGroup = new ArrayList<String>(Arrays.asList(elasticScalarAPI.getGroup(groupName).getRuleNames()));
+        autoScalarAPI.removeRuleFromGroup(groupName, rule2.getRuleName());
+        ArrayList<String> ruleRemovedGroup = new ArrayList<String>(Arrays.asList(autoScalarAPI.getGroup(groupName).getRuleNames()));
         Assert.assertFalse(ruleRemovedGroup.contains(rule2.getRuleName()));
 
-        String[] groups2 = elasticScalarAPI.getRuleUsage(rule2.getRuleName());
+        String[] groups2 = autoScalarAPI.getRuleUsage(rule2.getRuleName());
         Assert.assertFalse(groups2.length > 0);
 
         //test delete
-        elasticScalarAPI.deleteGroup(groupName);
-        Assert.assertFalse(elasticScalarAPI.isGroupExists(groupName));
-        elasticScalarAPI.deleteRule(rule.getRuleName());
-        elasticScalarAPI.deleteRule(rule2.getRuleName());
+        autoScalarAPI.deleteGroup(groupName);
+        Assert.assertFalse(autoScalarAPI.isGroupExists(groupName));
+        autoScalarAPI.deleteRule(rule.getRuleName());
+        autoScalarAPI.deleteRule(rule2.getRuleName());
     }
 }

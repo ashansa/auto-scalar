@@ -2,8 +2,8 @@ package se.kth.autoscalar.scaling.core;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import se.kth.autoscalar.common.monitoring.MachineMonitoringEvent;
-import se.kth.autoscalar.common.monitoring.RuleSupport;
+import se.kth.autoscalar.scaling.monitoring.MachineMonitoringEvent;
+import se.kth.autoscalar.scaling.monitoring.RuleSupport;
 import se.kth.autoscalar.scaling.MonitoringListener;
 import se.kth.autoscalar.scaling.ScalingSuggestion;
 import se.kth.autoscalar.scaling.cost.mgt.KaramelMachineProposer;
@@ -45,14 +45,14 @@ public class AutoScalingManager {
     //private ArrayList<String> activeESGroups = new ArrayList<String>();
     //ArrayBlockingQueue<ScalingSuggestion> suggestionsQueue = new ArrayBlockingQueue<ScalingSuggestion>(50);
 
-    public AutoScalingManager(ElasticScalarAPI elasticScalarAPI) throws AutoScalarException {
+    public AutoScalingManager(AutoScalarAPI autoScalarAPI) throws AutoScalarException {
         groupManager = GroupManagerImpl.getInstance();
         eventProfiler = new EventProfiler();
         eventProfiler.addListener(new ProfiledResourceEventListener());
         eventProfiler.addListener(new ProfiledMachineEventListener());
         scaleOutDecisionMaker = new ScaleOutDecisionMaker();
         //scaleInDecisionMaker = new ScaleInDecisionMaker();   //avoid using a different thread until there is a real need
-        monitoringListener = new MonitoringListener(elasticScalarAPI);
+        monitoringListener = new MonitoringListener(autoScalarAPI);
 
         //starting decision maker threads
         (new Thread(scaleOutDecisionMaker)).start();

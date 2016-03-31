@@ -2,8 +2,8 @@ package se.kth.autoscalar.scaling.rules;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import se.kth.autoscalar.common.monitoring.RuleSupport.Comparator;
-import se.kth.autoscalar.common.monitoring.RuleSupport.ResourceType;
+import se.kth.autoscalar.scaling.monitoring.RuleSupport.Comparator;
+import se.kth.autoscalar.scaling.monitoring.RuleSupport.ResourceType;
 import se.kth.autoscalar.scaling.exceptions.DBConnectionFailureException;
 import se.kth.autoscalar.scaling.utils.DBUtil;
 

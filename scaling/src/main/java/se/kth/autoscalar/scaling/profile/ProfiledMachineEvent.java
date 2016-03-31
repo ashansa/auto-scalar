@@ -1,6 +1,6 @@
 package se.kth.autoscalar.scaling.profile;
 
-import se.kth.autoscalar.common.monitoring.MachineMonitoringEvent;
+import se.kth.autoscalar.scaling.monitoring.MachineMonitoringEvent;
 
 /**
  * Created with IntelliJ IDEA.

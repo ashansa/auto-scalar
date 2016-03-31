@@ -1,6 +1,6 @@
 package se.kth.autoscalar.scaling.profile;
 
-import se.kth.autoscalar.common.monitoring.RuleSupport;
+import se.kth.autoscalar.scaling.monitoring.RuleSupport;
 
 /**
  * Created with IntelliJ IDEA.

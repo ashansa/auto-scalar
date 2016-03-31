@@ -1,7 +1,7 @@
 package se.kth.autoscalar.scaling.rules;
 
-import se.kth.autoscalar.common.monitoring.RuleSupport.Comparator;
-import se.kth.autoscalar.common.monitoring.RuleSupport.ResourceType;
+import se.kth.autoscalar.scaling.monitoring.RuleSupport.Comparator;
+import se.kth.autoscalar.scaling.monitoring.RuleSupport.ResourceType;
 
 
 /**

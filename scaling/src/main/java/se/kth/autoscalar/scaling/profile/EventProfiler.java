@@ -2,9 +2,9 @@ package se.kth.autoscalar.scaling.profile;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import se.kth.autoscalar.common.monitoring.MachineMonitoringEvent;
-import se.kth.autoscalar.common.monitoring.MonitoringEvent;
-import se.kth.autoscalar.common.monitoring.ResourceMonitoringEvent;
+import se.kth.autoscalar.scaling.monitoring.MachineMonitoringEvent;
+import se.kth.autoscalar.scaling.monitoring.MonitoringEvent;
+import se.kth.autoscalar.scaling.monitoring.ResourceMonitoringEvent;
 import se.kth.autoscalar.scaling.core.AutoScalingManager;
 import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 

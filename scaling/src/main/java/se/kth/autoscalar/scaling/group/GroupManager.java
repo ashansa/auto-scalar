@@ -1,6 +1,6 @@
 package se.kth.autoscalar.scaling.group;
 
-import se.kth.autoscalar.common.monitoring.RuleSupport;
+import se.kth.autoscalar.scaling.monitoring.RuleSupport;
 import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 import se.kth.autoscalar.scaling.rules.Rule;
 

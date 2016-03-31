@@ -1,4 +1,4 @@
-package se.kth.autoscalar.common.models;
+package se.kth.autoscalar.scaling.models;
 
 import java.util.Calendar;
 import java.util.Date;

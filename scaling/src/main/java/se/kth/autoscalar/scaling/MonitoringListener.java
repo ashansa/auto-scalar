@@ -2,9 +2,9 @@ package se.kth.autoscalar.scaling;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import se.kth.autoscalar.common.monitoring.MachineMonitoringEvent;
-import se.kth.autoscalar.common.monitoring.ResourceMonitoringEvent;
-import se.kth.autoscalar.scaling.core.ElasticScalarAPI;
+import se.kth.autoscalar.scaling.monitoring.MachineMonitoringEvent;
+import se.kth.autoscalar.scaling.monitoring.ResourceMonitoringEvent;
+import se.kth.autoscalar.scaling.core.AutoScalarAPI;
 import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 
 /**
@@ -18,16 +18,16 @@ public class MonitoringListener {
 
     Log log = LogFactory.getLog(MonitoringListener.class);
 
-    ElasticScalarAPI elasticScalarAPI;
+    AutoScalarAPI autoScalarAPI;
 
-    public MonitoringListener(ElasticScalarAPI elasticScalarAPI) throws AutoScalarException {
-        this.elasticScalarAPI = elasticScalarAPI;
+    public MonitoringListener(AutoScalarAPI autoScalarAPI) throws AutoScalarException {
+        this.autoScalarAPI = autoScalarAPI;
     }
 
     /*start of resource monitoring related methods*/
     public void onHighCPU(String groupId, ResourceMonitoringEvent event) throws AutoScalarException {
         try {
-            elasticScalarAPI.handleEvent(groupId, event);
+            autoScalarAPI.handleEvent(groupId, event);
         } catch (AutoScalarException e) {
             log.error("Error while handling onHighCPU event for group: " + groupId + " . " + e.getMessage());
             throw e;
@@ -36,7 +36,7 @@ public class MonitoringListener {
 
     public void onLowCPU(String groupId, ResourceMonitoringEvent event) throws AutoScalarException {
         try {
-            elasticScalarAPI.handleEvent(groupId, event);
+            autoScalarAPI.handleEvent(groupId, event);
         } catch (AutoScalarException e) {
             log.error("Error while handling onHighCPU event for group: " + groupId + " . " + e.getMessage());
             throw e;
@@ -45,7 +45,7 @@ public class MonitoringListener {
 
     public void onHighRam(String groupId, ResourceMonitoringEvent event) throws AutoScalarException {
         try {
-            elasticScalarAPI.handleEvent(groupId, event);
+            autoScalarAPI.handleEvent(groupId, event);
         } catch (AutoScalarException e) {
             log.error("Error while handling onHighCPU event for group: " + groupId + " . " + e.getMessage());
             throw e;
@@ -54,7 +54,7 @@ public class MonitoringListener {
 
     public void onLowRam(String groupId, ResourceMonitoringEvent event) throws AutoScalarException {
         try {
-            elasticScalarAPI.handleEvent(groupId, event);
+            autoScalarAPI.handleEvent(groupId, event);
         } catch (AutoScalarException e) {
             log.error("Error while handling onHighCPU event for group: " + groupId + " . " + e.getMessage());
             throw e;
@@ -64,7 +64,7 @@ public class MonitoringListener {
   /*start of machine monitoring related methods*/
   public void onStateChange(String groupId, MachineMonitoringEvent event) throws AutoScalarException {
       try {
-          elasticScalarAPI.handleEvent(groupId, event);
+          autoScalarAPI.handleEvent(groupId, event);
       } catch (AutoScalarException e) {
           log.error("Error while handling stateChange event for group: " + groupId + " with state change: " +
                   event.getStatus() + " . " + e.getMessage());
