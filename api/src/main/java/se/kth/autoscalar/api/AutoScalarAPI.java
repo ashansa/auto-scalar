@@ -5,7 +5,6 @@ import org.apache.commons.logging.LogFactory;
 import se.kth.autoscalar.common.models.MachineInfo;
 import se.kth.autoscalar.common.monitoring.RuleSupport.Comparator;
 import se.kth.autoscalar.common.monitoring.RuleSupport.ResourceType;
-import se.kth.autoscalar.exceptions.AutoScalarException;
 import se.kth.autoscalar.scaling.MonitoringListener;
 import se.kth.autoscalar.scaling.core.ElasticScalarAPI;
 import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
@@ -100,20 +99,20 @@ public class AutoScalarAPI {
         throw new UnsupportedOperationException("#removeMachineFromGroup()");
     }
 
-    public void startAutoScaling(String groupId, int currentNumberOfMachines) throws ElasticScalarException, AutoScalarException {
+    public void startAutoScaling(String groupId, int currentNumberOfMachines) throws ElasticScalarException, se.kth.autoscalar.exceptions.AutoScalarException {
 
         Group group = elasticScalar.getGroup(groupId);
         if (group == null) {
             String errorMsg = "Could not find a group with id " + groupId + " . A group should be created with the " +
                     "required requirements and scaling rules before starting auto scaling on a group";
-            throw new AutoScalarException(errorMsg);
+            throw new se.kth.autoscalar.exceptions.AutoScalarException(errorMsg);
         }
 
         String[] rulesOfGroup = group.getRuleNames();
         if (rulesOfGroup.length == 0) {
             String errorMsg = "No rules have been specified to the scaling group with id " + groupId + " . Rules for the" +
                     "group should be specified before starting auto scaling on the group.";
-            throw new AutoScalarException(errorMsg);
+            throw new se.kth.autoscalar.exceptions.AutoScalarException(errorMsg);
         }
 
         //TODO create RuleBase

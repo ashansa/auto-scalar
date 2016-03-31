@@ -11,9 +11,7 @@
     <modules>
         <module>common</module>
         <module>scaling</module>
-        <module>monitoring</module>
         <module>api</module>
-        <module>drools-eval</module>
     </modules>
 
 
