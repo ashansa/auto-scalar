@@ -9,7 +9,7 @@ import se.kth.autoscalar.common.monitoring.ResourceMonitoringEvent;
 import se.kth.autoscalar.common.monitoring.RuleSupport;
 import se.kth.autoscalar.common.monitoring.RuleSupport.ResourceType;
 import se.kth.autoscalar.scaling.core.ElasticScalarAPI;
-import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
+import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 import se.kth.autoscalar.scaling.group.Group;
 import se.kth.autoscalar.scaling.rules.Rule;
 
@@ -42,12 +42,12 @@ public class ElasticScalingTest {
     String groupName;
 
     @BeforeClass
-    public static void init() throws ElasticScalarException {
+    public static void init() throws AutoScalarException {
         elasticScalarAPI = new ElasticScalarAPI();
     }
 
     @Test
-    public void testElasticScalingAssumption1() throws ElasticScalarException {
+    public void testElasticScalingAssumption1() throws AutoScalarException {
         System.out.println("=============== test with Assumption 1 : affects are not reflected in window =============");
         System.out.println("=============== resource events are not affected by killed machines =============");
 
@@ -136,7 +136,7 @@ public class ElasticScalingTest {
     }
 
     //@Test
-    public void testElasticScalingAssumption2() throws ElasticScalarException {
+    public void testElasticScalingAssumption2() throws AutoScalarException {
 
         System.out.println("=============== test with Assumption 2 : affects are reflected in window. So can act just based on rules =============");
         System.out.println("=============== resource events are already affected =============");
@@ -244,7 +244,7 @@ public class ElasticScalingTest {
             group = elasticScalarAPI.createGroup(groupName, (int)(random * 10), (int)(random * 100), coolingTimeOut,
                     coolingTimeIn, new String[]{rule1.getRuleName(), rule2.getRuleName()}, minReq, 2.0f);
 
-        } catch (ElasticScalarException e) {
+        } catch (AutoScalarException e) {
             throw new IllegalStateException(e);
         }
 
@@ -393,7 +393,7 @@ public class ElasticScalingTest {
         }
     }
 
-    private void testCoolingTime() throws ElasticScalarException {
+    private void testCoolingTime() throws AutoScalarException {
 
         System.out.println("------------ Start: cooling down test ----------");
         try {
@@ -423,7 +423,7 @@ public class ElasticScalingTest {
     }
 
     @AfterClass
-    public static void cleanup() throws ElasticScalarException {
+    public static void cleanup() throws AutoScalarException {
         elasticScalarAPI.deleteRule(rule1.getRuleName());
         elasticScalarAPI.deleteRule(rule2.getRuleName());
         elasticScalarAPI.deleteGroup(group.getGroupName());

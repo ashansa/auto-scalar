@@ -1,4 +1,4 @@
-package se.kth.autoscalar.exceptions;
+package se.kth.autoscalar.scaling.exceptions;
 
 /**
  * Created with IntelliJ IDEA.

@@ -3,7 +3,7 @@ package se.kth.autoscalar.scaling.group;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import se.kth.autoscalar.common.monitoring.RuleSupport;
-import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
+import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 import se.kth.autoscalar.scaling.exceptions.ManageGroupException;
 import se.kth.autoscalar.scaling.rules.Rule;
 import se.kth.autoscalar.scaling.rules.RuleManager;
@@ -31,7 +31,7 @@ public class GroupManagerImpl implements GroupManager {
 
     private GroupManagerImpl() {}
 
-    public static GroupManagerImpl getInstance() throws ElasticScalarException {
+    public static GroupManagerImpl getInstance() throws AutoScalarException {
         if(groupManager == null) {
             groupManager  = new GroupManagerImpl();
             groupManager.init();
@@ -39,91 +39,91 @@ public class GroupManagerImpl implements GroupManager {
         return groupManager;
     }
 
-    private void init() throws ElasticScalarException {
+    private void init() throws AutoScalarException {
         groupDAO = GroupDAO.getInstance();
         ruleManager = RuleManagerImpl.getInstance();
     }
 
     public Group createGroup(String groupName, int minInstances, int maxInstances, int coolingTimeUp, int coolingTimeDown,
-                             String[] ruleNames, Map<Group.ResourceRequirement, Integer> minResourceReq, float reliabilityReq) throws ElasticScalarException {
+                             String[] ruleNames, Map<Group.ResourceRequirement, Integer> minResourceReq, float reliabilityReq) throws AutoScalarException {
 
         String[] validRules = getValidRules(ruleNames);
 
         if (validRules.length == 0) {
-            throw new ElasticScalarException("At least one valid rule name should be provided when creating a scaling group");
+            throw new AutoScalarException("At least one valid rule name should be provided when creating a scaling group");
         } else {
             try {
                 Group group = new Group(groupName, minInstances, maxInstances, coolingTimeUp, coolingTimeDown, validRules, minResourceReq, reliabilityReq);
                 groupDAO.createGroup(group);
                 return group;
             } catch (SQLException e) {
-                throw new ElasticScalarException("Failed to create the scaling group: " + groupName, e.getCause());
+                throw new AutoScalarException("Failed to create the scaling group: " + groupName, e.getCause());
             }
         }
     }
 
-    public boolean isGroupExists(String groupName) throws ElasticScalarException {
+    public boolean isGroupExists(String groupName) throws AutoScalarException {
         try {
             return groupDAO.isGroupExists(groupName);
         } catch (SQLException e) {
-            throw new ElasticScalarException("Error in checking the existance of scaling group " + groupName, e.getCause());
+            throw new AutoScalarException("Error in checking the existance of scaling group " + groupName, e.getCause());
         }
     }
 
-    public Group getGroup(String groupName) throws ElasticScalarException {
+    public Group getGroup(String groupName) throws AutoScalarException {
         try {
             return groupDAO.getGroup(groupName);
         } catch (SQLException e) {
-            throw new ElasticScalarException("Error while getting the group: " + groupName, e.getCause());
+            throw new AutoScalarException("Error while getting the group: " + groupName, e.getCause());
         } catch (ManageGroupException e) {
-            throw new ElasticScalarException("Error while getting the group: " + groupName, e.getCause());
+            throw new AutoScalarException("Error while getting the group: " + groupName, e.getCause());
         }
     }
 
-    public void addRuleToGroup(String groupName, String ruleName) throws ElasticScalarException {
+    public void addRuleToGroup(String groupName, String ruleName) throws AutoScalarException {
         try {
             groupDAO.addRuleToGroup(groupName, ruleName);
         } catch (SQLException e) {
-            throw new ElasticScalarException("Error in adding the rule: " + ruleName + " to the group: " + groupName, e.getCause());
+            throw new AutoScalarException("Error in adding the rule: " + ruleName + " to the group: " + groupName, e.getCause());
         }
     }
 
-    public void updateGroup(String groupName, Group group) throws ElasticScalarException {
+    public void updateGroup(String groupName, Group group) throws AutoScalarException {
         try {
             groupDAO.updateGroup(groupName, group);
         } catch (SQLException e) {
-            throw new ElasticScalarException("Failed to update the group: " + groupName);
+            throw new AutoScalarException("Failed to update the group: " + groupName);
         }
     }
 
-    public void removeRuleFromGroup(String groupName, String ruleName) throws ElasticScalarException {
+    public void removeRuleFromGroup(String groupName, String ruleName) throws AutoScalarException {
         try {
             groupDAO.removeRuleFromGroup(groupName, ruleName);
         } catch (SQLException e) {
-            throw new ElasticScalarException("Error in deleting the rule: " + ruleName + " from the group: " + groupName, e.getCause());
+            throw new AutoScalarException("Error in deleting the rule: " + ruleName + " from the group: " + groupName, e.getCause());
         }
     }
 
-    public String[] getRulesForGroup(String groupName) throws ElasticScalarException {
+    public String[] getRulesForGroup(String groupName) throws AutoScalarException {
         try {
             return groupDAO.getRulesForGroup(groupName);
         } catch (SQLException e) {
-            throw new ElasticScalarException("Error in retrieving the rules for the group " + groupName, e.getCause());
+            throw new AutoScalarException("Error in retrieving the rules for the group " + groupName, e.getCause());
         }
     }
 
     public Rule[] getMatchingRulesForGroup(String groupName, RuleSupport.ResourceType resourceType,
-                                           RuleSupport.Comparator comparator, float currentValue) throws ElasticScalarException {
+                                           RuleSupport.Comparator comparator, float currentValue) throws AutoScalarException {
         String[] rulesOfGroup = getRulesForGroup(groupName);
         Rule[] matchingRules = ruleManager.getMatchingRulesForConstraints(rulesOfGroup, resourceType, comparator, currentValue );
         return matchingRules;
     }
 
-    public void deleteGroup(String groupName) throws ElasticScalarException {
+    public void deleteGroup(String groupName) throws AutoScalarException {
         try {
             groupDAO.deleteGroup(groupName);
         } catch (SQLException e) {
-            throw new ElasticScalarException("Error while deleting the elastic scaling group: " + groupName, e.getCause());
+            throw new AutoScalarException("Error while deleting the elastic scaling group: " + groupName, e.getCause());
         }
     }
 
@@ -136,7 +136,7 @@ public class GroupManagerImpl implements GroupManager {
                 if(ruleManager.isRuleExists(ruleName)) {
                     validRuleNames.add(ruleName);
                 }
-            } catch (ElasticScalarException e) {
+            } catch (AutoScalarException e) {
                 log.warn("Could not check the existance of the rule: " + ruleName);
             }
         }

@@ -2,7 +2,7 @@ package se.kth.autoscalar.scaling.rules;
 
 import se.kth.autoscalar.common.monitoring.RuleSupport.Comparator;
 import se.kth.autoscalar.common.monitoring.RuleSupport.ResourceType;
-import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
+import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 
 import java.sql.SQLException;
 
@@ -16,19 +16,19 @@ import java.sql.SQLException;
 public interface RuleManager {
 
     Rule createRule(String ruleName, ResourceType resourceType, Comparator comparator,
-                    float thresholdPercentage, int operationAction) throws ElasticScalarException;
+                    float thresholdPercentage, int operationAction) throws AutoScalarException;
 
-    Rule getRule(String ruleName) throws ElasticScalarException;
+    Rule getRule(String ruleName) throws AutoScalarException;
 
-    void updateRule(String ruleName, Rule rule) throws ElasticScalarException;
+    void updateRule(String ruleName, Rule rule) throws AutoScalarException;
 
-    void deleteRule(String ruleName) throws ElasticScalarException;
+    void deleteRule(String ruleName) throws AutoScalarException;
 
-    boolean isRuleExists(String ruleName) throws ElasticScalarException;
+    boolean isRuleExists(String ruleName) throws AutoScalarException;
 
     boolean isRuleInUse(String ruleName);
 
-    String[] getRuleUsage(String ruleName) throws ElasticScalarException;
+    String[] getRuleUsage(String ruleName) throws AutoScalarException;
 
     Rule[] getMatchingRulesForConstraints(String[] ruleNames, ResourceType eventResourceType, Comparator eventComparator, float currentValue);
 

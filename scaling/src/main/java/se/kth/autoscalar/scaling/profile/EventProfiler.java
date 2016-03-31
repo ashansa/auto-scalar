@@ -5,14 +5,14 @@ import org.apache.commons.logging.LogFactory;
 import se.kth.autoscalar.common.monitoring.MachineMonitoringEvent;
 import se.kth.autoscalar.common.monitoring.MonitoringEvent;
 import se.kth.autoscalar.common.monitoring.ResourceMonitoringEvent;
-import se.kth.autoscalar.scaling.core.ElasticScalingManager;
-import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
+import se.kth.autoscalar.scaling.core.AutoScalingManager;
+import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-//import se.kth.autoscalar.scaling.core.ElasticScalingManager;
+//import se.kth.autoscalar.scaling.core.AutoScalingManager;
 
 /**
  * Created with IntelliJ IDEA.
@@ -117,17 +117,17 @@ public class EventProfiler {
 
         for (ProfiledEventListener listener : profiledEventListeners) {
             try {
-                if (profiledEvent instanceof ProfiledResourceEvent && listener instanceof ElasticScalingManager.ProfiledResourceEventListener) {
-                    ElasticScalingManager.ProfiledResourceEventListener resourceEventListener = (ElasticScalingManager.ProfiledResourceEventListener) listener;
+                if (profiledEvent instanceof ProfiledResourceEvent && listener instanceof AutoScalingManager.ProfiledResourceEventListener) {
+                    AutoScalingManager.ProfiledResourceEventListener resourceEventListener = (AutoScalingManager.ProfiledResourceEventListener) listener;
                     ProfiledResourceEvent resourceEvent = (ProfiledResourceEvent) profiledEvent;
                     resourceEventListener.handleEvent(resourceEvent);
-                } else if (profiledEvent instanceof ProfiledMachineEvent && listener instanceof ElasticScalingManager.ProfiledMachineEventListener) {
-                    ElasticScalingManager.ProfiledMachineEventListener machineEventListener = (ElasticScalingManager.ProfiledMachineEventListener) listener;
+                } else if (profiledEvent instanceof ProfiledMachineEvent && listener instanceof AutoScalingManager.ProfiledMachineEventListener) {
+                    AutoScalingManager.ProfiledMachineEventListener machineEventListener = (AutoScalingManager.ProfiledMachineEventListener) listener;
                     ProfiledMachineEvent machineEvent = (ProfiledMachineEvent) profiledEvent;
                     machineEventListener.handleEvent(machineEvent);
                 }
 
-            } catch(ElasticScalarException e){
+            } catch(AutoScalarException e){
                 throw new IllegalStateException(e);
             }
         }

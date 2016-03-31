@@ -6,7 +6,7 @@ import org.junit.Test;
 import se.kth.autoscalar.common.monitoring.RuleSupport.Comparator;
 import se.kth.autoscalar.common.monitoring.RuleSupport.ResourceType;
 import se.kth.autoscalar.scaling.core.ElasticScalarAPI;
-import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
+import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 import se.kth.autoscalar.scaling.rules.Rule;
 
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ public class GroupTest {
     private int coolingTimeIn = 300;
 
     @BeforeClass
-    public static void init() throws ElasticScalarException {
+    public static void init() throws AutoScalarException {
         try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
@@ -42,7 +42,7 @@ public class GroupTest {
     }
 
     @Test
-    public void testCRUDGroup() throws ElasticScalarException {
+    public void testCRUDGroup() throws AutoScalarException {
         double random = Math.random();
         String groupName = groupBaseName + String.valueOf((int)(random * 10));
 
@@ -63,7 +63,7 @@ public class GroupTest {
             fail("Expected exception not thrown");
 
         } catch (Exception e) {
-            Assert.assertEquals(ElasticScalarException.class, e.getClass());
+            Assert.assertEquals(AutoScalarException.class, e.getClass());
         }
 
         //test create group

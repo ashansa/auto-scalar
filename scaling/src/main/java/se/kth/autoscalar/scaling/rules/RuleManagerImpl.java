@@ -5,7 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import se.kth.autoscalar.common.monitoring.RuleSupport.Comparator;
 import se.kth.autoscalar.common.monitoring.RuleSupport.ResourceType;
 import se.kth.autoscalar.scaling.exceptions.DBConnectionFailureException;
-import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
+import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 import se.kth.autoscalar.scaling.group.GroupDAO;
 
 import java.sql.SQLException;
@@ -28,7 +28,7 @@ public class RuleManagerImpl implements RuleManager {
 
     private RuleManagerImpl() { }
 
-    public static RuleManagerImpl getInstance() throws ElasticScalarException {
+    public static RuleManagerImpl getInstance() throws AutoScalarException {
         try {
             if (ruleManager == null) {
                 ruleManager = new RuleManagerImpl();
@@ -36,7 +36,7 @@ public class RuleManagerImpl implements RuleManager {
             }
             return ruleManager;
         } catch (DBConnectionFailureException e) {
-            throw new ElasticScalarException(e.getMessage(), e);
+            throw new AutoScalarException(e.getMessage(), e);
         }
     }
 
@@ -45,46 +45,46 @@ public class RuleManagerImpl implements RuleManager {
     }
 
     public Rule createRule(String ruleName, ResourceType resourceType, Comparator comparator,
-                           float thresholdPercentage, int operationAction) throws ElasticScalarException {
+                           float thresholdPercentage, int operationAction) throws AutoScalarException {
         try {
             Rule rule = new Rule(ruleName, resourceType, comparator, thresholdPercentage,
                     operationAction);
             ruleDAO.createRule(rule);
             return rule;
         } catch (SQLException e) {
-            throw new ElasticScalarException("Failed to create rule. Name: " + ruleName, e.getCause());
+            throw new AutoScalarException("Failed to create rule. Name: " + ruleName, e.getCause());
         }
     }
 
-    public Rule getRule(String ruleName) throws ElasticScalarException {
+    public Rule getRule(String ruleName) throws AutoScalarException {
         try {
             return ruleDAO.getRule(ruleName);
         } catch (SQLException e) {
-            throw new ElasticScalarException("Failed to get rule with name " + ruleName, e.getCause());
+            throw new AutoScalarException("Failed to get rule with name " + ruleName, e.getCause());
         }
     }
 
-    public void updateRule(String ruleName, Rule rule) throws ElasticScalarException {
+    public void updateRule(String ruleName, Rule rule) throws AutoScalarException {
         try {
             ruleDAO.updateRule(ruleName, rule);
         } catch (SQLException e) {
-            throw new ElasticScalarException("Failed to update rule. Name: " + ruleName, e.getCause());
+            throw new AutoScalarException("Failed to update rule. Name: " + ruleName, e.getCause());
         }
     }
 
-    public void deleteRule(String ruleName) throws ElasticScalarException {
+    public void deleteRule(String ruleName) throws AutoScalarException {
         try {
             ruleDAO.deleteRule(ruleName);
         } catch (SQLException e) {
-            throw new ElasticScalarException("Failed to delete rule. Name: " + ruleName, e.getCause());
+            throw new AutoScalarException("Failed to delete rule. Name: " + ruleName, e.getCause());
         }
     }
 
-    public boolean isRuleExists(String ruleName) throws ElasticScalarException {
+    public boolean isRuleExists(String ruleName) throws AutoScalarException {
         try {
             return ruleDAO.isRuleAlreadyExists(ruleName);
         } catch (SQLException e) {
-            throw new ElasticScalarException("Failed to check whether rule exists for rule " + ruleName, e.getCause());
+            throw new AutoScalarException("Failed to check whether rule exists for rule " + ruleName, e.getCause());
         }
     }
 
@@ -97,13 +97,13 @@ public class RuleManagerImpl implements RuleManager {
      * @param ruleName
      * @return the list of group names of which the rule is being used
      */
-    public String[] getRuleUsage(String ruleName) throws ElasticScalarException {
+    public String[] getRuleUsage(String ruleName) throws AutoScalarException {
         try {
             return GroupDAO.getInstance().getGroupNamesForRule(ruleName);
         } catch (DBConnectionFailureException e) {
-            throw new ElasticScalarException("Failed to get the usage for rule " + ruleName, e.getCause());
+            throw new AutoScalarException("Failed to get the usage for rule " + ruleName, e.getCause());
         } catch (SQLException e) {
-            throw new ElasticScalarException("Failed to get the usage for rule " + ruleName, e.getCause());
+            throw new AutoScalarException("Failed to get the usage for rule " + ruleName, e.getCause());
         }
     }
 
@@ -168,7 +168,7 @@ public class RuleManagerImpl implements RuleManager {
 
                     }
                 }
-            } catch (ElasticScalarException e) {
+            } catch (AutoScalarException e) {
                 log.error("Error while retrieving the rule for name " + ruleName);
             }
         }

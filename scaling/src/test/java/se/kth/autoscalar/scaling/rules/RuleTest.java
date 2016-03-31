@@ -6,7 +6,7 @@ import org.junit.Test;
 import se.kth.autoscalar.common.monitoring.RuleSupport.Comparator;
 import se.kth.autoscalar.common.monitoring.RuleSupport.ResourceType;
 import se.kth.autoscalar.scaling.exceptions.DBConnectionFailureException;
-import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
+import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 
 /**
  * Created with IntelliJ IDEA.
@@ -23,7 +23,7 @@ public class RuleTest {
     private static RuleManager ruleManager;
 
     @BeforeClass
-    public static void setUp() throws ElasticScalarException {
+    public static void setUp() throws AutoScalarException {
         try {
             ruleManager = RuleManagerImpl.getInstance();
         } catch (DBConnectionFailureException e) {
@@ -74,7 +74,7 @@ public class RuleTest {
             Rule afterDeletion = ruleManager.getRule(rule.getRuleName());
             Assert.assertNull(afterDeletion);
 
-        } catch (ElasticScalarException e) {
+        } catch (AutoScalarException e) {
             throw new IllegalStateException(e);
         }
     }

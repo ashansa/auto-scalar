@@ -8,7 +8,7 @@ import se.kth.autoscalar.scaling.MonitoringListener;
 import se.kth.autoscalar.scaling.ScalingSuggestion;
 import se.kth.autoscalar.scaling.cost.mgt.KaramelMachineProposer;
 import se.kth.autoscalar.scaling.cost.mgt.MachineProposer;
-import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
+import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 import se.kth.autoscalar.scaling.group.Group;
 import se.kth.autoscalar.scaling.group.GroupManager;
 import se.kth.autoscalar.scaling.group.GroupManagerImpl;
@@ -27,9 +27,9 @@ import java.util.concurrent.ArrayBlockingQueue;
  * @version $Id$
  * @since 1.0
  */
-public class ElasticScalingManager {
+public class AutoScalingManager {
 
-    Log log = LogFactory.getLog(ElasticScalingManager.class);
+    Log log = LogFactory.getLog(AutoScalingManager.class);
 
     GroupManager groupManager;
     EventProfiler eventProfiler;
@@ -45,7 +45,7 @@ public class ElasticScalingManager {
     //private ArrayList<String> activeESGroups = new ArrayList<String>();
     //ArrayBlockingQueue<ScalingSuggestion> suggestionsQueue = new ArrayBlockingQueue<ScalingSuggestion>(50);
 
-    public ElasticScalingManager(ElasticScalarAPI elasticScalarAPI) throws ElasticScalarException {
+    public AutoScalingManager(ElasticScalarAPI elasticScalarAPI) throws AutoScalarException {
         groupManager = GroupManagerImpl.getInstance();
         eventProfiler = new EventProfiler();
         eventProfiler.addListener(new ProfiledResourceEventListener());
@@ -60,12 +60,12 @@ public class ElasticScalingManager {
 
     }
 
-    public void addGroupForScaling(String groupId, int currentNumberOfMachines) throws ElasticScalarException {
+    public void addGroupForScaling(String groupId, int currentNumberOfMachines) throws AutoScalarException {
         if (!activeGroupsInfo.containsKey(groupId)) {
             RuntimeGroupInfo runtimeGroupInfo = new RuntimeGroupInfo(groupId, currentNumberOfMachines);
             activeGroupsInfo.put(groupId, runtimeGroupInfo);
         } else {
-            throw new ElasticScalarException("Group with id " + groupId + " already exists in elastic scalar");
+            throw new AutoScalarException("Group with id " + groupId + " already exists in elastic scalar");
         }
     }
 
@@ -87,7 +87,7 @@ public class ElasticScalingManager {
      */
     public class ProfiledResourceEventListener implements ProfiledEventListener {
 
-        public void handleEvent(ProfiledEvent profiledEvent) throws ElasticScalarException {
+        public void handleEvent(ProfiledEvent profiledEvent) throws AutoScalarException {
             if (profiledEvent instanceof ProfiledResourceEvent) {
                 ProfiledResourceEvent event = (ProfiledResourceEvent)profiledEvent;
                 String groupId = event.getGroupId();
@@ -122,7 +122,7 @@ public class ElasticScalingManager {
                         }
                     }
                 } else {
-                    throw new ElasticScalarException("Resource event cannot be handled. Group is not in active scaling groups." +
+                    throw new AutoScalarException("Resource event cannot be handled. Group is not in active scaling groups." +
                             " Group Id: " + event.getGroupId());
                 }
             }
@@ -133,9 +133,9 @@ public class ElasticScalingManager {
      *
      * @param event
      * @return number of machines to be added/removed depending on the event and resource rules assigned to the group
-     * @throws ElasticScalarException
+     * @throws AutoScalarException
      */
-    private int getNumberOfMachineChanges(ProfiledResourceEvent event) throws ElasticScalarException {
+    private int getNumberOfMachineChanges(ProfiledResourceEvent event) throws AutoScalarException {
         Rule[] matchingRules = groupManager.getMatchingRulesForGroup(event.getGroupId(), event.getResourceType(),
                 event.getComparator(), event.getValue());
         int maxChangeOfMachines = 0;
@@ -158,7 +158,7 @@ public class ElasticScalingManager {
 
     public class ProfiledMachineEventListener implements ProfiledEventListener {
 
-        public void handleEvent(ProfiledEvent profiledEvent) throws ElasticScalarException {
+        public void handleEvent(ProfiledEvent profiledEvent) throws AutoScalarException {
             if (profiledEvent instanceof ProfiledMachineEvent) {
                 ProfiledMachineEvent event = (ProfiledMachineEvent)profiledEvent;
                 if (activeGroupsInfo.containsKey(event.getGroupId())) {
@@ -187,14 +187,14 @@ public class ElasticScalingManager {
                         runtimeGroupInfo.setScaleInInfo(machineChangesDone + killedInstances);
                     }
                 } else {
-                    throw new ElasticScalarException("Machine event cannot be handled. Group is not in active scaling groups." +
+                    throw new AutoScalarException("Machine event cannot be handled. Group is not in active scaling groups." +
                             " Group Id: " + event.getGroupId());
                 }
             }
         }
 
         //Assumption1: effect of killed machines are not reflected in resource events
-        private int handleWithAssumption1(int killedInstances, ArrayList<String> endOfBillingMachineIds, ProfiledMachineEvent event) throws ElasticScalarException {
+        private int handleWithAssumption1(int killedInstances, ArrayList<String> endOfBillingMachineIds, ProfiledMachineEvent event) throws AutoScalarException {
             ProfiledResourceEvent resourceEventOfGroup = event.getProfiledResourceEvent();
             String groupId = event.getGroupId();
             RuntimeGroupInfo runtimeGroupInfo = activeGroupsInfo.get(groupId);
@@ -240,7 +240,7 @@ public class ElasticScalingManager {
         }
 
         //Assumption2: effect of killed machines are reflected in resource events. Hence can act on what rules propose
-        private int handleWithAssumption2(ArrayList<String> endOfBillingMachineIds, ProfiledMachineEvent event) throws ElasticScalarException {
+        private int handleWithAssumption2(ArrayList<String> endOfBillingMachineIds, ProfiledMachineEvent event) throws AutoScalarException {
             ProfiledResourceEvent resourceEventOfGroup = event.getProfiledResourceEvent();
             String groupId = event.getGroupId();
             RuntimeGroupInfo runtimeGroupInfo = activeGroupsInfo.get(groupId);
@@ -325,7 +325,7 @@ public class ElasticScalingManager {
 
     }
 
-    private boolean isInCoolDownPeriod(String groupId, ScalingSuggestion.ScalingDirection direction) throws ElasticScalarException {
+    private boolean isInCoolDownPeriod(String groupId, ScalingSuggestion.ScalingDirection direction) throws AutoScalarException {
         RuntimeGroupInfo runtimeGroupInfo = activeGroupsInfo.get(groupId);
 
         //Evaluate the possibility of scaling with coolDown period
@@ -380,7 +380,7 @@ public class ElasticScalingManager {
 
                 } catch (InterruptedException e) {
                     log.error("Error while retrieving item from scaleOutInternalQueue. " + e.getMessage());
-                } catch (ElasticScalarException e) {
+                } catch (AutoScalarException e) {
                     log.error("Error while retrieving min resource req of group " + groupId + " ." + e.getMessage());
                 }
             }

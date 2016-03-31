@@ -7,7 +7,7 @@ import se.kth.autoscalar.common.monitoring.MonitoringEvent;
 import se.kth.autoscalar.common.monitoring.RuleSupport;
 import se.kth.autoscalar.scaling.MonitoringListener;
 import se.kth.autoscalar.scaling.ScalingSuggestion;
-import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
+import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 import se.kth.autoscalar.scaling.group.Group;
 import se.kth.autoscalar.scaling.group.GroupManager;
 import se.kth.autoscalar.scaling.group.GroupManagerImpl;
@@ -30,79 +30,79 @@ public class ElasticScalarAPI {
 
     Log log = LogFactory.getLog(ElasticScalarAPI.class);
 
-    ElasticScalingManager elasticScalingManager;
+    AutoScalingManager autoScalingManager;
     RuleManager ruleManager;
     GroupManager groupManager;
 
-    public ElasticScalarAPI() throws ElasticScalarException {
-        elasticScalingManager = new ElasticScalingManager(this);
+    public ElasticScalarAPI() throws AutoScalarException {
+        autoScalingManager = new AutoScalingManager(this);
         ruleManager = RuleManagerImpl.getInstance();
         groupManager = GroupManagerImpl.getInstance();
     }
 
-    public Rule createRule(String ruleName, RuleSupport.ResourceType resourceType, RuleSupport.Comparator comparator, float thresholdPercentage, int operationAction) throws ElasticScalarException {
+    public Rule createRule(String ruleName, RuleSupport.ResourceType resourceType, RuleSupport.Comparator comparator, float thresholdPercentage, int operationAction) throws AutoScalarException {
         return ruleManager.createRule(ruleName, resourceType, comparator, thresholdPercentage, operationAction);
     }
 
-    public Rule getRule(String ruleName) throws ElasticScalarException {
+    public Rule getRule(String ruleName) throws AutoScalarException {
         return ruleManager.getRule(ruleName);
     }
 
-    public void updateRule(String ruleName, Rule rule) throws ElasticScalarException {
+    public void updateRule(String ruleName, Rule rule) throws AutoScalarException {
         ruleManager.updateRule(ruleName, rule);
     }
 
-    public void deleteRule(String ruleName) throws ElasticScalarException {
+    public void deleteRule(String ruleName) throws AutoScalarException {
         ruleManager.deleteRule(ruleName);
     }
 
-    public boolean isRuleExists(String ruleName) throws ElasticScalarException {
+    public boolean isRuleExists(String ruleName) throws AutoScalarException {
         return ruleManager.isRuleExists(ruleName);
     }
 
-    public boolean isRuleInUse(String ruleName) throws ElasticScalarException {
+    public boolean isRuleInUse(String ruleName) throws AutoScalarException {
         return ruleManager.isRuleExists(ruleName);
     }
 
-    public String[] getRuleUsage(String ruleName) throws ElasticScalarException {
+    public String[] getRuleUsage(String ruleName) throws AutoScalarException {
         return ruleManager.getRuleUsage(ruleName);
     }
 
     public Group createGroup(String groupName, int minInstances, int maxInstances, int coolingTimeUp, int coolingTimeDown,
                              String[] ruleNames, Map<Group.ResourceRequirement, Integer> minResourceReq, float reliabilityReq)
-            throws ElasticScalarException {
+            throws AutoScalarException {
 
         if (isGroupExists(groupName)) {
             String errorMsg = "A group already exists with name " + groupName + " . Group name should be unique";
             log.error(errorMsg);
-            throw new ElasticScalarException(errorMsg);
+            throw new AutoScalarException(errorMsg);
         }
         return groupManager.createGroup(groupName, minInstances, maxInstances, coolingTimeUp, coolingTimeDown, ruleNames,
                 minResourceReq, reliabilityReq);
     }
 
-    public boolean isGroupExists(String groupName) throws ElasticScalarException {
+    public boolean isGroupExists(String groupName) throws AutoScalarException {
         return groupManager.isGroupExists(groupName);
     }
 
-    public Group getGroup(String groupName) throws ElasticScalarException {
+    public Group getGroup(String groupName) throws AutoScalarException {
         return groupManager.getGroup(groupName);
     }
 
-    public void addRuleToGroup(String groupName, String ruleName) throws ElasticScalarException {
+    public void addRuleToGroup(String groupName, String ruleName) throws AutoScalarException {
         groupManager.addRuleToGroup(groupName, ruleName);
     }
 
     //The list of rules in the group will not be updated with this method
-    public void updateGroup(String groupName, Group group) throws ElasticScalarException {
+    public void updateGroup(String groupName, Group group) throws AutoScalarException {
         groupManager.updateGroup(groupName, group);
     }
 
-    public void removeRuleFromGroup(String groupName, String ruleName) throws ElasticScalarException {
+    public void removeRuleFromGroup(String groupName, String ruleName) throws AutoScalarException {
         groupManager.removeRuleFromGroup(groupName, ruleName);
     }
 
-    public void deleteGroup(String groupName) throws ElasticScalarException {
+    public void deleteGroup(String groupName) throws AutoScalarException {
         groupManager.deleteGroup(groupName);
     }
 
@@ -117,21 +117,21 @@ public class ElasticScalarAPI {
         throw new UnsupportedOperationException("#removeMachineFromGroup()");
     }
 
-    public MonitoringListener startElasticScaling(String groupId, int currentNumberOfMachines) throws ElasticScalarException {
-        elasticScalingManager.addGroupForScaling(groupId, currentNumberOfMachines);
-        return elasticScalingManager.getMonitoringListener();
+    public MonitoringListener startElasticScaling(String groupId, int currentNumberOfMachines) throws AutoScalarException {
+        autoScalingManager.addGroupForScaling(groupId, currentNumberOfMachines);
+        return autoScalingManager.getMonitoringListener();
     }
 
     public void stopElasticScaling(String groupId) {
-        elasticScalingManager.removeGroupFromScaling(groupId);
+        autoScalingManager.removeGroupFromScaling(groupId);
     }
 
     public ArrayBlockingQueue<ScalingSuggestion> getSuggestionQueue(String groupId) {
-        return elasticScalingManager.getSuggestions(groupId);
+        return autoScalingManager.getSuggestions(groupId);
     }
 
-    public void handleEvent(String groupId, MonitoringEvent monitoringEvent) throws ElasticScalarException {
-        elasticScalingManager.getEventProfiler().profileEvent(groupId, monitoringEvent);
+    public void handleEvent(String groupId, MonitoringEvent monitoringEvent) throws AutoScalarException {
+        autoScalingManager.getEventProfiler().profileEvent(groupId, monitoringEvent);
     }
 
     public void tempMethodDeleteTables() throws SQLException {

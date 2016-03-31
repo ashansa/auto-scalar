@@ -5,7 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import se.kth.autoscalar.common.monitoring.MachineMonitoringEvent;
 import se.kth.autoscalar.common.monitoring.ResourceMonitoringEvent;
 import se.kth.autoscalar.scaling.core.ElasticScalarAPI;
-import se.kth.autoscalar.scaling.exceptions.ElasticScalarException;
+import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 
 /**
  * Created with IntelliJ IDEA.
@@ -20,52 +20,52 @@ public class MonitoringListener {
 
     ElasticScalarAPI elasticScalarAPI;
 
-    public MonitoringListener(ElasticScalarAPI elasticScalarAPI) throws ElasticScalarException {
+    public MonitoringListener(ElasticScalarAPI elasticScalarAPI) throws AutoScalarException {
         this.elasticScalarAPI = elasticScalarAPI;
     }
 
     /*start of resource monitoring related methods*/
-    public void onHighCPU(String groupId, ResourceMonitoringEvent event) throws ElasticScalarException {
+    public void onHighCPU(String groupId, ResourceMonitoringEvent event) throws AutoScalarException {
         try {
             elasticScalarAPI.handleEvent(groupId, event);
-        } catch (ElasticScalarException e) {
+        } catch (AutoScalarException e) {
             log.error("Error while handling onHighCPU event for group: " + groupId + " . " + e.getMessage());
             throw e;
         }
     }
 
-    public void onLowCPU(String groupId, ResourceMonitoringEvent event) throws ElasticScalarException {
+    public void onLowCPU(String groupId, ResourceMonitoringEvent event) throws AutoScalarException {
         try {
             elasticScalarAPI.handleEvent(groupId, event);
-        } catch (ElasticScalarException e) {
+        } catch (AutoScalarException e) {
             log.error("Error while handling onHighCPU event for group: " + groupId + " . " + e.getMessage());
             throw e;
         }
     }
 
-    public void onHighRam(String groupId, ResourceMonitoringEvent event) throws ElasticScalarException {
+    public void onHighRam(String groupId, ResourceMonitoringEvent event) throws AutoScalarException {
         try {
             elasticScalarAPI.handleEvent(groupId, event);
-        } catch (ElasticScalarException e) {
+        } catch (AutoScalarException e) {
             log.error("Error while handling onHighCPU event for group: " + groupId + " . " + e.getMessage());
             throw e;
         }
     }
 
-    public void onLowRam(String groupId, ResourceMonitoringEvent event) throws ElasticScalarException {
+    public void onLowRam(String groupId, ResourceMonitoringEvent event) throws AutoScalarException {
         try {
             elasticScalarAPI.handleEvent(groupId, event);
-        } catch (ElasticScalarException e) {
+        } catch (AutoScalarException e) {
             log.error("Error while handling onHighCPU event for group: " + groupId + " . " + e.getMessage());
             throw e;
         }
     }
 
   /*start of machine monitoring related methods*/
-  public void onStateChange(String groupId, MachineMonitoringEvent event) throws ElasticScalarException {
+  public void onStateChange(String groupId, MachineMonitoringEvent event) throws AutoScalarException {
       try {
           elasticScalarAPI.handleEvent(groupId, event);
-      } catch (ElasticScalarException e) {
+      } catch (AutoScalarException e) {
           log.error("Error while handling stateChange event for group: " + groupId + " with state change: " +
                   event.getStatus() + " . " + e.getMessage());
           throw e;

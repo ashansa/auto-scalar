@@ -7,7 +7,7 @@ package se.kth.autoscalar.scaling.exceptions;
  * @version $Id$
  * @since 1.0
  */
-public class ManageRuleException extends ElasticScalarException {
+public class ManageRuleException extends AutoScalarException {
 
     public ManageRuleException(String msg) {
         super(msg);

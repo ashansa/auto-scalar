@@ -7,7 +7,7 @@ package se.kth.autoscalar.scaling.exceptions;
  * @version $Id$
  * @since 1.0
  */
-public class DBConnectionFailureException extends ElasticScalarException {
+public class DBConnectionFailureException extends AutoScalarException {
 
     public DBConnectionFailureException(String msg) {
         super(msg);
