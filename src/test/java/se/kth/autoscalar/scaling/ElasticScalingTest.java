@@ -32,8 +32,8 @@ public class ElasticScalingTest {
 
     private String GROUP_BASE_NAME = "my_group";
     private String RULE_BASE_NAME = "my_rule";
-    private int coolingTimeOut = 1;
-    private int coolingTimeIn = 1;
+    private int coolingTimeOut = 0;
+    private int coolingTimeIn = 0;
 
     double random;
     static Rule rule1;
@@ -97,7 +97,7 @@ public class ElasticScalingTest {
 
         try {
             //No suggestions should be proposed since no resource events are in the window since thread is sleeping 5sec
-            Thread.sleep(000);
+            Thread.sleep(30);
         } catch (InterruptedException e) {
             throw new IllegalStateException("Interrupted while waiting before sending the machineMonitoringEvent", e);
         }
@@ -186,7 +186,7 @@ public class ElasticScalingTest {
 
         try {
             //No suggestions should be proposed since no resource events are in the window since thread is sleeping 5sec
-            Thread.sleep(3000);
+            Thread.sleep(30);
         } catch (InterruptedException e) {
             throw new IllegalStateException("Interrupted while waiting before sending the machineMonitoringEvent", e);
         }
@@ -257,7 +257,7 @@ public class ElasticScalingTest {
         while (suggestionQueue == null) {
             suggestionQueue = autoScalarAPI.getSuggestionQueue(groupName);
             try {
-                Thread.sleep(1000);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 System.out.println("CPU_PERCENTAGE:testElasticScaling thread sleep while getting suggestions interrupted.............");
             }
@@ -274,7 +274,7 @@ public class ElasticScalingTest {
 
             while (tries <= 10) {
                 try {
-                    suggestion = suggestionQueue.poll(1000, TimeUnit.MILLISECONDS);
+                    suggestion = suggestionQueue.poll(10, TimeUnit.MILLISECONDS);
                 } catch (InterruptedException e) {
                     throw new IllegalStateException(e);
                 }
@@ -303,7 +303,7 @@ public class ElasticScalingTest {
         while (suggestionsQueue == null) {
             suggestionsQueue = autoScalarAPI.getSuggestionQueue(groupName);
             try {
-                Thread.sleep(1000);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 System.out.println("RAM_PERCENTAGE: testElasticScaling thread sleep while getting suggestions interrupted.............");
             }
@@ -319,7 +319,7 @@ public class ElasticScalingTest {
 
             while (tries <= 10) {
                 try {
-                    suggestion = suggestionsQueue.poll(1000, TimeUnit.MILLISECONDS);
+                    suggestion = suggestionsQueue.poll(10, TimeUnit.MILLISECONDS);
                 } catch (InterruptedException e) {
                     throw new IllegalStateException(e);
                 }
@@ -347,7 +347,7 @@ public class ElasticScalingTest {
         while (suggestionsQueue == null) {
             suggestionsQueue = autoScalarAPI.getSuggestionQueue(groupName);
             try {
-                Thread.sleep(1000);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 System.out.println(expectedDirection.name() + " : thread sleep while getting suggestions interrupted.............");
             }
@@ -363,7 +363,7 @@ public class ElasticScalingTest {
                 int tries = 0;
 
                 while (tries <= 20) {
-                    suggestion = suggestionsQueue.poll(1000, TimeUnit.MILLISECONDS);
+                    suggestion = suggestionsQueue.poll(10, TimeUnit.MILLISECONDS);
                     tries++;
                 }
                 Assert.assertNull(suggestion);
@@ -397,7 +397,7 @@ public class ElasticScalingTest {
 
         System.out.println("------------ Start: cooling down test ----------");
         try {
-            Thread.sleep(1000);
+            Thread.sleep(10);
         } catch (InterruptedException e) {
             throw new IllegalStateException("Interrupted while waiting before starting testCoolingTime. ", e);
         }
