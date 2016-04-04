@@ -3,9 +3,7 @@ package se.kth.autoscalar.scaling.core;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import se.kth.autoscalar.scaling.models.MachineInfo;
-import se.kth.autoscalar.scaling.monitoring.MonitoringEvent;
-import se.kth.autoscalar.scaling.monitoring.RuleSupport;
-import se.kth.autoscalar.scaling.MonitoringListener;
+import se.kth.autoscalar.scaling.monitoring.*;
 import se.kth.autoscalar.scaling.ScalingSuggestion;
 import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 import se.kth.autoscalar.scaling.group.Group;
@@ -30,14 +28,16 @@ public class AutoScalarAPI {
 
     Log log = LogFactory.getLog(AutoScalarAPI.class);
 
-    AutoScalingManager autoScalingManager;
-    RuleManager ruleManager;
-    GroupManager groupManager;
+    private AutoScalingManager autoScalingManager;
+    private RuleManager ruleManager;
+    private GroupManager groupManager;
+    private MonitoringHandler monitoringHandler;
 
     public AutoScalarAPI() throws AutoScalarException {
         autoScalingManager = new AutoScalingManager(this);
         ruleManager = RuleManagerImpl.getInstance();
         groupManager = GroupManagerImpl.getInstance();
+        monitoringHandler = new MonitoringHandler();
     }
 
     public Rule createRule(String ruleName, RuleSupport.ResourceType resourceType, RuleSupport.Comparator comparator, float thresholdPercentage, int operationAction) throws AutoScalarException {
@@ -117,9 +117,9 @@ public class AutoScalarAPI {
         throw new UnsupportedOperationException("#removeMachineFromGroup()");
     }
 
-    public MonitoringListener startElasticScaling(String groupId, int currentNumberOfMachines) throws AutoScalarException {
-        autoScalingManager.addGroupForScaling(groupId, currentNumberOfMachines);
-        return autoScalingManager.getMonitoringListener();
+    public void startAutoScaling(String groupId, int currentNumberOfMachines) throws AutoScalarException {
+        InterestedEvent[] interestedEvents = autoScalingManager.startAutoScaling(groupId, currentNumberOfMachines);
+        monitoringHandler.addGroupForMonitoring(groupId, interestedEvents);
     }
 
     public void stopElasticScaling(String groupId) {

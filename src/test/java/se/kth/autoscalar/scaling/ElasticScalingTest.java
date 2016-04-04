@@ -5,6 +5,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import se.kth.autoscalar.scaling.monitoring.MachineMonitoringEvent;
+import se.kth.autoscalar.scaling.monitoring.MonitoringListener;
 import se.kth.autoscalar.scaling.monitoring.ResourceMonitoringEvent;
 import se.kth.autoscalar.scaling.monitoring.RuleSupport;
 import se.kth.autoscalar.scaling.monitoring.RuleSupport.ResourceType;
@@ -53,7 +54,7 @@ public class ElasticScalingTest {
 
         setBasicRulesNGroup();
         //TODO should set rules in monitoring component
-        monitoringListener = autoScalarAPI.startElasticScaling(group.getGroupName(), 2);
+        monitoringListener = autoScalarAPI.startAutoScaling(group.getGroupName(), 2);
         //TODO pass the listener to monitoring component and it should send events based on rules
 
         /*
@@ -142,7 +143,7 @@ public class ElasticScalingTest {
         System.out.println("=============== resource events are already affected =============");
         setBasicRulesNGroup();
         //TODO should set rules in monitoring component
-        monitoringListener = autoScalarAPI.startElasticScaling(group.getGroupName(), 2);
+        monitoringListener = autoScalarAPI.startAutoScaling(group.getGroupName(), 2);
         //TODO pass the listener to monitoring component and it should send events based on rules
 
         /*

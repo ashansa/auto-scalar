@@ -51,9 +51,8 @@ public class EventProfiler {
             @Override
             public void run() {
                 isProcessingInProgress = true;
-                ArrayList<MonitoringEvent> events;
-
                 eventsToBeProfiled = processMachineEvents(eventsToBeProfiled);
+                ArrayList<MonitoringEvent> events;
 
                 //process remaining resource events
                 for (String eventKey : eventsToBeProfiled.keySet()) {
@@ -62,7 +61,7 @@ public class EventProfiler {
                     if (eventKey.endsWith(RESOURCE_EVENT)) {
                         for (MonitoringEvent monitoringEvent : events) {
                             //as first step, just adding every event to profiled events queue
-                            //TODO do profiling and add the result without  adding every event to profiled events queue
+                            //TODO call getProfiledResourceEvent when its logic is implemented. May have to update the tests
                             ResourceMonitoringEvent event = (ResourceMonitoringEvent) monitoringEvent;
                             ProfiledEvent profiledEvent = new ProfiledResourceEvent(getGroupId(eventKey), event.getResourceType(),
                                     event.getComparator(), event.getCurrentValue());
@@ -98,9 +97,7 @@ public class EventProfiler {
                 ProfiledResourceEvent profiledResourceEvent = null;
 
                 if (resourceEventsInGroup != null) {
-                    //TODO consider all resource events and create the profiled resource event. (CAN use same method as if(eventKey.endsWith(RESOURCE_EVENT))
-                    ResourceMonitoringEvent resE = (ResourceMonitoringEvent) resourceEventsInGroup.get(0);
-                    profiledResourceEvent = new ProfiledResourceEvent(groupId, resE.getResourceType(), resE.getComparator(), resE.getCurrentValue());
+                    profiledResourceEvent = getProfiledResourceEvent(groupId, resourceEventsInGroup.toArray(new ResourceMonitoringEvent[resourceEventsInGroup.size()]));
                     eventsToBeProfiled.remove(resourceEventKeyOfGroup);
                 }
 
@@ -111,6 +108,13 @@ public class EventProfiler {
             }
         }
         return eventsToBeProfiled;
+    }
+
+    private ProfiledResourceEvent getProfiledResourceEvent(String groupId, ResourceMonitoringEvent[] resourceEvents) {
+        //TODO consider all resource events and create the profiled resource event. (CAN use same method as if(eventKey.endsWith(RESOURCE_EVENT))
+        ResourceMonitoringEvent resE = (ResourceMonitoringEvent) resourceEvents[0];
+        ProfiledResourceEvent profiledResourceEvent = new ProfiledResourceEvent(groupId, resE.getResourceType(), resE.getComparator(), resE.getCurrentValue());
+        return profiledResourceEvent;
     }
 
     private void notifyListeners(ProfiledEvent profiledEvent) {

@@ -6,7 +6,11 @@
 
     <groupId>se.kth.autoscalar</groupId>
     <artifactId>scaling</artifactId>
+    <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
+    <modules>
+        <module>page-rank</module>
+    </modules>
 
     <dependencies>
         <dependency>

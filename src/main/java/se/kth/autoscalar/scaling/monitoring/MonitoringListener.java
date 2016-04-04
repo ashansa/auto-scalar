@@ -1,11 +1,12 @@
-package se.kth.autoscalar.scaling;
+package se.kth.autoscalar.scaling.monitoring;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import se.kth.autoscalar.scaling.monitoring.MachineMonitoringEvent;
-import se.kth.autoscalar.scaling.monitoring.ResourceMonitoringEvent;
 import se.kth.autoscalar.scaling.core.AutoScalarAPI;
 import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Created with IntelliJ IDEA.
@@ -18,10 +19,16 @@ public class MonitoringListener {
 
     Log log = LogFactory.getLog(MonitoringListener.class);
 
-    AutoScalarAPI autoScalarAPI;
+    private ArrayList<InterestedEvent> interestedEvents;
+    private AutoScalarAPI autoScalarAPI;
 
     public MonitoringListener(AutoScalarAPI autoScalarAPI) throws AutoScalarException {
         this.autoScalarAPI = autoScalarAPI;
+    }
+
+    public MonitoringListener(AutoScalarAPI autoScalarAPI, InterestedEvent[] interestedEvents) throws AutoScalarException {
+        this.autoScalarAPI = autoScalarAPI;
+        this.interestedEvents = new ArrayList<InterestedEvent>(Arrays.asList(interestedEvents));
     }
 
     /*start of resource monitoring related methods*/

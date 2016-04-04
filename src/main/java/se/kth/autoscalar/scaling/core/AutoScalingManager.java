@@ -2,9 +2,10 @@ package se.kth.autoscalar.scaling.core;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import se.kth.autoscalar.scaling.monitoring.InterestedEvent;
 import se.kth.autoscalar.scaling.monitoring.MachineMonitoringEvent;
 import se.kth.autoscalar.scaling.monitoring.RuleSupport;
-import se.kth.autoscalar.scaling.MonitoringListener;
+import se.kth.autoscalar.scaling.monitoring.MonitoringListener;
 import se.kth.autoscalar.scaling.ScalingSuggestion;
 import se.kth.autoscalar.scaling.cost.mgt.KaramelMachineProposer;
 import se.kth.autoscalar.scaling.cost.mgt.MachineProposer;
@@ -60,7 +61,14 @@ public class AutoScalingManager {
 
     }
 
-    public void addGroupForScaling(String groupId, int currentNumberOfMachines) throws AutoScalarException {
+    public InterestedEvent[] startAutoScaling(String groupId, int currentNumberOfMachines) throws AutoScalarException {
+        addGroupForScaling(groupId, currentNumberOfMachines);
+        ArrayList<InterestedEvent> interestedEvents = new ArrayList<InterestedEvent>();
+        //TODO add events to list
+        return interestedEvents.toArray(new InterestedEvent[interestedEvents.size()]);
+    }
+
+    private void addGroupForScaling(String groupId, int currentNumberOfMachines) throws AutoScalarException {
         if (!activeGroupsInfo.containsKey(groupId)) {
             RuntimeGroupInfo runtimeGroupInfo = new RuntimeGroupInfo(groupId, currentNumberOfMachines);
             activeGroupsInfo.put(groupId, runtimeGroupInfo);
