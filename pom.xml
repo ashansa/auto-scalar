@@ -6,12 +6,12 @@
 
     <groupId>se.kth.autoscalar</groupId>
     <artifactId>scaling</artifactId>
-    <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
-    <modules>
-        <module>page-rank</module>
-    </modules>
 
+    <properties>
+        <java.compiler.version>1.7</java.compiler.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>commons-logging</groupId>
@@ -35,4 +35,17 @@
             <version>2.3.1</version>
         </dependency>
     </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <source>${java.compiler.version}</source>
+                    <target>${java.compiler.version}</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

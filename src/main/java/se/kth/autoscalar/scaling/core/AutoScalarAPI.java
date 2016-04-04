@@ -37,7 +37,7 @@ public class AutoScalarAPI {
         autoScalingManager = new AutoScalingManager(this);
         ruleManager = RuleManagerImpl.getInstance();
         groupManager = GroupManagerImpl.getInstance();
-        monitoringHandler = new MonitoringHandler();
+        monitoringHandler = new MonitoringHandler(this);
     }
 
     public Rule createRule(String ruleName, RuleSupport.ResourceType resourceType, RuleSupport.Comparator comparator, float thresholdPercentage, int operationAction) throws AutoScalarException {
@@ -117,9 +117,11 @@ public class AutoScalarAPI {
         throw new UnsupportedOperationException("#removeMachineFromGroup()");
     }
 
-    public void startAutoScaling(String groupId, int currentNumberOfMachines) throws AutoScalarException {
+    public MonitoringListener startAutoScaling(String groupId, int currentNumberOfMachines) throws AutoScalarException {
         InterestedEvent[] interestedEvents = autoScalingManager.startAutoScaling(groupId, currentNumberOfMachines);
-        monitoringHandler.addGroupForMonitoring(groupId, interestedEvents);
+        MonitoringListener monitoringListener = monitoringHandler.addGroupForMonitoring(groupId, interestedEvents);
+        //TODO temporary returning  MonitoringListener to emulate monitoring events by tests
+        return monitoringListener;
     }
 
     public void stopElasticScaling(String groupId) {
