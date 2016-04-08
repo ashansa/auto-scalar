@@ -4,14 +4,14 @@ import junit.framework.Assert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import se.kth.autoscalar.scaling.core.AutoScalarAPI;
+import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
+import se.kth.autoscalar.scaling.group.Group;
 import se.kth.autoscalar.scaling.monitoring.MachineMonitoringEvent;
 import se.kth.autoscalar.scaling.monitoring.MonitoringListener;
 import se.kth.autoscalar.scaling.monitoring.ResourceMonitoringEvent;
 import se.kth.autoscalar.scaling.monitoring.RuleSupport;
 import se.kth.autoscalar.scaling.monitoring.RuleSupport.ResourceType;
-import se.kth.autoscalar.scaling.core.AutoScalarAPI;
-import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
-import se.kth.autoscalar.scaling.group.Group;
 import se.kth.autoscalar.scaling.rules.Rule;
 
 import java.util.HashMap;
@@ -41,6 +41,7 @@ public class ElasticScalingTest {
     static Rule rule2;
     static Group group;
     String groupName;
+    String vmId = "vm1";
 
     @BeforeClass
     public static void init() throws AutoScalarException {
@@ -61,14 +62,14 @@ public class ElasticScalingTest {
         Testing with ResourceMonitoringEvent
          */
         //temporary mocking the monitoring events for scale out 1 machine
-        ResourceMonitoringEvent cpuEvent = new ResourceMonitoringEvent(ResourceType.CPU_PERCENTAGE,
+        ResourceMonitoringEvent cpuEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.CPU_PERCENTAGE,
                 RuleSupport.Comparator.GREATER_THAN, (float) ((random * 100) + 5));
         monitoringListener.onHighCPU(groupName, cpuEvent);
         testCPURules(1, ScalingSuggestion.ScalingDirection.SCALE_OUT);
 
         //temporary mocking the monitoring events for scale out 2 machine
-        ResourceMonitoringEvent ramEvent = new ResourceMonitoringEvent(ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.
-                GREATER_THAN_OR_EQUAL, (int)(random * 100) + 3);
+        ResourceMonitoringEvent ramEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.RAM_PERCENTAGE,
+                RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (int)(random * 100) + 3);
         monitoringListener.onHighRam(groupName, ramEvent);
 
         testRAMRules(2, ScalingSuggestion.ScalingDirection.SCALE_OUT);
@@ -86,7 +87,7 @@ public class ElasticScalingTest {
                 ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.LESS_THAN_OR_EQUAL, (float) ((random * 10) + 10f) , -2);
         autoScalarAPI.addRuleToGroup(groupName, ramLess.getRuleName());
         autoScalarAPI.addRuleToGroup(groupName, ramLessEq.getRuleName());
-        ramEvent = new ResourceMonitoringEvent(ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.
+        ramEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.
                 LESS_THAN_OR_EQUAL, (float) ((random * 10) + 5));
         monitoringListener.onLowRam(groupName, ramEvent);
         testRAMRules(0, null); //scale in happens only at the end of billing period
@@ -150,14 +151,14 @@ public class ElasticScalingTest {
         Testing with ResourceMonitoringEvent
          */
         //temporary mocking the monitoring events for scale out 1 machine
-        ResourceMonitoringEvent cpuEvent = new ResourceMonitoringEvent(ResourceType.CPU_PERCENTAGE,
+        ResourceMonitoringEvent cpuEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.CPU_PERCENTAGE,
                 RuleSupport.Comparator.GREATER_THAN, (float) ((random * 100) + 5));
         monitoringListener.onHighCPU(groupName, cpuEvent);
         testCPURules(1, ScalingSuggestion.ScalingDirection.SCALE_OUT);
 
         //temporary mocking the monitoring events for scale out 2 machine
-        ResourceMonitoringEvent ramEvent = new ResourceMonitoringEvent(ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.
-                GREATER_THAN_OR_EQUAL, (int)(random * 100) + 3);
+        ResourceMonitoringEvent ramEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.RAM_PERCENTAGE,
+                RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (int)(random * 100) + 3);
         monitoringListener.onHighRam(groupName, ramEvent);
 
         testRAMRules(2, ScalingSuggestion.ScalingDirection.SCALE_OUT);
@@ -175,7 +176,7 @@ public class ElasticScalingTest {
                 ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.LESS_THAN_OR_EQUAL, (float) ((random * 10) + 10f) , -2);
         autoScalarAPI.addRuleToGroup(groupName, ramLess.getRuleName());
         autoScalarAPI.addRuleToGroup(groupName, ramLessEq.getRuleName());
-        ramEvent = new ResourceMonitoringEvent(ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.
+        ramEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.
                 LESS_THAN_OR_EQUAL, (float) ((random * 10) + 5));
         monitoringListener.onLowRam(groupName, ramEvent);
         testRAMRules(0, null);    //scale in happens only at the end of billing period
@@ -408,14 +409,14 @@ public class ElasticScalingTest {
         updatedGroup.setCoolingTimeOut(100);
         autoScalarAPI.updateGroup(groupName, updatedGroup);
 
-        ResourceMonitoringEvent cpuEvent = new ResourceMonitoringEvent(ResourceType.CPU_PERCENTAGE,
+        ResourceMonitoringEvent cpuEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.CPU_PERCENTAGE,
                 RuleSupport.Comparator.GREATER_THAN, (float) ((random * 100) + 5));
         monitoringListener.onHighCPU(groupName, cpuEvent);
         testCPURules(0, ScalingSuggestion.ScalingDirection.SCALE_OUT);
 
         //temporary mocking the monitoring events for scale out 2 machine
-        ResourceMonitoringEvent ramEvent = new ResourceMonitoringEvent(ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.
-                GREATER_THAN_OR_EQUAL, (int)(random * 100) + 3);
+        ResourceMonitoringEvent ramEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.RAM_PERCENTAGE,
+                RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (int)(random * 100) + 3);
         monitoringListener.onHighRam(groupName, ramEvent);
 
         testRAMRules(0, null);   //since the coolDown time is higher, wont scale out for event

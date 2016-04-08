@@ -2,10 +2,6 @@ package se.kth.autoscalar.scaling.core;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import se.kth.autoscalar.scaling.monitoring.InterestedEvent;
-import se.kth.autoscalar.scaling.monitoring.MachineMonitoringEvent;
-import se.kth.autoscalar.scaling.monitoring.RuleSupport;
-import se.kth.autoscalar.scaling.monitoring.MonitoringListener;
 import se.kth.autoscalar.scaling.ScalingSuggestion;
 import se.kth.autoscalar.scaling.cost.mgt.KaramelMachineProposer;
 import se.kth.autoscalar.scaling.cost.mgt.MachineProposer;
@@ -15,6 +11,10 @@ import se.kth.autoscalar.scaling.group.GroupManager;
 import se.kth.autoscalar.scaling.group.GroupManagerImpl;
 import se.kth.autoscalar.scaling.models.MachineType;
 import se.kth.autoscalar.scaling.models.RuntimeGroupInfo;
+import se.kth.autoscalar.scaling.monitoring.InterestedEvent;
+import se.kth.autoscalar.scaling.monitoring.MachineMonitoringEvent;
+import se.kth.autoscalar.scaling.monitoring.MonitoringListener;
+import se.kth.autoscalar.scaling.monitoring.RuleSupport;
 import se.kth.autoscalar.scaling.profile.*;
 import se.kth.autoscalar.scaling.rules.Rule;
 
@@ -62,9 +62,10 @@ public class AutoScalingManager {
     }
 
     public InterestedEvent[] startAutoScaling(String groupId, int currentNumberOfMachines) throws AutoScalarException {
-        addGroupForScaling(groupId, currentNumberOfMachines);
         ArrayList<InterestedEvent> interestedEvents = new ArrayList<InterestedEvent>();
         //TODO add events to list
+        String[] ruleNames = groupManager.getRulesForGroup(groupId);
+        addGroupForScaling(groupId, currentNumberOfMachines);
         return interestedEvents.toArray(new InterestedEvent[interestedEvents.size()]);
     }
 

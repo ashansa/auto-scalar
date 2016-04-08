@@ -9,4 +9,19 @@ package se.kth.autoscalar.scaling.monitoring;
  */
 public class MonitoringEvent {
 
+    private String groupId;
+    private String machineId;
+
+    MonitoringEvent(String groupId, String machineId) {
+        this.groupId = groupId;
+        this.machineId = machineId;
+    }
+
+    public String getGroupId() {
+        return groupId;
+    }
+
+    public String getMachineId() {
+        return machineId;
+    }
 }

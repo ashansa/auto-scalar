@@ -29,9 +29,11 @@ public class EventProfiler {
     private Map<String, ArrayList<MonitoringEvent>> eventsToBeProfiled = new HashMap<String, ArrayList<MonitoringEvent>>();
     private Map<String, ArrayList<MonitoringEvent>> eventsToBeProfiledTempMap = new HashMap<String, ArrayList<MonitoringEvent>>();
 
-    ArrayList<ProfiledEventListener> profiledEventListeners = new ArrayList<ProfiledEventListener>();
+    private ArrayList<ProfiledEventListener> profiledEventListeners = new ArrayList<ProfiledEventListener>();
 
-    boolean isProcessingInProgress;
+    //TODO make this configurable
+    private int windowSize = 20; //time in ms
+    private boolean isProcessingInProgress;
     private Lock lock = new ReentrantLock();
 
     private static final String RESOURCE_EVENT = "resourceEvent";
@@ -45,7 +47,7 @@ public class EventProfiler {
         profiledEventListeners.add(listener);
     }
 
-    private void init() {
+    public void init() {
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -56,6 +58,7 @@ public class EventProfiler {
 
                 //process remaining resource events
                 for (String eventKey : eventsToBeProfiled.keySet()) {
+                    //TODO do profiling in different threads
                     events = eventsToBeProfiled.get(eventKey); //this is only one type of events in a group
                     //since the machine monitoring events are already processed, only the resource events will be remaining to be processed
                     if (eventKey.endsWith(RESOURCE_EVENT)) {
@@ -70,6 +73,15 @@ public class EventProfiler {
                     }
                 }
 
+                /* end of static profiling */
+
+                /* start of dynamic profiling */
+                //1) profile events and decide what to request
+
+                //2-a) if properly LB, get avg and create Profiled events & notify listeners
+                //2-b) if not properly LB, ask the avg of nodes after removing outliers ( AVG from 10% to 90%)
+                /* end of dynamic profiling */
+
                 try {
                     lock.lock();
                     //after processing is done, add events added to temp map to eventsToBeProcessed so that they will
@@ -81,13 +93,14 @@ public class EventProfiler {
                     lock.unlock();
                 }
             }
-        }, 10, 20);
+        }, 10, windowSize);
     }
 
     private Map<String, ArrayList<MonitoringEvent>> processMachineEvents(Map<String, ArrayList<MonitoringEvent>> eventsToBeProfiled) {
         Set<String> keys = new HashSet<String>();
         keys.addAll(eventsToBeProfiled.keySet());
         for (String eventKey : keys) {
+            //TODO do profiling in different threads
             if (eventKey.endsWith(MACHINE_EVENT)) {
                 ArrayList<MonitoringEvent> machineEventsInGroup = eventsToBeProfiled.get(eventKey);
 

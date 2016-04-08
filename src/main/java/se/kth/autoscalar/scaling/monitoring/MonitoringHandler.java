@@ -25,11 +25,11 @@ public class MonitoringHandler {
         return monitoringListener;
     }
 
-    public void addInterestedEvent(InterestedEvent event) {
-
+    public void addInterestedEvent(String groupId, InterestedEvent[] events, int timeDuration) {
+        //TODO request events for a limited time
     }
 
-    public void removeInterestedEvent(InterestedEvent event) {
-
+    public void removeInterestedEvent(String groupId, InterestedEvent events, int timeDuration) {
+        //TODO remove events for a limited time
     }
 }

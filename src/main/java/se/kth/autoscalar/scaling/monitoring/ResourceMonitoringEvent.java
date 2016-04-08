@@ -13,7 +13,9 @@ public class ResourceMonitoringEvent extends MonitoringEvent {
     private RuleSupport.Comparator comparator;
     private float currentValue;
 
-    public ResourceMonitoringEvent(RuleSupport.ResourceType resourceType, RuleSupport.Comparator comparator, float value) {
+    public ResourceMonitoringEvent(String groupId, String machineId, RuleSupport.ResourceType resourceType,
+                                   RuleSupport.Comparator comparator, float value) {
+        super(groupId, machineId);
         this.resourceType = resourceType;
         this.comparator = comparator;
         this.currentValue = value;
