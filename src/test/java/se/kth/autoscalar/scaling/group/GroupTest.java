@@ -38,7 +38,7 @@ public class GroupTest {
         } catch (InterruptedException e) {
             throw new IllegalStateException(e);
         }
-        autoScalarAPI = new AutoScalarAPI();
+        autoScalarAPI = AutoScalarAPI.getInstance();
     }
 
     @Test

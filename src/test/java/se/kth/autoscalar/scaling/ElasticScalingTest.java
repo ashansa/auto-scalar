@@ -45,7 +45,7 @@ public class ElasticScalingTest {
 
     @BeforeClass
     public static void init() throws AutoScalarException {
-        autoScalarAPI = new AutoScalarAPI();
+        autoScalarAPI = AutoScalarAPI.getInstance();
     }
 
     @Test

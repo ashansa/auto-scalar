@@ -11,12 +11,11 @@ import se.kth.autoscalar.scaling.group.GroupManager;
 import se.kth.autoscalar.scaling.group.GroupManagerImpl;
 import se.kth.autoscalar.scaling.models.MachineType;
 import se.kth.autoscalar.scaling.models.RuntimeGroupInfo;
-import se.kth.autoscalar.scaling.monitoring.InterestedEvent;
-import se.kth.autoscalar.scaling.monitoring.MachineMonitoringEvent;
-import se.kth.autoscalar.scaling.monitoring.MonitoringListener;
-import se.kth.autoscalar.scaling.monitoring.RuleSupport;
+import se.kth.autoscalar.scaling.monitoring.*;
 import se.kth.autoscalar.scaling.profile.*;
 import se.kth.autoscalar.scaling.rules.Rule;
+import se.kth.autoscalar.scaling.rules.RuleManager;
+import se.kth.autoscalar.scaling.rules.RuleManagerImpl;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -32,10 +31,12 @@ public class AutoScalingManager {
 
     Log log = LogFactory.getLog(AutoScalingManager.class);
 
-    GroupManager groupManager;
-    EventProfiler eventProfiler;
-    MonitoringListener monitoringListener;
-    ScaleOutDecisionMaker scaleOutDecisionMaker;
+    private GroupManager groupManager;
+    private RuleManager ruleManager;
+    private EventProfiler eventProfiler;
+    //private MonitoringListener monitoringListener;
+    private MonitoringHandler monitoringHandler;
+    private ScaleOutDecisionMaker scaleOutDecisionMaker;
     private boolean optimizedScaleInTmp = true;
 
     private Map<String, RuntimeGroupInfo> activeGroupsInfo = new HashMap<String, RuntimeGroupInfo>();
@@ -46,14 +47,15 @@ public class AutoScalingManager {
     //private ArrayList<String> activeESGroups = new ArrayList<String>();
     //ArrayBlockingQueue<ScalingSuggestion> suggestionsQueue = new ArrayBlockingQueue<ScalingSuggestion>(50);
 
-    public AutoScalingManager(AutoScalarAPI autoScalarAPI) throws AutoScalarException {
+    public AutoScalingManager(MonitoringHandler monitoringHandler) throws AutoScalarException {
         groupManager = GroupManagerImpl.getInstance();
+        ruleManager = RuleManagerImpl.getInstance();
         eventProfiler = new EventProfiler();
         eventProfiler.addListener(new ProfiledResourceEventListener());
         eventProfiler.addListener(new ProfiledMachineEventListener());
         scaleOutDecisionMaker = new ScaleOutDecisionMaker();
         //scaleInDecisionMaker = new ScaleInDecisionMaker();   //avoid using a different thread until there is a real need
-        monitoringListener = new MonitoringListener(autoScalarAPI);
+        this.monitoringHandler = monitoringHandler;
 
         //starting decision maker threads
         (new Thread(scaleOutDecisionMaker)).start();
@@ -61,12 +63,32 @@ public class AutoScalingManager {
 
     }
 
-    public InterestedEvent[] startAutoScaling(String groupId, int currentNumberOfMachines) throws AutoScalarException {
+    public MonitoringListener startAutoScaling(String groupId, int currentNumberOfMachines) throws AutoScalarException {
         ArrayList<InterestedEvent> interestedEvents = new ArrayList<InterestedEvent>();
-        //TODO add events to list
         String[] ruleNames = groupManager.getRulesForGroup(groupId);
+        Rule rule;
+        //adding resource utilization interests
+        for (String ruleName : ruleNames) {
+            try {
+                rule = ruleManager.getRule(ruleName);
+                interestedEvents.add(new InterestedEvent(rule.getResourceType().name().concat(" ").concat(
+                        rule.getComparator().name().concat(" ").concat(String.valueOf(rule.getThreshold())))));
+            } catch (AutoScalarException e) {
+                log.error("Failed to add rule: " + ruleName + " to interested events.");
+            }
+        }
+
+        //adding machine status interests
+        interestedEvents.add(new InterestedEvent(MachineMonitoringEvent.Status.AT_END_OF_BILLING_PERIOD.name()));
+        interestedEvents.add(new InterestedEvent(MachineMonitoringEvent.Status.KILLED.name()));
+
         addGroupForScaling(groupId, currentNumberOfMachines);
-        return interestedEvents.toArray(new InterestedEvent[interestedEvents.size()]);
+
+        MonitoringListener monitoringListener = monitoringHandler.addGroupForMonitoring(groupId,
+                interestedEvents.toArray(new InterestedEvent[interestedEvents.size()]));
+        //TODO temporary returning  MonitoringListener to emulate monitoring events by tests
+        //TODO call monitoring component and give the listener
+        return monitoringListener;
     }
 
     private void addGroupForScaling(String groupId, int currentNumberOfMachines) throws AutoScalarException {
@@ -87,8 +109,53 @@ public class AutoScalingManager {
         return suggestionMap.get(groupId);
     }
 
-    public MonitoringListener getMonitoringListener() {
+   /* public MonitoringListener getMonitoringListener() {
         return monitoringListener;
+    }*/
+
+    public int getNoOfMachinesInGroup(String groupId) {
+        RuntimeGroupInfo runtimeInfo = activeGroupsInfo.get(groupId);
+        if (runtimeInfo == null) {
+            log.warn("Given group is not in active Auto scaling groups. GroupId: " + groupId);
+        }
+        return runtimeInfo.getNumberOfMachinesInGroup();
+    }
+
+    /**
+     * @param groupId
+     * @param thesholdChange   should add -x to lower threshold by x
+     * @throws AutoScalarException
+     */
+    public void addNewThresholdResourceInterests(String groupId, float thesholdChange, int timeDuration) throws AutoScalarException {
+        ArrayList<InterestedEvent> interestedEvents = new ArrayList<InterestedEvent>();
+        String[] ruleNames = groupManager.getRulesForGroup(groupId);
+        Rule rule;
+        //adding resource utilization interests
+        for (String ruleName : ruleNames) {
+            try {
+                //TODO if there are more than one CPU > rules, add the lowest which will cover others as well
+                rule = ruleManager.getRule(ruleName);
+                //id: CPU > 80
+                InterestedEvent event = new InterestedEvent(rule.getResourceType().name().concat(" ").concat(rule.
+                        getComparator().name().concat(" ").concat(String.valueOf(rule.getThreshold() + thesholdChange))));
+                interestedEvents.add(event);
+            } catch (AutoScalarException e) {
+                log.error("Failed to add rule: " + ruleName + " to interested events.");
+            }
+        }
+
+        monitoringHandler.addInterestedEvent(groupId, interestedEvents.toArray(new InterestedEvent[interestedEvents.size()]),
+                timeDuration);
+
+    }
+
+    public void addAverageResourceInterests(String groupId, RuleSupport.ResourceType resourceType, float lowerPercentile,
+                                            float upperPercentile, int timeDuration) throws AutoScalarException {
+        ArrayList<InterestedEvent> interestedEvents = new ArrayList<InterestedEvent>();
+        //ie: CPU AVG(10To90)
+        InterestedEvent event = new InterestedEvent(resourceType.name().concat(" ").concat("AVG (").concat(
+                String.valueOf(lowerPercentile).concat("TO").concat(String.valueOf(upperPercentile))));
+        monitoringHandler.addGroupForMonitoring(groupId, new InterestedEvent[]{event});
     }
 
     /**

@@ -2,13 +2,16 @@ package se.kth.autoscalar.scaling.core;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import se.kth.autoscalar.scaling.models.MachineInfo;
-import se.kth.autoscalar.scaling.monitoring.*;
 import se.kth.autoscalar.scaling.ScalingSuggestion;
 import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 import se.kth.autoscalar.scaling.group.Group;
 import se.kth.autoscalar.scaling.group.GroupManager;
 import se.kth.autoscalar.scaling.group.GroupManagerImpl;
+import se.kth.autoscalar.scaling.models.MachineInfo;
+import se.kth.autoscalar.scaling.monitoring.MonitoringEvent;
+import se.kth.autoscalar.scaling.monitoring.MonitoringHandler;
+import se.kth.autoscalar.scaling.monitoring.MonitoringListener;
+import se.kth.autoscalar.scaling.monitoring.RuleSupport;
 import se.kth.autoscalar.scaling.rules.Rule;
 import se.kth.autoscalar.scaling.rules.RuleManager;
 import se.kth.autoscalar.scaling.rules.RuleManagerImpl;
@@ -31,13 +34,24 @@ public class AutoScalarAPI {
     private AutoScalingManager autoScalingManager;
     private RuleManager ruleManager;
     private GroupManager groupManager;
-    private MonitoringHandler monitoringHandler;
+    private static AutoScalarAPI autoScalarAPI;
 
-    public AutoScalarAPI() throws AutoScalarException {
-        autoScalingManager = new AutoScalingManager(this);
+    private AutoScalarAPI() throws AutoScalarException {
+        MonitoringHandler monitoringHandler = new MonitoringHandler(this);
+        autoScalingManager = new AutoScalingManager(monitoringHandler);
         ruleManager = RuleManagerImpl.getInstance();
         groupManager = GroupManagerImpl.getInstance();
-        monitoringHandler = new MonitoringHandler(this);
+    }
+
+    public static AutoScalarAPI getInstance() throws AutoScalarException {
+        try {
+            if (autoScalarAPI == null) {
+                autoScalarAPI = new AutoScalarAPI();
+            }
+            return autoScalarAPI;
+        } catch (AutoScalarException e) {
+            throw new AutoScalarException("Error while initializing AutoScalarAPI", e);
+        }
     }
 
     public Rule createRule(String ruleName, RuleSupport.ResourceType resourceType, RuleSupport.Comparator comparator, float thresholdPercentage, int operationAction) throws AutoScalarException {
@@ -118,10 +132,7 @@ public class AutoScalarAPI {
     }
 
     public MonitoringListener startAutoScaling(String groupId, int currentNumberOfMachines) throws AutoScalarException {
-        InterestedEvent[] interestedEvents = autoScalingManager.startAutoScaling(groupId, currentNumberOfMachines);
-        MonitoringListener monitoringListener = monitoringHandler.addGroupForMonitoring(groupId, interestedEvents);
-        //TODO temporary returning  MonitoringListener to emulate monitoring events by tests
-        return monitoringListener;
+        return autoScalingManager.startAutoScaling(groupId, currentNumberOfMachines);
     }
 
     public void stopElasticScaling(String groupId) {

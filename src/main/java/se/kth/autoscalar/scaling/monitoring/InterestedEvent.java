@@ -9,22 +9,18 @@ package se.kth.autoscalar.scaling.monitoring;
  */
 public class InterestedEvent {
 
-    public enum X {
+    /*public enum X {
         GREATER_THAN_OR_EQUAL, LESS_THAN_OR_EQUAL, AVG, TO
     }
+    */
 
-    private RuleSupport.ResourceType resourceType;
     //TODO change this as required
-    private String interest;   //ie: >= 80 OR <= 30;   avg (10% TO 90%)
+    private String interest;   //resource interests: CPU >= 80%; RAM <= 30%;   CPU avg (10% TO 90%)
+                               // machine interests: KILLED; AT_END_OF_BILLING_PERIOD
 
-    public InterestedEvent(RuleSupport.ResourceType resourceType, String interest) {
+    public InterestedEvent(String interest) {
         //TODO validate the interest is in correct format
-        this.resourceType = resourceType;
         this.interest = interest;
-    }
-
-    public RuleSupport.ResourceType getResourceType() {
-        return resourceType;
     }
 
     public String getInterest() {
