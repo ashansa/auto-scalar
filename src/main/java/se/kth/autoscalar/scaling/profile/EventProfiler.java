@@ -65,9 +65,9 @@ public class EventProfiler {
                             //as first step, just adding every event to profiled events queue
                             //TODO call getProfiledResourceEvent when its logic is implemented. May have to update the tests
                             ResourceMonitoringEvent event = (ResourceMonitoringEvent) monitoringEvent;
-                            ProfiledEvent profiledEvent = new ProfiledResourceEvent(getGroupId(eventKey), event.getResourceType(),
+                            /*ProfiledEvent profiledEvent = new ProfiledResourceEvent(getGroupId(eventKey), event.getResourceType(),
                                     event.getComparator(), event.getCurrentValue());
-                            notifyListeners(profiledEvent);
+                            notifyListeners(profiledEvent);*/
                         }
                     }
                 }
@@ -98,10 +98,10 @@ public class EventProfiler {
                 ArrayList<MonitoringEvent> resourceEventsInGroup = eventsToBeProfiled.get(resourceEventKeyOfGroup);
                 ProfiledResourceEvent profiledResourceEvent = null;
 
-                if (resourceEventsInGroup != null) {
+                /*if (resourceEventsInGroup != null) {
                     profiledResourceEvent = getProfiledResourceEvent(groupId, resourceEventsInGroup.toArray(new ResourceMonitoringEvent[resourceEventsInGroup.size()]));
                     eventsToBeProfiled.remove(resourceEventKeyOfGroup);
-                }
+                }*/
 
                 ProfiledMachineEvent profiledMachineEvent = new ProfiledMachineEvent(groupId, machineEventsInGroup.toArray(
                         new MachineMonitoringEvent[machineEventsInGroup.size()]), profiledResourceEvent);
@@ -112,12 +112,12 @@ public class EventProfiler {
         return eventsToBeProfiled;
     }
 
-    private ProfiledResourceEvent getProfiledResourceEvent(String groupId, ResourceMonitoringEvent[] resourceEvents) {
+   /* private ProfiledResourceEvent getProfiledResourceEvent(String groupId, ResourceMonitoringEvent[] resourceEvents) {
         //TODO consider all resource events and create the profiled resource event. (CAN use same method as if(eventKey.endsWith(RESOURCE_EVENT))
         ResourceMonitoringEvent resE = (ResourceMonitoringEvent) resourceEvents[0];
         ProfiledResourceEvent profiledResourceEvent = new ProfiledResourceEvent(groupId, resE.getResourceType(), resE.getComparator(), resE.getCurrentValue());
         return profiledResourceEvent;
-    }
+    }*/
 
     private void notifyListeners(ProfiledEvent profiledEvent) {
 

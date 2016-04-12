@@ -63,4 +63,19 @@ public class Rule {
     public String getRuleName() {
         return ruleName;
     }
+
+    @Override
+    public int hashCode() {
+        return ruleName.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other instanceof Rule) {
+            Rule otherRule = (Rule) other;
+            return this.ruleName.equals(otherRule.getRuleName());
+        } else {
+            return false;
+        }
+    }
 }

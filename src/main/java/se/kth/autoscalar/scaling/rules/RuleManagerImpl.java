@@ -115,20 +115,7 @@ public class RuleManagerImpl implements RuleManager {
                 if (rule == null) {
                     log.error("Could not find the rule for rule name: " + ruleName);
                 } else {
-                    //if (rule.getResourceType().name().equals(resourceType.name()) && rule.getComparator().name().equals(comparator.name())) {
                     if (rule.getResourceType().name().equals(eventResourceType.name())) {
-                        /*if (Comparator.GREATER_THAN.equals(eventComparator) || Comparator.GREATER_THAN_OR_EQUAL.equals(eventComparator)) {
-                            if (eventValue > rule.getThreshold())
-                                matchingRules.add(rule);
-                            else if (eventValue == rule.getThreshold() && Comparator.GREATER_THAN_OR_EQUAL.equals(rule.getComparator()))
-                                matchingRules.add(rule);
-                        } else if (Comparator.LESS_THAN.equals(eventComparator) || Comparator.LESS_THAN_OR_EQUAL.equals(eventComparator)) {
-                            if (eventValue < rule.getThreshold())
-                                matchingRules.add(rule);
-                            else if (eventValue == rule.getThreshold() && Comparator.LESS_THAN_OR_EQUAL.equals(rule.getComparator()))
-                                matchingRules.add(rule);
-                        }*/
-
                         Comparator ruleComparator = rule.getComparator();
                         if (Comparator.GREATER_THAN.equals(eventComparator) || Comparator.GREATER_THAN_OR_EQUAL.equals(eventComparator)) {
                             if (Comparator.GREATER_THAN.equals(ruleComparator)) {
@@ -147,25 +134,6 @@ public class RuleManagerImpl implements RuleManager {
                                     matchingRules.add(rule);
                             }
                         }
-                        /*switch (rule.getComparator()) {
-                            case GREATER_THAN:
-                                if (currentValue > rule.getThreshold())
-                                matchingRules.add(rule);
-                                break;
-                            case GREATER_THAN_OR_EQUAL:
-                                if (currentValue >= rule.getThreshold())
-                                    matchingRules.add(rule);
-                                break;
-                            case LESS_THAN:
-                                if (currentValue < rule.getThreshold())
-                                    matchingRules.add(rule);
-                                break;
-                            case LESS_THAN_OR_EQUAL:
-                                if (currentValue <= rule.getThreshold())
-                                    matchingRules.add(rule);
-                                break;
-                        }*/
-
                     }
                 }
             } catch (AutoScalarException e) {

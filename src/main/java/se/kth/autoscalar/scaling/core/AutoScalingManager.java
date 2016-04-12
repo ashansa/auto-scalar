@@ -2,6 +2,7 @@ package se.kth.autoscalar.scaling.core;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import se.kth.autoscalar.scaling.Constants;
 import se.kth.autoscalar.scaling.ScalingSuggestion;
 import se.kth.autoscalar.scaling.cost.mgt.KaramelMachineProposer;
 import se.kth.autoscalar.scaling.cost.mgt.MachineProposer;
@@ -33,8 +34,8 @@ public class AutoScalingManager {
 
     private GroupManager groupManager;
     private RuleManager ruleManager;
-    private EventProfiler eventProfiler;
-    //private DynamicEventProfiler eventProfiler;
+    //private EventProfiler eventProfiler;
+    private DynamicEventProfiler eventProfiler;
     private MonitoringHandler monitoringHandler;
     private ScaleOutDecisionMaker scaleOutDecisionMaker;
     private boolean optimizedScaleInTmp = true;
@@ -50,8 +51,8 @@ public class AutoScalingManager {
     public AutoScalingManager(MonitoringHandler monitoringHandler) throws AutoScalarException {
         groupManager = GroupManagerImpl.getInstance();
         ruleManager = RuleManagerImpl.getInstance();
-        eventProfiler = new EventProfiler();
-        //eventProfiler = new DynamicEventProfiler(monitoringHandler, this);
+        //eventProfiler = new EventProfiler();
+        eventProfiler = new DynamicEventProfiler(monitoringHandler, this);
         eventProfiler.addListener(new ProfiledResourceEventListener());
         eventProfiler.addListener(new ProfiledMachineEventListener());
         scaleOutDecisionMaker = new ScaleOutDecisionMaker();
@@ -214,24 +215,36 @@ public class AutoScalingManager {
      */
     private int getNumberOfMachineChanges(ProfiledResourceEvent event) throws AutoScalarException {
         //TODO should iterate all resource types and comparators and give the machine changes
-        Rule[] matchingRules = groupManager.getMatchingRulesForGroup(event.getGroupId(), event.getResourceType(),
-                event.getComparator(), event.getValue());
-        int maxChangeOfMachines = 0;
+        ////Set<Rule> allMatchingRules = new HashSet<Rule>();
+        HashMap<String, Float> resourceThresholds = event.getResourceThresholds();   //ie key: CPU:>=
+        ArrayList<Integer> noOfMachineChanges = new ArrayList<Integer>();
 
-        if(RuleSupport.Comparator.GREATER_THAN.equals(event.getComparator()) || RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.equals(event.getComparator())) {
-            //will keep the maximum machine additions
-            for (Rule rule : matchingRules) {
-                if (maxChangeOfMachines < rule.getOperationAction())
-                    maxChangeOfMachines = rule.getOperationAction();
+        for (String resourceComparatorKey : resourceThresholds.keySet()) {
+            RuleSupport.ResourceType resourceType = RuleSupport.ResourceType.valueOf(resourceComparatorKey.split(Constants.SEPARATOR)[0]);
+            RuleSupport.Comparator comparator = RuleSupport.Comparator.valueOf(resourceComparatorKey.split(Constants.SEPARATOR)[1]);
+
+            Rule[] matchingRules = groupManager.getMatchingRulesForGroup(event.getGroupId(), resourceType, comparator,
+                    resourceThresholds.get(resourceComparatorKey));
+            ////allMatchingRules.addAll(Arrays.asList(matchingRules));
+
+            int maxChangeOfMachines = 0;
+
+            if(RuleSupport.Comparator.GREATER_THAN.equals(comparator) || RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.equals(comparator)) {
+                //will keep the maximum machine additions
+                for (Rule rule : matchingRules) {
+                    if (maxChangeOfMachines < rule.getOperationAction())
+                        maxChangeOfMachines = rule.getOperationAction();
+                }
+            } else if(RuleSupport.Comparator.LESS_THAN.equals(comparator) || RuleSupport.Comparator.LESS_THAN_OR_EQUAL.equals(comparator)) {
+                //will keep the maximum machine removals
+                for (Rule rule : matchingRules) {
+                    if (maxChangeOfMachines > rule.getOperationAction())
+                        maxChangeOfMachines = rule.getOperationAction();
+                }
             }
-        } else if(RuleSupport.Comparator.LESS_THAN.equals(event.getComparator()) || RuleSupport.Comparator.LESS_THAN_OR_EQUAL.equals(event.getComparator())) {
-            //will keep the maximum machine removals
-            for (Rule rule : matchingRules) {
-                if (maxChangeOfMachines > rule.getOperationAction())
-                    maxChangeOfMachines = rule.getOperationAction();
-            }
+            noOfMachineChanges.add(maxChangeOfMachines);
         }
-        return maxChangeOfMachines;
+        return Collections.max(noOfMachineChanges);
     }
 
     public class ProfiledMachineEventListener implements ProfiledEventListener {
@@ -480,7 +493,8 @@ public class AutoScalingManager {
 
     //add a ScaleInDecisionMaker class if required
 
-    public EventProfiler getEventProfiler() {
+    //public EventProfiler getEventProfiler() {
+    public DynamicEventProfiler getEventProfiler() {
         return eventProfiler;
     }
 }

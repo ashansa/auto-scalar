@@ -2,6 +2,7 @@ package se.kth.autoscalar.scaling.profile;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import se.kth.autoscalar.scaling.Constants;
 import se.kth.autoscalar.scaling.core.AutoScalingManager;
 import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 import se.kth.autoscalar.scaling.monitoring.*;
@@ -99,7 +100,7 @@ public class DynamicEventProfiler {
 
                         eventsInGroup = combineEvents(eventsInGroup, newEvents);
                         if (eventsInGroup != null) {
-                            ProfiledEvent profiledEvent = getProfiledEvent(eventsInGroup);
+                            ProfiledEvent profiledEvent = getProfiledEvent(groupId, eventsInGroup);
                             notifyListeners(profiledEvent);
                         }
                     } else {
@@ -150,7 +151,7 @@ public class DynamicEventProfiler {
 
                             eventsInGroup = combineEvents(eventsInGroup, newEvents);
                             if (eventsInGroup != null) {
-                                ProfiledEvent profiledEvent = getProfiledEvent(eventsInGroup);
+                                ProfiledEvent profiledEvent = getProfiledEvent(groupId, eventsInGroup);
                                 notifyListeners(profiledEvent);
                             }
                         } else {
@@ -180,7 +181,7 @@ public class DynamicEventProfiler {
                             //create profiledEvents based on new events (with resource AVGs and machine Events
                             eventsInGroup = combineEvents(eventsInGroup, newEvents);
                             if (eventsInGroup != null) {
-                                ProfiledEvent profiledEvent = getProfiledEvent(eventsInGroup);
+                                ProfiledEvent profiledEvent = getProfiledEvent(groupId, eventsInGroup);
                                 notifyListeners(profiledEvent);
                             }
                         }
@@ -240,8 +241,8 @@ public class DynamicEventProfiler {
         return isLoadBalanced;
     }
 
-    private ProfiledEvent getProfiledEvent(ArrayList<MonitoringEvent> events) {
-        //TODO implement method priorotizing AVG, and adding machine events
+    private ProfiledEvent getProfiledEvent(String groupId, ArrayList<MonitoringEvent> events) {
+        //TODO implement method prioretizing AVG, and adding machine events
         ArrayList<ResourceMonitoringEvent> resourceMonitoringEvents = new ArrayList<ResourceMonitoringEvent>();
         ArrayList<MachineMonitoringEvent> machineMonitoringEvents = new ArrayList<MachineMonitoringEvent>();
         ArrayList<ResourceAggregatedEvent> resourceAggregatedEvents = new ArrayList<ResourceAggregatedEvent>();
@@ -255,41 +256,36 @@ public class DynamicEventProfiler {
                resourceAggregatedEvents.add((ResourceAggregatedEvent)event);
         }
 
-        //create profiled resource events for resource types supported
-        ArrayList<ProfiledResourceEvent> profiledResourceEvents = new ArrayList<ProfiledResourceEvent>();
-        ArrayList<RuleSupport.ResourceType> profiledResourceTypes = new ArrayList<RuleSupport.ResourceType>();
+        ProfiledResourceEvent profiledResourceEvent = null;
 
-        //create profiled resource events with aggregated events
-        for (ResourceAggregatedEvent aggregatedEvent : resourceAggregatedEvents) {
-            ProfiledResourceEvent profiledResourceEvent = new ProfiledResourceEvent(aggregatedEvent.getGroupId(),
-                    aggregatedEvent.getResourceType(), aggregatedEvent.getComparator(), aggregatedEvent.getCurrentValue());
-            profiledResourceEvents.add(profiledResourceEvent);
-            profiledResourceTypes.add(profiledResourceEvent.getResourceType());
-        }
-        //fill the profiled resource events with normal resource events
-        for (RuleSupport.ResourceType resourceType : RuleSupport.ResourceType.values()) {
-            if (!profiledResourceTypes.contains(resourceType)) {
+        if (resourceAggregatedEvents.size() > 0 || resourceMonitoringEvents.size() > 0) {
+            profiledResourceEvent = new ProfiledResourceEvent(groupId);
+            List<RuleSupport.ResourceType> requiredResourceTypes = Arrays.asList(RuleSupport.ResourceType.values());
+            ArrayList<RuleSupport.ResourceType> profiledResourceTypes = new ArrayList<RuleSupport.ResourceType>();
+            String resourceComparatorKey;
 
-                //TODO ****** should consider the comparator value as well :(
-                ResourceMonitoringEvent[] resourceEventsOfType = getResourceEventsOfType(resourceMonitoringEvents.
-                        toArray(new ResourceMonitoringEvent[resourceMonitoringEvents.size()]), resourceType);
-                if (resourceEventsOfType.length > 0) {
-                    float average = getAvgOfCurrentValues(resourceEventsOfType);
-                    ResourceMonitoringEvent sampleEvent = resourceEventsOfType[0];  //to retrieve info for Profiled event
-                    ProfiledResourceEvent profiledResourceEvent = new ProfiledResourceEvent(sampleEvent.getGroupId(),
-                            sampleEvent.getResourceType(), sampleEvent.getComparator(), average);
-                    profiledResourceEvents.add(profiledResourceEvent);
-                }
+            for (ResourceAggregatedEvent aggregatedEvent : resourceAggregatedEvents) {
+                resourceComparatorKey = aggregatedEvent.getResourceType().name().concat(Constants.SEPARATOR).concat("AVG");
+                profiledResourceEvent.addResourceThresholds(resourceComparatorKey, aggregatedEvent.getCurrentValue());
+                profiledResourceTypes.add(aggregatedEvent.getResourceType());
+            }
+
+            //fill the resource types of profiled resource with normal resource events
+            requiredResourceTypes.removeAll(profiledResourceTypes);
+            HashMap<String, ArrayList<ResourceMonitoringEvent>> categorization = categorizeEventsByTypeNComparator(
+                    resourceMonitoringEvents, requiredResourceTypes);
+            for (String key : categorization.keySet()) {
+                float average = getAvgOfCurrentValues(categorization.get(key));
+                profiledResourceEvent.addResourceThresholds(key, average);
             }
         }
 
-
-
         if (machineMonitoringEvents.size() > 0) {
-            MachineMonitoringEvent sampleEvent = machineMonitoringEvents.get(0); //to retrieve info for Profiled event
-            //ProfiledEvent profiledEvent = new ProfiledMachineEvent(sampleEvent.getGroupId())
+            ProfiledEvent profiledMachineEvent = new ProfiledMachineEvent(groupId, machineMonitoringEvents.toArray(
+                    new MachineMonitoringEvent[machineMonitoringEvents.size()]), profiledResourceEvent);
+            return profiledMachineEvent;
         }
-        return null;
+        return profiledResourceEvent;
     }
 
     private ResourceMonitoringEvent[] getResourceEventsOfType(ResourceMonitoringEvent[] resourceEvents,
@@ -303,12 +299,45 @@ public class DynamicEventProfiler {
         return filteredEvents.toArray(new ResourceMonitoringEvent[filteredEvents.size()]);
     }
 
-    private float getAvgOfCurrentValues(ResourceMonitoringEvent[] resourceEvents) {
+    /**
+     * Key of returned hashmap ie: CPU:>=
+     * @param resourceEvents
+     * @param requestedTypes
+     * @return
+     */
+    private HashMap<String, ArrayList<ResourceMonitoringEvent>> categorizeEventsByTypeNComparator(
+            List<ResourceMonitoringEvent> resourceEvents, List<RuleSupport.ResourceType> requestedTypes) {
+
+        HashMap<String, ArrayList<ResourceMonitoringEvent>> categorizedEvents = new HashMap<String, ArrayList<ResourceMonitoringEvent>>();
+
+        for (ResourceMonitoringEvent event : resourceEvents) {
+            RuleSupport.ResourceType resourceType = event.getResourceType();
+
+            if (requestedTypes.contains(resourceType)) {
+                String key = event.getResourceType().name().concat(Constants.SEPARATOR).concat(
+                        RuleSupport.getNormalizedComparatorType(event.getComparator()).name());
+
+                ArrayList<ResourceMonitoringEvent> eventsOfTypeNComparator;
+                if(categorizedEvents.containsKey(key)) {
+                    eventsOfTypeNComparator = categorizedEvents.get(key);
+                } else {
+                    eventsOfTypeNComparator = new ArrayList<ResourceMonitoringEvent>();
+                }
+                eventsOfTypeNComparator.add(event);
+                categorizedEvents.put(key, eventsOfTypeNComparator);
+            }
+        }
+        return categorizedEvents;
+    }
+
+
+
+    private float getAvgOfCurrentValues(ArrayList<ResourceMonitoringEvent> resourceEvents) {
         float sum = 0f;
         for (ResourceMonitoringEvent event : resourceEvents) {
             sum += event.getCurrentValue();
         }
-        return sum/resourceEvents.length;
+        return sum/resourceEvents.size();
     }
 
     private void notifyListeners(ProfiledEvent profiledEvent) {

@@ -3,7 +3,6 @@ package se.kth.autoscalar.scaling;
 import junit.framework.Assert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Test;
 import se.kth.autoscalar.scaling.core.AutoScalarAPI;
 import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 import se.kth.autoscalar.scaling.group.Group;
@@ -52,7 +51,7 @@ public class ElasticScalingTest {
         windowSize = DynamicEventProfiler.getWindowSize();
     }
 
-    @Test
+    //@Test
     public void testElasticScalingAssumption1() throws AutoScalarException {
         System.out.println("=============== test with Assumption 1 : affects are not reflected in window =============");
         System.out.println("=============== resource events are not affected by killed machines =============");

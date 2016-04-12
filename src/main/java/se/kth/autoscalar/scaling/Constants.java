@@ -13,4 +13,7 @@ public class Constants {
     public static final String REGION = "region";
     public static final String INSTANCE_TYPE = "instance_type";
     public static final String BIDDING_PRICE = "bidding_price";
+
+    public static final String SEPARATOR = ":";
+
 }
