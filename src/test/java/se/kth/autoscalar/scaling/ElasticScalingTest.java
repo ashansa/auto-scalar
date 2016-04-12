@@ -12,6 +12,7 @@ import se.kth.autoscalar.scaling.monitoring.MonitoringListener;
 import se.kth.autoscalar.scaling.monitoring.ResourceMonitoringEvent;
 import se.kth.autoscalar.scaling.monitoring.RuleSupport;
 import se.kth.autoscalar.scaling.monitoring.RuleSupport.ResourceType;
+import se.kth.autoscalar.scaling.profile.DynamicEventProfiler;
 import se.kth.autoscalar.scaling.rules.Rule;
 
 import java.util.HashMap;
@@ -43,9 +44,12 @@ public class ElasticScalingTest {
     String groupName;
     String vmId = "vm1";
 
+    static int windowSize;
+
     @BeforeClass
     public static void init() throws AutoScalarException {
         autoScalarAPI = AutoScalarAPI.getInstance();
+        windowSize = DynamicEventProfiler.getWindowSize();
     }
 
     @Test
@@ -98,8 +102,8 @@ public class ElasticScalingTest {
          */
 
         try {
-            //No suggestions should be proposed since no resource events are in the window since thread is sleeping 5sec
-            Thread.sleep(30);
+            //No suggestions should be proposed since no resource events are in the window since thread sleeps > windowSize
+            Thread.sleep(windowSize + 5);
         } catch (InterruptedException e) {
             throw new IllegalStateException("Interrupted while waiting before sending the machineMonitoringEvent", e);
         }
@@ -187,8 +191,8 @@ public class ElasticScalingTest {
          */
 
         try {
-            //No suggestions should be proposed since no resource events are in the window since thread is sleeping 5sec
-            Thread.sleep(30);
+            //No suggestions should be proposed since no resource events are in the window since thread is sleeping > windowSize
+            Thread.sleep(windowSize + 5);
         } catch (InterruptedException e) {
             throw new IllegalStateException("Interrupted while waiting before sending the machineMonitoringEvent", e);
         }
@@ -259,13 +263,13 @@ public class ElasticScalingTest {
         while (suggestionQueue == null) {
             suggestionQueue = autoScalarAPI.getSuggestionQueue(groupName);
             try {
-                Thread.sleep(10);
+                Thread.sleep(windowSize/10);
             } catch (InterruptedException e) {
                 System.out.println("CPU_PERCENTAGE:testElasticScaling thread sleep while getting suggestions interrupted.............");
             }
             count++;
-            if (count > 10) {
-                new AssertionError("CPU_PERCENTAGE:No suggestion received during one minute");
+            if (count > 12) {   //waited to cover window size
+                //throw new AssertionError("CPU_PERCENTAGE:No suggestion received after window size");
             }
         }
 
@@ -274,9 +278,9 @@ public class ElasticScalingTest {
         if(expectedMachines == 0) {
             int tries = 0;
 
-            while (tries <= 10) {
+            while (tries <= 12) {
                 try {
-                    suggestion = suggestionQueue.poll(10, TimeUnit.MILLISECONDS);
+                    suggestion = suggestionQueue.poll(windowSize/10, TimeUnit.MILLISECONDS);
                 } catch (InterruptedException e) {
                     throw new IllegalStateException(e);
                 }
@@ -305,13 +309,13 @@ public class ElasticScalingTest {
         while (suggestionsQueue == null) {
             suggestionsQueue = autoScalarAPI.getSuggestionQueue(groupName);
             try {
-                Thread.sleep(10);
+                Thread.sleep(windowSize/10);
             } catch (InterruptedException e) {
                 System.out.println("RAM_PERCENTAGE: testElasticScaling thread sleep while getting suggestions interrupted.............");
             }
             count++;
-            if (count > 10) {
-                new AssertionError("RAM_PERCENTAGE: No suggestion received during one minute");
+            if (count > 12) {
+                throw new AssertionError("RAM_PERCENTAGE: No suggestion received during one minute");
             }
         }
         ScalingSuggestion suggestion = null;
@@ -319,9 +323,9 @@ public class ElasticScalingTest {
         if(expectedMachines == 0) {
             int tries = 0;
 
-            while (tries <= 10) {
+            while (tries <= 12) {
                 try {
-                    suggestion = suggestionsQueue.poll(10, TimeUnit.MILLISECONDS);
+                    suggestion = suggestionsQueue.poll(windowSize/10, TimeUnit.MILLISECONDS);
                 } catch (InterruptedException e) {
                     throw new IllegalStateException(e);
                 }
@@ -349,13 +353,13 @@ public class ElasticScalingTest {
         while (suggestionsQueue == null) {
             suggestionsQueue = autoScalarAPI.getSuggestionQueue(groupName);
             try {
-                Thread.sleep(10);
+                Thread.sleep(windowSize/10);
             } catch (InterruptedException e) {
                 System.out.println(expectedDirection.name() + " : thread sleep while getting suggestions interrupted.............");
             }
             count++;
-            if (count > 10) {
-                new AssertionError(expectedDirection.name() + " : No suggestion received during one minute");
+            if (count > 12) {
+                throw new AssertionError(expectedDirection.name() + " : No suggestion received during one minute");
             }
         }
         try {
@@ -364,8 +368,8 @@ public class ElasticScalingTest {
             if(expectedMachineChanges == 0) {
                 int tries = 0;
 
-                while (tries <= 20) {
-                    suggestion = suggestionsQueue.poll(10, TimeUnit.MILLISECONDS);
+                while (tries <= 12) {
+                    suggestion = suggestionsQueue.poll(windowSize/10, TimeUnit.MILLISECONDS);
                     tries++;
                 }
                 Assert.assertNull(suggestion);
@@ -399,7 +403,7 @@ public class ElasticScalingTest {
 
         System.out.println("------------ Start: cooling down test ----------");
         try {
-            Thread.sleep(10);
+            Thread.sleep(windowSize);
         } catch (InterruptedException e) {
             throw new IllegalStateException("Interrupted while waiting before starting testCoolingTime. ", e);
         }

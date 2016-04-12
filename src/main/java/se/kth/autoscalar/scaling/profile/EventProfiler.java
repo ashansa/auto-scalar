@@ -31,6 +31,8 @@ public class EventProfiler {
 
     ArrayList<ProfiledEventListener> profiledEventListeners = new ArrayList<ProfiledEventListener>();
 
+    //TODO make this configurable  (Temporary made this static to refer in test)
+    private static int windowSize = 20; //time in ms
     boolean isProcessingInProgress;
     private Lock lock = new ReentrantLock();
 
@@ -81,7 +83,7 @@ public class EventProfiler {
                     lock.unlock();
                 }
             }
-        }, 10, 20);
+        }, 10, windowSize);
     }
 
     private Map<String, ArrayList<MonitoringEvent>> processMachineEvents(Map<String, ArrayList<MonitoringEvent>> eventsToBeProfiled) {
@@ -181,5 +183,9 @@ public class EventProfiler {
 
     private String getGroupId(String profiledEventKey) {
         return profiledEventKey.substring(0, profiledEventKey.lastIndexOf(":"));
+    }
+
+    public static int getWindowSize() {
+        return windowSize;
     }
 }

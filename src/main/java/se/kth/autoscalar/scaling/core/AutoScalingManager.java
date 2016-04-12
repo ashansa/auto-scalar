@@ -34,7 +34,7 @@ public class AutoScalingManager {
     private GroupManager groupManager;
     private RuleManager ruleManager;
     private EventProfiler eventProfiler;
-    //private MonitoringListener monitoringListener;
+    //private DynamicEventProfiler eventProfiler;
     private MonitoringHandler monitoringHandler;
     private ScaleOutDecisionMaker scaleOutDecisionMaker;
     private boolean optimizedScaleInTmp = true;
@@ -51,6 +51,7 @@ public class AutoScalingManager {
         groupManager = GroupManagerImpl.getInstance();
         ruleManager = RuleManagerImpl.getInstance();
         eventProfiler = new EventProfiler();
+        //eventProfiler = new DynamicEventProfiler(monitoringHandler, this);
         eventProfiler.addListener(new ProfiledResourceEventListener());
         eventProfiler.addListener(new ProfiledMachineEventListener());
         scaleOutDecisionMaker = new ScaleOutDecisionMaker();
@@ -212,6 +213,7 @@ public class AutoScalingManager {
      * @throws AutoScalarException
      */
     private int getNumberOfMachineChanges(ProfiledResourceEvent event) throws AutoScalarException {
+        //TODO should iterate all resource types and comparators and give the machine changes
         Rule[] matchingRules = groupManager.getMatchingRulesForGroup(event.getGroupId(), event.getResourceType(),
                 event.getComparator(), event.getValue());
         int maxChangeOfMachines = 0;
@@ -271,13 +273,13 @@ public class AutoScalingManager {
 
         //Assumption1: effect of killed machines are not reflected in resource events
         private int handleWithAssumption1(int killedInstances, ArrayList<String> endOfBillingMachineIds, ProfiledMachineEvent event) throws AutoScalarException {
-            ProfiledResourceEvent resourceEventOfGroup = event.getProfiledResourceEvent();
+            ProfiledResourceEvent profiledResourceEventOfGroup = event.getProfiledResourceEvent();
             String groupId = event.getGroupId();
             RuntimeGroupInfo runtimeGroupInfo = activeGroupsInfo.get(groupId);
             int machineChanges = 0;
 
-            if (resourceEventOfGroup != null) {
-                int maxChangeOfMachines = getNumberOfMachineChanges(event.getProfiledResourceEvent());
+            if (profiledResourceEventOfGroup != null) {
+                int maxChangeOfMachines = getNumberOfMachineChanges(profiledResourceEventOfGroup);
 
                 if (maxChangeOfMachines > 0) {
                     //Adding the machinesKilled + maxChangeOfMachines to be spawned: because Assumption1

@@ -31,11 +31,11 @@ public class DynamicEventProfiler {
     private MonitoringHandler monitoringHandler;
     private AutoScalingManager autoScalingManager;
 
-    //TODO make this configurable
-    private int windowSize = 20; //time in ms
-    private int timeOutForNewEvents = windowSize/3;
+    //TODO make this configurable   (Temporary made this static to refer in test)
+    private static int windowSize = 30; //time in ms
+    private int windowFractionSize = windowSize/3;
     private boolean isProcessingInProgress;
-    private Lock lock = new ReentrantLock();
+    private Lock tempMaplock = new ReentrantLock();
 
     public DynamicEventProfiler(MonitoringHandler monitoringHandler, AutoScalingManager autoScalingManager) {
         this.monitoringHandler = monitoringHandler;
@@ -54,7 +54,16 @@ public class DynamicEventProfiler {
             public void run() {
                 isProcessingInProgress = true;
 
+                //TODO process each group in separate thread AND make required methods SYNCHRONIZED... MAY BE ALL :D
                 for (String groupId : eventsToBeProfiled.keySet()) {
+
+                    //wait until the events for first fraction of the window received
+                    try {
+                        Thread.sleep(windowFractionSize);
+                    } catch (InterruptedException e) {
+                        log.warn("Thread sleep interrupted while waiting for interested events, part 1");
+                    }
+
                     ArrayList<MonitoringEvent> eventsInGroup = eventsToBeProfiled.get(groupId);;
 
                     /* start of dynamic profiling */
@@ -75,77 +84,81 @@ public class DynamicEventProfiler {
                         //Step 2-a
                         //TODO analyze these results too
                         try {
-                            Thread.sleep(timeOutForNewEvents*2);
+                            Thread.sleep(windowFractionSize * 2);
                         } catch (InterruptedException e) {
                             log.warn("Thread sleep interrupted while waiting for new interested events, part 1");
                         }
 
                         ArrayList<MonitoringEvent> newEvents;
                         try {
-                            lock.lock();
+                            tempMaplock.lock();
                             newEvents = eventsToBeProfiledTempMap.get(groupId);
                         } finally {
-                            lock.unlock();
+                            tempMaplock.unlock();
                         }
 
-                        eventsInGroup.addAll(newEvents);
-                        ProfiledEvent profiledEvent = getProfiledEvent(eventsInGroup);
-                        notifyListeners(profiledEvent);
+                        eventsInGroup = combineEvents(eventsInGroup, newEvents);
+                        if (eventsInGroup != null) {
+                            ProfiledEvent profiledEvent = getProfiledEvent(eventsInGroup);
+                            notifyListeners(profiledEvent);
+                        }
                     } else {
                         //Step 2-b
                         //not perfectly load balanced, request lowered thresholds
                         try {
-                            autoScalingManager.addNewThresholdResourceInterests(groupId, -10f, timeOutForNewEvents); //TODO work on partitionSize
+                            autoScalingManager.addNewThresholdResourceInterests(groupId, -10f, windowFractionSize); //TODO work on partitionSize
                         } catch (AutoScalarException e) {
                             log.warn("Error while adding new threshold interests for group: " + groupId);
                         }
 
                         try {
-                            Thread.sleep(timeOutForNewEvents);
+                            Thread.sleep(windowFractionSize);
                         } catch (InterruptedException e) {
                             log.warn("Thread sleep interrupted while waiting for new interested events, part 1");
                         }
 
                         ArrayList<MonitoringEvent> newEvents;
                         try {
-                            lock.lock();
+                            tempMaplock.lock();
                             newEvents = eventsToBeProfiledTempMap.get(groupId);
                             if(newEvents != null) {
                                 //add empty array to keep new events
                                 eventsToBeProfiledTempMap.put(groupId, new ArrayList<MonitoringEvent>());
                             }
                         } finally {
-                            lock.unlock();
+                            tempMaplock.unlock();
                         }
 
-                        eventsInGroup.addAll(newEvents);
+                        eventsInGroup = combineEvents(eventsInGroup, newEvents);
                         loadBalanced = isProperlyLoadBalanced(eventsInGroup, autoScalingManager.getNoOfMachinesInGroup(groupId), 5);
 
                         if (loadBalanced) {
                             //2-a-i
                             //get avg and create profiled events with machine events
                             try {
-                                Thread.sleep(timeOutForNewEvents);
+                                Thread.sleep(windowFractionSize);
                             } catch (InterruptedException e) {
                                 log.warn("Thread sleep interrupted while waiting for new interested events, part 1");
                             }
 
                             try {
-                                lock.lock();
+                                tempMaplock.lock();
                                 newEvents = eventsToBeProfiledTempMap.get(groupId);
                             } finally {
-                                lock.unlock();
+                                tempMaplock.unlock();
                             }
 
-                            eventsInGroup.addAll(newEvents);
-                            ProfiledEvent profiledEvent = getProfiledEvent(eventsInGroup);
-                            notifyListeners(profiledEvent);
+                            eventsInGroup = combineEvents(eventsInGroup, newEvents);
+                            if (eventsInGroup != null) {
+                                ProfiledEvent profiledEvent = getProfiledEvent(eventsInGroup);
+                                notifyListeners(profiledEvent);
+                            }
                         } else {
                             //2-a-ii
                             //TODO - MINOR (coz values won't me much diff if LB. add only the non balanced resources to get AVG(10-90) and change the logic in creating ProfiledEvent too
                             for (RuleSupport.ResourceType resourceType : RuleSupport.ResourceType.values()) {
                                 try {
-                                    autoScalingManager.addAverageResourceInterests(groupId, resourceType, 10, 90, timeOutForNewEvents); //TODO work on partition
+                                    autoScalingManager.addAverageResourceInterests(groupId, resourceType, 10, 90, windowFractionSize); //TODO work on partition
                                 } catch (AutoScalarException e) {
                                     log.warn("Error while adding new AVG(10-90) interest for group: " + groupId +
                                             " for resource type: " + resourceType.name());
@@ -153,41 +166,60 @@ public class DynamicEventProfiler {
                             }
 
                             try {
-                                Thread.sleep(timeOutForNewEvents);
+                                Thread.sleep(windowFractionSize);
                             } catch (InterruptedException e) {
                                 log.warn("Thread sleep interrupted while waiting for new interested events, part 2");
                             }
 
                             try {
-                                lock.lock();
+                                tempMaplock.lock();
                                 newEvents = eventsToBeProfiledTempMap.get(groupId);
                             } finally {
-                                lock.unlock();
+                                tempMaplock.unlock();
                             }
                             //create profiledEvents based on new events (with resource AVGs and machine Events
-                            eventsInGroup.addAll(newEvents);
-                            ProfiledEvent profiledEvent = getProfiledEvent(eventsInGroup);
-                            notifyListeners(profiledEvent);
+                            eventsInGroup = combineEvents(eventsInGroup, newEvents);
+                            if (eventsInGroup != null) {
+                                ProfiledEvent profiledEvent = getProfiledEvent(eventsInGroup);
+                                notifyListeners(profiledEvent);
+                            }
                         }
                     }
                 }
 
                 try {
-                    lock.lock();
+                    tempMaplock.lock();
                     //after processing is done, add events added to temp map to eventsToBeProcessed so that they will
                     // be processed in the next scheduling round
                     eventsToBeProfiled = eventsToBeProfiledTempMap;
                     eventsToBeProfiledTempMap = new HashMap<String, ArrayList<MonitoringEvent>>();
-                    isProcessingInProgress = false;
                 } finally {
-                    lock.unlock();
+                    tempMaplock.unlock();
+                    isProcessingInProgress = false;
                 }
             }
-        }, 10, windowSize);
+        }, 0, windowSize);
+    }
+
+    private synchronized ArrayList<MonitoringEvent> combineEvents(ArrayList<MonitoringEvent> existingEvents, ArrayList<MonitoringEvent> newEvents) {
+        if (existingEvents != null) {
+            if (newEvents != null) {
+                existingEvents.addAll(newEvents);
+                return existingEvents;
+            } else {
+                return existingEvents;
+            }
+        } else {
+            return newEvents;
+        }
     }
 
     private boolean isProperlyLoadBalanced(ArrayList<MonitoringEvent> events, int noOfMachinesInGroup, int errorPercentage) {
         boolean isLoadBalanced = false;
+
+        if (events == null) {
+            return isLoadBalanced;
+        }
 
         //TODO improve algo
         //MachineID, MonitoringEvents map
@@ -208,14 +240,75 @@ public class DynamicEventProfiler {
         return isLoadBalanced;
     }
 
-    public ProfiledEvent getProfiledEvent(ArrayList<MonitoringEvent> events) {
+    private ProfiledEvent getProfiledEvent(ArrayList<MonitoringEvent> events) {
         //TODO implement method priorotizing AVG, and adding machine events
+        ArrayList<ResourceMonitoringEvent> resourceMonitoringEvents = new ArrayList<ResourceMonitoringEvent>();
         ArrayList<MachineMonitoringEvent> machineMonitoringEvents = new ArrayList<MachineMonitoringEvent>();
         ArrayList<ResourceAggregatedEvent> resourceAggregatedEvents = new ArrayList<ResourceAggregatedEvent>();
-        for (MonitoringEvent event : events) {
 
+        for (MonitoringEvent event : events) {
+            if (event instanceof ResourceMonitoringEvent)
+                resourceMonitoringEvents.add((ResourceMonitoringEvent)event);
+            else if (event instanceof MachineMonitoringEvent)
+                machineMonitoringEvents.add((MachineMonitoringEvent) event);
+            else if (event instanceof ResourceAggregatedEvent)
+               resourceAggregatedEvents.add((ResourceAggregatedEvent)event);
+        }
+
+        //create profiled resource events for resource types supported
+        ArrayList<ProfiledResourceEvent> profiledResourceEvents = new ArrayList<ProfiledResourceEvent>();
+        ArrayList<RuleSupport.ResourceType> profiledResourceTypes = new ArrayList<RuleSupport.ResourceType>();
+
+        //create profiled resource events with aggregated events
+        for (ResourceAggregatedEvent aggregatedEvent : resourceAggregatedEvents) {
+            ProfiledResourceEvent profiledResourceEvent = new ProfiledResourceEvent(aggregatedEvent.getGroupId(),
+                    aggregatedEvent.getResourceType(), aggregatedEvent.getComparator(), aggregatedEvent.getCurrentValue());
+            profiledResourceEvents.add(profiledResourceEvent);
+            profiledResourceTypes.add(profiledResourceEvent.getResourceType());
+        }
+        //fill the profiled resource events with normal resource events
+        for (RuleSupport.ResourceType resourceType : RuleSupport.ResourceType.values()) {
+            if (!profiledResourceTypes.contains(resourceType)) {
+
+                //TODO ****** should consider the comparator value as well :(
+                ResourceMonitoringEvent[] resourceEventsOfType = getResourceEventsOfType(resourceMonitoringEvents.
+                        toArray(new ResourceMonitoringEvent[resourceMonitoringEvents.size()]), resourceType);
+                if (resourceEventsOfType.length > 0) {
+                    float average = getAvgOfCurrentValues(resourceEventsOfType);
+                    ResourceMonitoringEvent sampleEvent = resourceEventsOfType[0];  //to retrieve info for Profiled event
+                    ProfiledResourceEvent profiledResourceEvent = new ProfiledResourceEvent(sampleEvent.getGroupId(),
+                            sampleEvent.getResourceType(), sampleEvent.getComparator(), average);
+                    profiledResourceEvents.add(profiledResourceEvent);
+                }
+            }
+        }
+
+
+
+        if (machineMonitoringEvents.size() > 0) {
+            MachineMonitoringEvent sampleEvent = machineMonitoringEvents.get(0); //to retrieve info for Profiled event
+            //ProfiledEvent profiledEvent = new ProfiledMachineEvent(sampleEvent.getGroupId())
         }
         return null;
+    }
+
+    private ResourceMonitoringEvent[] getResourceEventsOfType(ResourceMonitoringEvent[] resourceEvents,
+                                                              RuleSupport.ResourceType resourceType) {
+        ArrayList<ResourceMonitoringEvent> filteredEvents = new ArrayList<ResourceMonitoringEvent>();
+        for (ResourceMonitoringEvent resourceEvent : resourceEvents) {
+            if (resourceEvent.getResourceType().equals(resourceType)) {
+                filteredEvents.add(resourceEvent);
+            }
+        }
+        return filteredEvents.toArray(new ResourceMonitoringEvent[filteredEvents.size()]);
+    }
+
+    private float getAvgOfCurrentValues(ResourceMonitoringEvent[] resourceEvents) {
+        float sum = 0f;
+        for (ResourceMonitoringEvent event : resourceEvents) {
+            sum += event.getCurrentValue();
+        }
+        return sum/resourceEvents.length;
     }
 
     private void notifyListeners(ProfiledEvent profiledEvent) {
@@ -242,7 +335,7 @@ public class DynamicEventProfiler {
         //////String profiledEventKey = getProfiledEventKey(groupId, monitoringEvent.getClass());
 
         if(isProcessingInProgress) {
-            lock.lock();
+            tempMaplock.lock();
             //adding events to temp map since the event map is processing (eventsToBeProfiledTempMap)
 
             ArrayList<MonitoringEvent> events;
@@ -255,7 +348,7 @@ public class DynamicEventProfiler {
             events.add(monitoringEvent);
             eventsToBeProfiledTempMap.put(groupId, events);
 
-            lock.unlock();
+            tempMaplock.unlock();
         } else {
             // add to eventsToBeProfiled map
             ArrayList<MonitoringEvent> events;
@@ -269,5 +362,9 @@ public class DynamicEventProfiler {
             eventsToBeProfiled.put(groupId, events);
         }
 
+    }
+
+    public static int getWindowSize() {
+        return windowSize;
     }
 }
