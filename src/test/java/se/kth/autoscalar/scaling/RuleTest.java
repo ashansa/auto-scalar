@@ -1,4 +1,4 @@
-package se.kth.autoscalar.scaling.rules;
+package se.kth.autoscalar.scaling;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -7,6 +7,9 @@ import se.kth.autoscalar.scaling.monitoring.RuleSupport.Comparator;
 import se.kth.autoscalar.scaling.monitoring.RuleSupport.ResourceType;
 import se.kth.autoscalar.scaling.exceptions.DBConnectionFailureException;
 import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
+import se.kth.autoscalar.scaling.rules.Rule;
+import se.kth.autoscalar.scaling.rules.RuleManager;
+import se.kth.autoscalar.scaling.rules.RuleManagerImpl;
 
 /**
  * Created with IntelliJ IDEA.

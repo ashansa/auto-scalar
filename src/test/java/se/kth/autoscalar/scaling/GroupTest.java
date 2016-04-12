@@ -1,8 +1,9 @@
-package se.kth.autoscalar.scaling.group;
+package se.kth.autoscalar.scaling;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import se.kth.autoscalar.scaling.group.Group;
 import se.kth.autoscalar.scaling.monitoring.RuleSupport.Comparator;
 import se.kth.autoscalar.scaling.monitoring.RuleSupport.ResourceType;
 import se.kth.autoscalar.scaling.core.AutoScalarAPI;

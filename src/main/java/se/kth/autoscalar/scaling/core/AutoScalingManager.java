@@ -157,7 +157,7 @@ public class AutoScalingManager {
         //ie: CPU AVG(10To90)
         InterestedEvent event = new InterestedEvent(resourceType.name().concat(" ").concat("AVG (").concat(
                 String.valueOf(lowerPercentile).concat("TO").concat(String.valueOf(upperPercentile))));
-        monitoringHandler.addGroupForMonitoring(groupId, new InterestedEvent[]{event});
+        monitoringHandler.addInterestedEvent(groupId, new InterestedEvent[]{event}, timeDuration);
     }
 
     /**
@@ -213,11 +213,12 @@ public class AutoScalingManager {
      * @return number of machines to be added/removed depending on the event and resource rules assigned to the group
      * @throws AutoScalarException
      */
-    private int getNumberOfMachineChanges(ProfiledResourceEvent event) throws AutoScalarException {
+    public int getNumberOfMachineChanges(ProfiledResourceEvent event) throws AutoScalarException {
         //TODO should iterate all resource types and comparators and give the machine changes
         ////Set<Rule> allMatchingRules = new HashSet<Rule>();
         HashMap<String, Float> resourceThresholds = event.getResourceThresholds();   //ie key: CPU:>=
         ArrayList<Integer> noOfMachineChanges = new ArrayList<Integer>();
+        int maxChangeOfMachines = 0;
 
         for (String resourceComparatorKey : resourceThresholds.keySet()) {
             RuleSupport.ResourceType resourceType = RuleSupport.ResourceType.valueOf(resourceComparatorKey.split(Constants.SEPARATOR)[0]);
@@ -225,9 +226,6 @@ public class AutoScalingManager {
 
             Rule[] matchingRules = groupManager.getMatchingRulesForGroup(event.getGroupId(), resourceType, comparator,
                     resourceThresholds.get(resourceComparatorKey));
-            ////allMatchingRules.addAll(Arrays.asList(matchingRules));
-
-            int maxChangeOfMachines = 0;
 
             if(RuleSupport.Comparator.GREATER_THAN.equals(comparator) || RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.equals(comparator)) {
                 //will keep the maximum machine additions

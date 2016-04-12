@@ -12,6 +12,7 @@ import se.kth.autoscalar.scaling.monitoring.MonitoringEvent;
 import se.kth.autoscalar.scaling.monitoring.MonitoringHandler;
 import se.kth.autoscalar.scaling.monitoring.MonitoringListener;
 import se.kth.autoscalar.scaling.monitoring.RuleSupport;
+import se.kth.autoscalar.scaling.profile.ProfiledResourceEvent;
 import se.kth.autoscalar.scaling.rules.Rule;
 import se.kth.autoscalar.scaling.rules.RuleManager;
 import se.kth.autoscalar.scaling.rules.RuleManagerImpl;
@@ -145,6 +146,10 @@ public class AutoScalarAPI {
 
     public void handleEvent(String groupId, MonitoringEvent monitoringEvent) throws AutoScalarException {
         autoScalingManager.getEventProfiler().profileEvent(groupId, monitoringEvent);
+    }
+
+    public int getNumberOfMachineChanges(ProfiledResourceEvent event) throws AutoScalarException {
+        return autoScalingManager.getNumberOfMachineChanges(event);
     }
 
     public void tempMethodDeleteTables() throws SQLException {
