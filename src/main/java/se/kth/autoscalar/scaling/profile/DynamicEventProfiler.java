@@ -224,22 +224,37 @@ public class DynamicEventProfiler {
         }
 
         //TODO LoadBalance : all VMs has sent similar types of resource events on thresholds
-        //MachineID, MonitoringEvents map
-        Map<String, ArrayList<MonitoringEvent>> receivedEventsByMachine = new HashMap<String, ArrayList<MonitoringEvent>>();
-        for (MonitoringEvent monitoringEvent : events) {
-            ArrayList<MonitoringEvent> eventsOfMachine;
-            if (receivedEventsByMachine.containsKey(monitoringEvent.getMachineId())) {
-                eventsOfMachine = receivedEventsByMachine.get(monitoringEvent.getMachineId());
-            } else {
-                eventsOfMachine = new ArrayList<MonitoringEvent>();
+        HashMap<String, ArrayList<ResourceMonitoringEvent>> categorizedResourceEvents = categorizeEventsByTypeNComparator(
+                filterNGetResourceEvents(events), Arrays.asList(RuleSupport.ResourceType.values()));
+
+        for (String key : categorizedResourceEvents.keySet()) {
+            //check whether each category is load balanced
+            ArrayList<String> triggeredMachineIds = new ArrayList<String>();
+            for (ResourceMonitoringEvent event : categorizedResourceEvents.get(key)) {
+                if (!triggeredMachineIds.contains(event.getMachineId())) {
+                    triggeredMachineIds.add(event.getMachineId());
+                }
             }
-            eventsOfMachine.add(monitoringEvent);
-            receivedEventsByMachine.put(monitoringEvent.getMachineId(), eventsOfMachine);
+
+            //TODO incoperate error percentate
+            if (triggeredMachineIds.size() < noOfMachinesInGroup) {
+                isLoadBalanced = false;
+                return isLoadBalanced;
+            }
         }
-        if (receivedEventsByMachine.size() >= noOfMachinesInGroup) {
-            isLoadBalanced = true;
-        }
+
+        isLoadBalanced = true;
         return isLoadBalanced;
+    }
+
+    private ArrayList<ResourceMonitoringEvent> filterNGetResourceEvents(ArrayList<MonitoringEvent> events) {
+        ArrayList<ResourceMonitoringEvent> resourceEvents = new ArrayList<ResourceMonitoringEvent>();
+        for (MonitoringEvent event : events) {
+            if (event instanceof ResourceMonitoringEvent) {
+                resourceEvents.add((ResourceMonitoringEvent)event);
+            }
+        }
+        return resourceEvents;
     }
 
     private ProfiledEvent getProfiledEvent(String groupId, ArrayList<MonitoringEvent> events) {

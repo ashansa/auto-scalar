@@ -78,7 +78,7 @@ public class AutoScalingTest {
                 Constants.SEPARATOR).concat(RuleSupport.Comparator.LESS_THAN_OR_EQUAL.name()), (float) (random * 10)); //aligned with -2
         Assert.assertEquals(-2, autoScalarAPI.getNumberOfMachineChanges(profiledResourceEvent2));   //should get -2 since both -1,-2 rules matches
 
-        autoScalarAPI.deleteGroup(cpuLess.getRuleName());
+        autoScalarAPI.deleteRule(cpuLess.getRuleName());
         autoScalarAPI.deleteRule(ramLess.getRuleName());
     }
 
