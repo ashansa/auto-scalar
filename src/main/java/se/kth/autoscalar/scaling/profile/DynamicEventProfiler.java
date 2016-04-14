@@ -24,7 +24,7 @@ public class DynamicEventProfiler {
 
     Log log = LogFactory.getLog(DynamicEventProfiler.class);
 
-    //<groupId> <MonitoringEvent ArrayList> maps    //ie of key: group_8
+    //<groupId> <MonitoringEvent ArrayList> maps
     private Map<String, ArrayList<MonitoringEvent>> eventsToBeProfiled = new HashMap<String, ArrayList<MonitoringEvent>>();
     private Map<String, ArrayList<MonitoringEvent>> eventsToBeProfiledTempMap = new HashMap<String, ArrayList<MonitoringEvent>>();
 
@@ -53,7 +53,7 @@ public class DynamicEventProfiler {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                isProcessingInProgress = true;
+                //////isProcessingInProgress = true;
 
                 //TODO process each group in separate thread AND make required methods SYNCHRONIZED... MAY BE ALL :D
                 for (String groupId : eventsToBeProfiled.keySet()) {
@@ -65,6 +65,7 @@ public class DynamicEventProfiler {
                         log.warn("Thread sleep interrupted while waiting for interested events, part 1");
                     }
 
+                    isProcessingInProgress = true;
                     ArrayList<MonitoringEvent> eventsInGroup = eventsToBeProfiled.get(groupId);;
 
                     /* start of dynamic profiling */
@@ -107,7 +108,8 @@ public class DynamicEventProfiler {
                         //Step 2-b
                         //not perfectly load balanced, request lowered thresholds
                         try {
-                            autoScalingManager.addNewThresholdResourceInterests(groupId, -10f, windowFractionSize); //TODO work on partitionSize
+                            //TODO increase threashold of LessThan rules
+                            autoScalingManager.addNewThresholdResourceInterests(groupId, 10f, windowFractionSize); //TODO work on partitionSize
                         } catch (AutoScalarException e) {
                             log.warn("Error while adding new threshold interests for group: " + groupId);
                         }
@@ -186,17 +188,16 @@ public class DynamicEventProfiler {
                             }
                         }
                     }
-                }
-
-                try {
-                    tempMaplock.lock();
-                    //after processing is done, add events added to temp map to eventsToBeProcessed so that they will
-                    // be processed in the next scheduling round
-                    eventsToBeProfiled = eventsToBeProfiledTempMap;
-                    eventsToBeProfiledTempMap = new HashMap<String, ArrayList<MonitoringEvent>>();
-                } finally {
-                    tempMaplock.unlock();
-                    isProcessingInProgress = false;
+                    try {
+                        tempMaplock.lock();
+                        //after processing is done, add events added to temp map to eventsToBeProcessed so that they will
+                        // be processed in the next scheduling round
+                        eventsToBeProfiled = eventsToBeProfiledTempMap;
+                        eventsToBeProfiledTempMap = new HashMap<String, ArrayList<MonitoringEvent>>();
+                    } finally {
+                        tempMaplock.unlock();
+                        isProcessingInProgress = false;
+                    }
                 }
             }
         }, 0, windowSize);
@@ -222,7 +223,7 @@ public class DynamicEventProfiler {
             return isLoadBalanced;
         }
 
-        //TODO improve algo
+        //TODO LoadBalance : all VMs has sent similar types of resource events on thresholds
         //MachineID, MonitoringEvents map
         Map<String, ArrayList<MonitoringEvent>> receivedEventsByMachine = new HashMap<String, ArrayList<MonitoringEvent>>();
         for (MonitoringEvent monitoringEvent : events) {

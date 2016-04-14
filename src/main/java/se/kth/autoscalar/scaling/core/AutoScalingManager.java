@@ -125,10 +125,10 @@ public class AutoScalingManager {
 
     /**
      * @param groupId
-     * @param thesholdChange   should add -x to lower threshold by x
+     * @param thresholdChange   should add -x to lower threshold by x
      * @throws AutoScalarException
      */
-    public void addNewThresholdResourceInterests(String groupId, float thesholdChange, int timeDuration) throws AutoScalarException {
+    public void addNewThresholdResourceInterests(String groupId, float thresholdChange, int timeDuration) throws AutoScalarException {
         ArrayList<InterestedEvent> interestedEvents = new ArrayList<InterestedEvent>();
         String[] ruleNames = groupManager.getRulesForGroup(groupId);
         Rule rule;
@@ -137,9 +137,16 @@ public class AutoScalingManager {
             try {
                 //TODO if there are more than one CPU > rules, add the lowest which will cover others as well
                 rule = ruleManager.getRule(ruleName);
-                //id: CPU > 80
+                RuleSupport.Comparator comparator = rule.getComparator();
+                //ie: CPU > 80
+                float newThreshold = rule.getThreshold();
+                if (RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.equals(RuleSupport.getNormalizedComparatorType(comparator))) {
+                    newThreshold = rule.getThreshold() - thresholdChange;
+                } else if (RuleSupport.Comparator.LESS_THAN_OR_EQUAL.equals(RuleSupport.getNormalizedComparatorType(comparator))) {
+                    newThreshold = rule.getThreshold() + thresholdChange;
+                }
                 InterestedEvent event = new InterestedEvent(rule.getResourceType().name().concat(" ").concat(rule.
-                        getComparator().name().concat(" ").concat(String.valueOf(rule.getThreshold() + thesholdChange))));
+                        getComparator().name().concat(" ").concat(String.valueOf(newThreshold))));
                 interestedEvents.add(event);
             } catch (AutoScalarException e) {
                 log.error("Failed to add rule: " + ruleName + " to interested events.");
