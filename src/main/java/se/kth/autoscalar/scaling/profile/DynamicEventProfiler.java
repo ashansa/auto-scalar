@@ -80,7 +80,7 @@ public class DynamicEventProfiler {
 
                     //Step 1
                     boolean loadBalanced = isProperlyLoadBalanced(eventsInGroup,
-                            autoScalingManager.getNoOfMachinesInGroup(groupId), 5);
+                            autoScalingManager.getNoOfMachinesInGroup(groupId), 0.05f);
 
                     if (loadBalanced) {
                         //Step 2-a
@@ -108,7 +108,6 @@ public class DynamicEventProfiler {
                         //Step 2-b
                         //not perfectly load balanced, request lowered thresholds
                         try {
-                            //TODO increase threashold of LessThan rules
                             autoScalingManager.addNewThresholdResourceInterests(groupId, 10f, windowFractionSize); //TODO work on partitionSize
                         } catch (AutoScalarException e) {
                             log.warn("Error while adding new threshold interests for group: " + groupId);
@@ -133,10 +132,10 @@ public class DynamicEventProfiler {
                         }
 
                         eventsInGroup = combineEvents(eventsInGroup, newEvents);
-                        loadBalanced = isProperlyLoadBalanced(eventsInGroup, autoScalingManager.getNoOfMachinesInGroup(groupId), 5);
+                        loadBalanced = isProperlyLoadBalanced(eventsInGroup, autoScalingManager.getNoOfMachinesInGroup(groupId), 0.05f);
 
                         if (loadBalanced) {
-                            //2-a-i
+                            //2-b-i
                             //get avg and create profiled events with machine events
                             try {
                                 Thread.sleep(windowFractionSize);
@@ -157,7 +156,7 @@ public class DynamicEventProfiler {
                                 notifyListeners(profiledEvent);
                             }
                         } else {
-                            //2-a-ii
+                            //2-b-ii
                             //TODO - MINOR (coz values won't me much diff if LB. add only the non balanced resources to get AVG(10-90) and change the logic in creating ProfiledEvent too
                             for (RuleSupport.ResourceType resourceType : RuleSupport.ResourceType.values()) {
                                 try {
@@ -216,14 +215,20 @@ public class DynamicEventProfiler {
         }
     }
 
-    private boolean isProperlyLoadBalanced(ArrayList<MonitoringEvent> events, int noOfMachinesInGroup, int errorPercentage) {
+    /**
+     *
+     * @param events
+     * @param noOfMachinesInGroup
+     * @param ignorableErrorPercentage if it should bear 5% error, should send 0.05as error per
+     * @return
+     */
+    private boolean isProperlyLoadBalanced(ArrayList<MonitoringEvent> events, int noOfMachinesInGroup, float ignorableErrorPercentage) {
         boolean isLoadBalanced = false;
 
         if (events == null) {
             return isLoadBalanced;
         }
 
-        //TODO LoadBalance : all VMs has sent similar types of resource events on thresholds
         HashMap<String, ArrayList<ResourceMonitoringEvent>> categorizedResourceEvents = categorizeEventsByTypeNComparator(
                 filterNGetResourceEvents(events), Arrays.asList(RuleSupport.ResourceType.values()));
 
@@ -236,8 +241,8 @@ public class DynamicEventProfiler {
                 }
             }
 
-            //TODO incoperate error percentate
-            if (triggeredMachineIds.size() < noOfMachinesInGroup) {
+            float ignorableError = ignorableErrorPercentage * noOfMachinesInGroup;
+            if ((triggeredMachineIds.size() + ignorableError) < noOfMachinesInGroup) {
                 isLoadBalanced = false;
                 return isLoadBalanced;
             }
