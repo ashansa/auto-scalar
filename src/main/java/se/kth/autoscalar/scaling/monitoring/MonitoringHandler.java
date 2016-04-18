@@ -25,6 +25,10 @@ public class MonitoringHandler {
         return monitoringListener;
     }
 
+    public void removeGroupFromMonitoring(String groupId) {
+        // avoid monitoring and sending events of the machines of the group
+    }
+
     public void addInterestedEvent(String groupId, InterestedEvent[] events, int timeDuration) {
         //TODO request events for a limited time
     }

@@ -137,7 +137,7 @@ public class AutoScalarAPI {
     }
 
     public void stopElasticScaling(String groupId) {
-        autoScalingManager.removeGroupFromScaling(groupId);
+        autoScalingManager.stopAutoScaling(groupId);
     }
 
     public ArrayBlockingQueue<ScalingSuggestion> getSuggestionQueue(String groupId) {

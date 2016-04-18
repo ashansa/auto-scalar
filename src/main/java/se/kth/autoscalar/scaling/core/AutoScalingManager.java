@@ -102,11 +102,13 @@ public class AutoScalingManager {
         }
     }
 
-    public void removeGroupFromScaling(String groupId) {
+    public void stopAutoScaling(String groupId) {
         if (activeGroupsInfo.containsKey(groupId))
             activeGroupsInfo.remove(groupId);
+        monitoringHandler.removeGroupFromMonitoring(groupId);
     }
 
+    //TODO check whether the new suggestions will be updated in the prevously returned queue
     public ArrayBlockingQueue<ScalingSuggestion> getSuggestions(String groupId) {
         return suggestionMap.get(groupId);
     }
@@ -160,7 +162,7 @@ public class AutoScalingManager {
 
     public void addAverageResourceInterests(String groupId, RuleSupport.ResourceType resourceType, float lowerPercentile,
                                             float upperPercentile, int timeDuration) throws AutoScalarException {
-        ArrayList<InterestedEvent> interestedEvents = new ArrayList<InterestedEvent>();
+
         //ie: CPU AVG(10To90)
         InterestedEvent event = new InterestedEvent(resourceType.name().concat(" ").concat("AVG (").concat(
                 String.valueOf(lowerPercentile).concat("TO").concat(String.valueOf(upperPercentile))));
@@ -273,8 +275,8 @@ public class AutoScalingManager {
 
                     RuntimeGroupInfo runtimeGroupInfo = activeGroupsInfo.get(event.getGroupId());
 
-                    //int machineChangesDone = handleWithAssumption2(endOfBillingMachineIds, event);
-                    int machineChangesDone = handleWithAssumption1(killedInstances, endOfBillingMachineIds, event);
+                    int machineChangesDone = handleWithAssumption2(endOfBillingMachineIds, event);
+                    //int machineChangesDone = handleWithAssumption1(killedInstances, endOfBillingMachineIds, event);
                     if (machineChangesDone > 0) {
                         runtimeGroupInfo.setScaleOutInfo(machineChangesDone);
                         runtimeGroupInfo.setScaleInInfo(killedInstances);

@@ -35,13 +35,13 @@ public class ScalingSuggestion {
         }
     }
 
-    public ScalingSuggestion(String[] scaleInSuggestion) {
+    public ScalingSuggestion(String[] machineIdsToBeRemoved) {
         scalingDirection = ScalingDirection.SCALE_IN;
 
-        if (scaleInSuggestion.length == 0)
+        if (machineIdsToBeRemoved.length == 0)
             scaleInSuggestions = new ArrayList<String>();
         else {
-            List<String> suggestions = Arrays.<String>asList(scaleInSuggestion);
+            List<String> suggestions = Arrays.<String>asList(machineIdsToBeRemoved);
             scaleInSuggestions = new ArrayList<String>(suggestions);
         }
     }
