@@ -27,10 +27,10 @@ public class KaramelMachineProposer implements MachineProposer {
         for (int i = 0; i < noOfMachines; ++i) {
             if (i%3 ==0) {   //just to have different types to test
                 properties.put(Constants.INSTANCE_TYPE, "t2.micro");
-                machineTypes[i] = new MachineType(false, properties);
+                machineTypes[i] = new MachineType("EC2", false, properties);
             } else {
                 properties.put(Constants.INSTANCE_TYPE, "t2.medium");
-                machineTypes[i] = new MachineType(false, properties);
+                machineTypes[i] = new MachineType("EC2", false, properties);
             }
         }
         return machineTypes;
