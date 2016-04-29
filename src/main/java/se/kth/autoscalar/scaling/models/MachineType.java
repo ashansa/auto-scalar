@@ -15,6 +15,10 @@ public class MachineType {
         INSTANCE_TYPE, BIDDING_PRICE;
     }
 
+    public enum EC2Properties {
+       AMI, REGION, SUBNET, VPC;
+    }
+
     private String launcher;
     private boolean isPreemptible;
     private Map<String,String> properties;
