@@ -16,7 +16,7 @@ public class MachineType {
     }
 
     public enum EC2Properties {
-       AMI, REGION, SUBNET, VPC;
+       AMI, REGION, SUBNET, VPC, TYPE;
     }
 
     private String launcher;
