@@ -90,6 +90,29 @@ public class AutoScalingManager {
                 interestedEvents.toArray(new InterestedEvent[interestedEvents.size()]));
         //TODO temporary returning  MonitoringListener to emulate monitoring events by tests
         //TODO call monitoring component and give the listener
+
+        /////TODO-AS temp adding suggestions here to test
+        final String gId = groupId;
+        new Thread() {
+            public void run() {
+                try {
+                    Thread.sleep(60000);
+                } catch (InterruptedException e) {
+                    throw new IllegalStateException(e);
+                }
+                ScalingSuggestion suggestion = new ScalingSuggestion(new String[]{"vm1"});
+
+                ArrayBlockingQueue<ScalingSuggestion> suggestionsQueue;
+                if (suggestionMap.containsKey(gId)) {
+                    suggestionsQueue = suggestionMap.get(gId);
+                } else {
+                    suggestionsQueue = new ArrayBlockingQueue<ScalingSuggestion>(50);   //TODO: make 50 configurable
+                }
+                suggestionsQueue.add(suggestion);
+                suggestionMap.put(gId, suggestionsQueue);
+            }
+        }.start();
+
         return monitoringListener;
     }
 
