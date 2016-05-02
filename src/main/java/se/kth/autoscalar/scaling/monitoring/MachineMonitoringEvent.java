@@ -19,10 +19,23 @@ public class MachineMonitoringEvent extends MonitoringEvent {
     }
 
     private Status status;
+    private int timeRemaining = 0;
 
     public MachineMonitoringEvent(String groupId, String machineId, Status status) {
         super(groupId, machineId);
         this.status = status;
+    }
+
+    public int getTimeRemaining() {
+        return timeRemaining;
+    }
+
+  /**
+   * Set time remaining to end of billing period in milliseconds
+   * @param timeRemaining
+   */
+  public void setTimeRemaining(int timeRemaining) {
+        this.timeRemaining = timeRemaining;
     }
 
     public Status getStatus() {
