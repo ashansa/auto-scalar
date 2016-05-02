@@ -19,14 +19,14 @@ public class MachineMonitoringEvent extends MonitoringEvent {
     }
 
     private Status status;
-    private int timeRemaining = 0;
+    private long timeRemaining = 0;
 
     public MachineMonitoringEvent(String groupId, String machineId, Status status) {
         super(groupId, machineId);
         this.status = status;
     }
 
-    public int getTimeRemaining() {
+    public long getTimeRemaining() {
         return timeRemaining;
     }
 
@@ -34,7 +34,7 @@ public class MachineMonitoringEvent extends MonitoringEvent {
    * Set time remaining to end of billing period in milliseconds
    * @param timeRemaining
    */
-  public void setTimeRemaining(int timeRemaining) {
+  public void setTimeRemaining(long timeRemaining) {
         this.timeRemaining = timeRemaining;
     }
 
