@@ -107,6 +107,52 @@ public class DBUtil {
         }
     }
 
+    public static Connection getKandyDbConnection() throws DBConnectionFailureException {
+        Properties prop = new Properties();
+        InputStream in = null;
+        try {
+            in = new FileInputStream(new File(DB_PROPERTY_FILE));
+            prop.load(in);
+            in.close();
+
+        } catch (FileNotFoundException e) {
+            DBConnectionFailureException exception = handleDBConnectionException(e.getMessage(), e);
+            throw exception;
+        } catch (IOException e) {
+            DBConnectionFailureException exception = handleDBConnectionException("Error occurred while reading " +
+                    DB_PROPERTY_FILE, e);
+            throw exception;
+        }
+
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+
+            String urlHostPort = prop.getProperty("kandydb.urlhostport");
+            String dbName = prop.getProperty("kandydb.name");
+            String username = prop.getProperty("kandydb.username");
+            String password = prop.getProperty("kandydb.password");
+            String connectionURL;
+
+            if (urlHostPort.endsWith("/"))
+                connectionURL = urlHostPort.concat(dbName);
+            else
+                connectionURL = urlHostPort.concat("/").concat(dbName);
+
+            Connection connection = DriverManager.getConnection(connectionURL, username, password);
+            log.info("DB connection successful to " + dbName + " with user " + username);
+            return connection;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            DBConnectionFailureException exception = handleDBConnectionException(
+                    "Error occurred while connecting to database.", e);
+            throw exception;
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+            DBConnectionFailureException exception = handleDBConnectionException("DB driver class not found", e);
+            throw exception;
+        }
+    }
+
     public static DBConnectionFailureException handleDBConnectionException(String msg, Exception e) {
         log.error(msg);
         e.printStackTrace();

@@ -3,6 +3,7 @@ package se.kth.autoscalar.scaling;
 import junit.framework.Assert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Test;
 import se.kth.autoscalar.scaling.core.AutoScalarAPI;
 import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 import se.kth.autoscalar.scaling.group.Group;

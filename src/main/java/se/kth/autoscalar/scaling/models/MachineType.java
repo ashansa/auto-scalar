@@ -57,7 +57,7 @@ public class MachineType {
                 isValid = false;
             } else {
                 try {
-                    Float bid = Float.valueOf(bidPriceString);
+                    Double bid = Double.valueOf(bidPriceString);
                 } catch (NumberFormatException e) {
                     isValid = false;
                 }
