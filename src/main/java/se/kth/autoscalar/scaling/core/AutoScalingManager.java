@@ -100,7 +100,6 @@ public class AutoScalingManager {
                 } catch (InterruptedException e) {
                     throw new IllegalStateException(e);
                 }
-                ScalingSuggestion suggestion = new ScalingSuggestion(new String[]{"vm1"});
 
                 ArrayBlockingQueue<ScalingSuggestion> suggestionsQueue;
                 if (suggestionMap.containsKey(gId)) {
@@ -108,7 +107,22 @@ public class AutoScalingManager {
                 } else {
                     suggestionsQueue = new ArrayBlockingQueue<ScalingSuggestion>(50);   //TODO: make 50 configurable
                 }
-                suggestionsQueue.add(suggestion);
+
+                //scale in test
+                ScalingSuggestion scaleInSuggestion = new ScalingSuggestion(new String[]{"vm1"});
+                suggestionsQueue.add(scaleInSuggestion);
+
+                //scale out test
+                /*try {
+                    MachineType[] proposals = new KaramelMachineProposer().getMachineProposals(groupId,
+                            groupManager.getGroup(groupId).getMinResourceReq(), 1, 80);
+                    ScalingSuggestion scaleOutSuggestion = new ScalingSuggestion(proposals);
+                    suggestionsQueue.add(scaleOutSuggestion);
+                } catch (AutoScalarException e) {
+                    log.error("################## Could not get the proposals from Karamel Proposar when " +
+                            "creating dummy suggestions ##############");
+                }*/
+
                 suggestionMap.put(gId, suggestionsQueue);
             }
         }.start();

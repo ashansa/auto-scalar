@@ -69,7 +69,7 @@ public class GroupTest {
 
         //test create group
         Rule rule = autoScalarAPI.createRule(ruleNameBase + String.valueOf((int)(random * 10)),
-                ResourceType.CPU_PERCENTAGE, Comparator.GREATER_THAN, (int)(random * 100), 1);
+                ResourceType.CPU, Comparator.GREATER_THAN, (int)(random * 100), 1);
         Assert.assertNotNull(rule);
 
         Group group = autoScalarAPI.createGroup(groupName, (int)(random * 10),
@@ -93,7 +93,7 @@ public class GroupTest {
 
         //test add rule
         Rule rule2 = autoScalarAPI.createRule(ruleNameBase + String.valueOf((int)(random * 10) + 1),
-                ResourceType.CPU_PERCENTAGE, Comparator.GREATER_THAN, (int)(random * 100), 1);
+                ResourceType.CPU, Comparator.GREATER_THAN, (int)(random * 100), 1);
         ArrayList<String> rulesOfGroup = new ArrayList<String>(Arrays.asList(autoScalarAPI.getGroup(groupName).getRuleNames()));
         Assert.assertFalse(rulesOfGroup.contains(rule2.getRuleName()));
 

@@ -48,33 +48,33 @@ public class AutoScalingTest {
 
         //test for scale out
         ProfiledResourceEvent profiledResourceEvent1 = new ProfiledResourceEvent(groupId);
-        profiledResourceEvent1.addResourceThresholds(RuleSupport.ResourceType.CPU_PERCENTAGE.name().concat(
+        profiledResourceEvent1.addResourceThresholds(RuleSupport.ResourceType.CPU.name().concat(
                 Constants.SEPARATOR).concat(RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.name()), (float) (random * 100 + 5)); //aligned with +1
-        profiledResourceEvent1.addResourceThresholds(RuleSupport.ResourceType.RAM_PERCENTAGE.name().concat(
+        profiledResourceEvent1.addResourceThresholds(RuleSupport.ResourceType.RAM.name().concat(
                 Constants.SEPARATOR).concat(RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.name()), (float) (random * 100));  // aligned with no changes
         Assert.assertEquals(1, autoScalarAPI.getNumberOfMachineChanges(profiledResourceEvent1));
 
-        profiledResourceEvent1.addResourceThresholds(RuleSupport.ResourceType.RAM_PERCENTAGE.name().concat(
+        profiledResourceEvent1.addResourceThresholds(RuleSupport.ResourceType.RAM.name().concat(
                 Constants.SEPARATOR).concat(RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.name()), (float) (random * 100 + 6));  // aligned with no changes
         Assert.assertEquals(2, autoScalarAPI.getNumberOfMachineChanges(profiledResourceEvent1));
 
         Rule ramLess =  autoScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 2),
-                RuleSupport.ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.LESS_THAN, (float) ((random * 10) + 30.5f) , -1);
+                RuleSupport.ResourceType.RAM, RuleSupport.Comparator.LESS_THAN, (float) ((random * 10) + 30.5f) , -1);
         autoScalarAPI.addRuleToGroup(groupId, ramLess.getRuleName());
-        profiledResourceEvent1.addResourceThresholds(RuleSupport.ResourceType.RAM_PERCENTAGE.name().concat(
+        profiledResourceEvent1.addResourceThresholds(RuleSupport.ResourceType.RAM.name().concat(
                 Constants.SEPARATOR).concat(RuleSupport.Comparator.LESS_THAN_OR_EQUAL.name()), (float) (random * 10)); //aligned with -1
         Assert.assertEquals(2, autoScalarAPI.getNumberOfMachineChanges(profiledResourceEvent1));   //since there are +values, should not scale down
 
         //test for scale in
         ProfiledResourceEvent profiledResourceEvent2 = new ProfiledResourceEvent(groupId);
-        profiledResourceEvent2.addResourceThresholds(RuleSupport.ResourceType.RAM_PERCENTAGE.name().concat(
+        profiledResourceEvent2.addResourceThresholds(RuleSupport.ResourceType.RAM.name().concat(
                 Constants.SEPARATOR).concat(RuleSupport.Comparator.LESS_THAN_OR_EQUAL.name()), (float) (random * 10)); //aligned with -1
         Assert.assertEquals(-1, autoScalarAPI.getNumberOfMachineChanges(profiledResourceEvent2));
 
         Rule cpuLess =  autoScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 3),
-                RuleSupport.ResourceType.CPU_PERCENTAGE, RuleSupport.Comparator.LESS_THAN_OR_EQUAL, (float) ((random * 10) + 20.5f) , -2);
+                RuleSupport.ResourceType.CPU, RuleSupport.Comparator.LESS_THAN_OR_EQUAL, (float) ((random * 10) + 20.5f) , -2);
         autoScalarAPI.addRuleToGroup(groupId, cpuLess.getRuleName());
-        profiledResourceEvent2.addResourceThresholds(RuleSupport.ResourceType.CPU_PERCENTAGE.name().concat(
+        profiledResourceEvent2.addResourceThresholds(RuleSupport.ResourceType.CPU.name().concat(
                 Constants.SEPARATOR).concat(RuleSupport.Comparator.LESS_THAN_OR_EQUAL.name()), (float) (random * 10)); //aligned with -2
         Assert.assertEquals(-2, autoScalarAPI.getNumberOfMachineChanges(profiledResourceEvent2));   //should get -2 since both -1,-2 rules matches
 
@@ -88,9 +88,9 @@ public class AutoScalingTest {
             random = Math.random();
             groupId = GROUP_BASE_NAME + String.valueOf((int) (random * 10));
             rule1 = autoScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int) (random * 10)),
-                    RuleSupport.ResourceType.CPU_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN, (float) (random * 100), 1);
+                    RuleSupport.ResourceType.CPU, RuleSupport.Comparator.GREATER_THAN, (float) (random * 100), 1);
             rule2 = autoScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 1),
-                    RuleSupport.ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (float) ((random * 100) + 2) , 2);
+                    RuleSupport.ResourceType.RAM, RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (float) ((random * 100) + 2) , 2);
 
             Map<Group.ResourceRequirement, Integer> minReq = new HashMap<Group.ResourceRequirement, Integer>();
             minReq.put(Group.ResourceRequirement.NUMBER_OF_VCPUS, 4);

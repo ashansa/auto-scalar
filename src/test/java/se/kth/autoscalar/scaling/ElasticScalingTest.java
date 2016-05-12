@@ -3,7 +3,6 @@ package se.kth.autoscalar.scaling;
 import junit.framework.Assert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Test;
 import se.kth.autoscalar.scaling.core.AutoScalarAPI;
 import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 import se.kth.autoscalar.scaling.group.Group;
@@ -66,13 +65,13 @@ public class ElasticScalingTest {
         Testing with ResourceMonitoringEvent
          */
         //temporary mocking the monitoring events for scale out 1 machine
-        ResourceMonitoringEvent cpuEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.CPU_PERCENTAGE,
+        ResourceMonitoringEvent cpuEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.CPU,
                 RuleSupport.Comparator.GREATER_THAN, (float) ((random * 100) + 5));
         monitoringListener.onHighCPU(groupName, cpuEvent);
         testCPURules(1, ScalingSuggestion.ScalingDirection.SCALE_OUT);
 
         //temporary mocking the monitoring events for scale out 2 machine
-        ResourceMonitoringEvent ramEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.RAM_PERCENTAGE,
+        ResourceMonitoringEvent ramEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.RAM,
                 RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (int)(random * 100) + 3);
         monitoringListener.onHighRam(groupName, ramEvent);
 
@@ -80,18 +79,18 @@ public class ElasticScalingTest {
 
         //threshold is lower than rule1, still ask to add 2 instances. So ES should add 2 instances
         Rule cpuGreatEq =  autoScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 2),
-                ResourceType.CPU_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (float) ((random * 100) + 0.5f) , 2);
+                ResourceType.CPU, RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (float) ((random * 100) + 0.5f) , 2);
         autoScalarAPI.addRuleToGroup(groupName, cpuGreatEq.getRuleName());
         monitoringListener.onHighCPU(groupName, cpuEvent);
         testCPURules(2, ScalingSuggestion.ScalingDirection.SCALE_OUT);
 
         Rule ramLess =  autoScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 3),
-                ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.LESS_THAN, (float) ((random * 10) + 30.5f) , -1);
+                ResourceType.RAM, RuleSupport.Comparator.LESS_THAN, (float) ((random * 10) + 30.5f) , -1);
         Rule ramLessEq =  autoScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 4),
-                ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.LESS_THAN_OR_EQUAL, (float) ((random * 10) + 10f) , -2);
+                ResourceType.RAM, RuleSupport.Comparator.LESS_THAN_OR_EQUAL, (float) ((random * 10) + 10f) , -2);
         autoScalarAPI.addRuleToGroup(groupName, ramLess.getRuleName());
         autoScalarAPI.addRuleToGroup(groupName, ramLessEq.getRuleName());
-        ramEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.
+        ramEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.RAM, RuleSupport.Comparator.
                 LESS_THAN_OR_EQUAL, (float) ((random * 10) + 5));
         monitoringListener.onLowRam(groupName, ramEvent);
         testRAMRules(0, null); //scale in happens only at the end of billing period
@@ -155,13 +154,13 @@ public class ElasticScalingTest {
         Testing with ResourceMonitoringEvent
          */
         //temporary mocking the monitoring events for scale out 1 machine
-        ResourceMonitoringEvent cpuEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.CPU_PERCENTAGE,
+        ResourceMonitoringEvent cpuEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.CPU,
                 RuleSupport.Comparator.GREATER_THAN, (float) ((random * 100) + 5));
         monitoringListener.onHighCPU(groupName, cpuEvent);
         testCPURules(1, ScalingSuggestion.ScalingDirection.SCALE_OUT);
 
         //temporary mocking the monitoring events for scale out 2 machine
-        ResourceMonitoringEvent ramEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.RAM_PERCENTAGE,
+        ResourceMonitoringEvent ramEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.RAM,
                 RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (int)(random * 100) + 3);
         monitoringListener.onHighRam(groupName, ramEvent);
 
@@ -169,18 +168,18 @@ public class ElasticScalingTest {
 
         //threshold is lower than rule1, still ask to add 2 instances. So ES should add 2 instances
         Rule ramGreater =  autoScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 2),
-                ResourceType.CPU_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (float) ((random * 100) + 0.5f) , 2);
+                ResourceType.CPU, RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (float) ((random * 100) + 0.5f) , 2);
         autoScalarAPI.addRuleToGroup(groupName, ramGreater.getRuleName());
         monitoringListener.onHighCPU(groupName, cpuEvent);
         testCPURules(2, ScalingSuggestion.ScalingDirection.SCALE_OUT);
 
         Rule ramLess =  autoScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 3),
-                ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.LESS_THAN, (float) ((random * 10) + 30.5f) , -1);
+                ResourceType.RAM, RuleSupport.Comparator.LESS_THAN, (float) ((random * 10) + 30.5f) , -1);
         Rule ramLessEq =  autoScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 4),
-                ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.LESS_THAN_OR_EQUAL, (float) ((random * 10) + 10f) , -2);
+                ResourceType.RAM, RuleSupport.Comparator.LESS_THAN_OR_EQUAL, (float) ((random * 10) + 10f) , -2);
         autoScalarAPI.addRuleToGroup(groupName, ramLess.getRuleName());
         autoScalarAPI.addRuleToGroup(groupName, ramLessEq.getRuleName());
-        ramEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.
+        ramEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.RAM, RuleSupport.Comparator.
                 LESS_THAN_OR_EQUAL, (float) ((random * 10) + 5));
         monitoringListener.onLowRam(groupName, ramEvent);
         testRAMRules(0, null);    //scale in happens only at the end of billing period
@@ -238,9 +237,9 @@ public class ElasticScalingTest {
             random = Math.random();
             groupName = GROUP_BASE_NAME + String.valueOf((int) (random * 10));
             rule1 = autoScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int) (random * 10)),
-                    ResourceType.CPU_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN, (float) (random * 100), 1);
+                    ResourceType.CPU, RuleSupport.Comparator.GREATER_THAN, (float) (random * 100), 1);
             rule2 = autoScalarAPI.createRule(RULE_BASE_NAME + String.valueOf((int)(random * 10) + 1),
-                    ResourceType.RAM_PERCENTAGE, RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (float) ((random * 100) + 2) , 2);
+                    ResourceType.RAM, RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (float) ((random * 100) + 2) , 2);
 
             Map<Group.ResourceRequirement, Integer> minReq = new HashMap<Group.ResourceRequirement, Integer>();
             minReq.put(Group.ResourceRequirement.NUMBER_OF_VCPUS, 4);
@@ -265,11 +264,11 @@ public class ElasticScalingTest {
             try {
                 Thread.sleep(windowSize/10);
             } catch (InterruptedException e) {
-                System.out.println("CPU_PERCENTAGE:testElasticScaling thread sleep while getting suggestions interrupted.............");
+                System.out.println("CPU:testElasticScaling thread sleep while getting suggestions interrupted.............");
             }
             count++;
             if (count > 12) {   //waited to cover window size
-                //throw new AssertionError("CPU_PERCENTAGE:No suggestion received after window size");
+                //throw new AssertionError("CPU:No suggestion received after window size");
             }
         }
 
@@ -287,7 +286,7 @@ public class ElasticScalingTest {
                 tries++;
             }
             Assert.assertNull(suggestion);
-            System.out.println("CPU_PERCENTAGE: test pass. Expected machine changes: " + expectedMachines);
+            System.out.println("CPU: test pass. Expected machine changes: " + expectedMachines);
             return;
         }
 
@@ -295,7 +294,7 @@ public class ElasticScalingTest {
             suggestion = suggestionQueue.take();
             Assert.assertEquals(expectedMachines, suggestion.getScaleOutSuggestions().size());
             Assert.assertEquals(expectedDirection, suggestion.getScalingDirection());
-            System.out.println("CPU_PERCENTAGE: test pass");
+            System.out.println("CPU: test pass");
 
         } catch (InterruptedException e) {
             throw new IllegalStateException(e);
@@ -311,11 +310,11 @@ public class ElasticScalingTest {
             try {
                 Thread.sleep(windowSize/10);
             } catch (InterruptedException e) {
-                System.out.println("RAM_PERCENTAGE: testElasticScaling thread sleep while getting suggestions interrupted.............");
+                System.out.println("RAM: testElasticScaling thread sleep while getting suggestions interrupted.............");
             }
             count++;
             if (count > 12) {
-                throw new AssertionError("RAM_PERCENTAGE: No suggestion received during one minute");
+                throw new AssertionError("RAM: No suggestion received during one minute");
             }
         }
         ScalingSuggestion suggestion = null;
@@ -332,7 +331,7 @@ public class ElasticScalingTest {
                 tries++;
             }
             Assert.assertNull(suggestion);
-            System.out.println("RAM_PERCENTAGE: test pass. Expected machine changes: " + expectedMachines);
+            System.out.println("RAM: test pass. Expected machine changes: " + expectedMachines);
             return;
         }
 
@@ -340,7 +339,7 @@ public class ElasticScalingTest {
             suggestion = suggestionsQueue.take();
             Assert.assertEquals(expectedMachines, suggestion.getScaleOutSuggestions().size());
             Assert.assertEquals(expectedDirection, suggestion.getScalingDirection());
-            System.out.println("RAM_PERCENTAGE: test pass");
+            System.out.println("RAM: test pass");
         } catch (InterruptedException e) {
             throw new IllegalStateException(e);
         }
@@ -413,13 +412,13 @@ public class ElasticScalingTest {
         updatedGroup.setCoolingTimeOut(100);
         autoScalarAPI.updateGroup(groupName, updatedGroup);
 
-        ResourceMonitoringEvent cpuEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.CPU_PERCENTAGE,
+        ResourceMonitoringEvent cpuEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.CPU,
                 RuleSupport.Comparator.GREATER_THAN, (float) ((random * 100) + 5));
         monitoringListener.onHighCPU(groupName, cpuEvent);
         testCPURules(0, ScalingSuggestion.ScalingDirection.SCALE_OUT);
 
         //temporary mocking the monitoring events for scale out 2 machine
-        ResourceMonitoringEvent ramEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.RAM_PERCENTAGE,
+        ResourceMonitoringEvent ramEvent = new ResourceMonitoringEvent(groupName, vmId, ResourceType.RAM,
                 RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, (int)(random * 100) + 3);
         monitoringListener.onHighRam(groupName, ramEvent);
 

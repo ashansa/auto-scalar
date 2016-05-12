@@ -10,7 +10,7 @@ package se.kth.autoscalar.scaling.monitoring;
 public class RuleSupport {
 
     public enum ResourceType {
-        CPU_PERCENTAGE, RAM_PERCENTAGE
+        CPU, RAM
     }
 
     public enum Comparator {

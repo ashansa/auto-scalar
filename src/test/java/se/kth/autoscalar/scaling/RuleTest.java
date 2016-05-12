@@ -21,7 +21,7 @@ import se.kth.autoscalar.scaling.rules.RuleManagerImpl;
 public class RuleTest {
 
     private static final String ruleNameBase = "testRule";
-    private static final ResourceType cpu = ResourceType.CPU_PERCENTAGE;
+    private static final ResourceType cpu = ResourceType.CPU;
     private static final Comparator greaterThan = Comparator.GREATER_THAN;
     private static RuleManager ruleManager;
 
