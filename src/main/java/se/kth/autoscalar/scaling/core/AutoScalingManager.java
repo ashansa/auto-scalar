@@ -96,7 +96,7 @@ public class AutoScalingManager {
         new Thread() {
             public void run() {
                 try {
-                    Thread.sleep(60000);
+                    Thread.sleep(60000*2);
                 } catch (InterruptedException e) {
                     throw new IllegalStateException(e);
                 }
