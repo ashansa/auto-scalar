@@ -73,8 +73,9 @@ public class AutoScalingManager {
         for (String ruleName : ruleNames) {
             try {
                 rule = ruleManager.getRule(ruleName);
-                interestedEvents.add(new InterestedEvent(rule.getResourceType().name().concat(" ").concat(
-                        rule.getComparator().name().concat(" ").concat(String.valueOf(rule.getThreshold())))));
+                interestedEvents.add(new InterestedEvent(rule.getResourceType().name().concat(Constants.SEPARATOR).
+                        concat(rule.getComparator().name().concat(Constants.SEPARATOR).concat(String.valueOf(
+                                rule.getThreshold())))));
             } catch (AutoScalarException e) {
                 log.error("Failed to add rule: " + ruleName + " to interested events.");
             }
@@ -175,18 +176,31 @@ public class AutoScalingManager {
         for (String ruleName : ruleNames) {
             try {
                 //TODO if there are more than one CPU > rules, add the lowest which will cover others as well
+                //TODO - create new topic to be between 70-80 rather than > 70
                 rule = ruleManager.getRule(ruleName);
                 RuleSupport.Comparator comparator = rule.getComparator();
                 //ie: CPU > 80
-                float newThreshold = rule.getThreshold();
                 if (RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.equals(RuleSupport.getNormalizedComparatorType(comparator))) {
-                    newThreshold = rule.getThreshold() - thresholdChange;
+                    float newThreshold = rule.getThreshold() - thresholdChange;
+                    //CPU > 20 ==>   CPU >=20 & CPU <=30//CPU:>=:70:<=:80
+                    StringBuilder interest = new StringBuilder();
+                    interest.append(rule.getResourceType().name()).append(Constants.SEPARATOR).
+                            append(RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.name()).append(Constants.SEPARATOR).
+                            append(newThreshold).append(Constants.SEPARATOR).
+                            append(RuleSupport.Comparator.LESS_THAN_OR_EQUAL.name()).append(Constants.SEPARATOR).
+                            append(rule.getThreshold());
+                    interestedEvents.add(new InterestedEvent(interest.toString()));
                 } else if (RuleSupport.Comparator.LESS_THAN_OR_EQUAL.equals(RuleSupport.getNormalizedComparatorType(comparator))) {
-                    newThreshold = rule.getThreshold() + thresholdChange;
+                    //CPU < 20 ==>   CPU >=20 & CPU <=30    //CPU:>=:20:<=:30
+                    float newThreshold = rule.getThreshold() + thresholdChange;
+                    StringBuilder interest = new StringBuilder();
+                    interest.append(rule.getResourceType().name()).append(Constants.SEPARATOR).
+                            append(RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.name()).append(Constants.SEPARATOR).
+                            append(rule.getThreshold()).append(Constants.SEPARATOR).
+                            append(RuleSupport.Comparator.LESS_THAN_OR_EQUAL.name()).append(Constants.SEPARATOR).
+                            append(newThreshold);
+                    interestedEvents.add(new InterestedEvent(interest.toString()));
                 }
-                InterestedEvent event = new InterestedEvent(rule.getResourceType().name().concat(" ").concat(rule.
-                        getComparator().name().concat(" ").concat(String.valueOf(newThreshold))));
-                interestedEvents.add(event);
             } catch (AutoScalarException e) {
                 log.error("Failed to add rule: " + ruleName + " to interested events.");
             }
@@ -200,9 +214,10 @@ public class AutoScalingManager {
     public void addAverageResourceInterests(String groupId, RuleSupport.ResourceType resourceType, float lowerPercentile,
                                             float upperPercentile, int timeDuration) throws AutoScalarException {
 
-        //ie: CPU AVG(10To90)
-        InterestedEvent event = new InterestedEvent(resourceType.name().concat(" ").concat("AVG (").concat(
-                String.valueOf(lowerPercentile).concat("TO").concat(String.valueOf(upperPercentile))));
+        //ie: CPU:AVG:10-90
+        InterestedEvent event = new InterestedEvent(resourceType.name().concat(Constants.SEPARATOR).concat(
+                Constants.AVERAGE).concat(Constants.SEPARATOR).concat(String.valueOf(lowerPercentile).concat("-").
+                concat(String.valueOf(upperPercentile))));
         monitoringHandler.addInterestedEvent(groupId, new InterestedEvent[]{event}, timeDuration);
     }
 

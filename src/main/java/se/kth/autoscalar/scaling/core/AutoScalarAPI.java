@@ -83,7 +83,20 @@ public class AutoScalarAPI {
         return ruleManager.getRuleUsage(ruleName);
     }
 
-    public Group createGroup(String groupName, int minInstances, int maxInstances, int coolingTimeUp, int coolingTimeDown,
+  /**
+   *
+   * @param groupName
+   * @param minInstances
+   * @param maxInstances
+   * @param coolingTimeOut minimum time interval in seconds between two scale out actions
+   * @param coolingTimeIn
+   * @param ruleNames
+   * @param minResourceReq
+   * @param reliabilityReq
+   * @return
+   * @throws AutoScalarException
+   */
+    public Group createGroup(String groupName, int minInstances, int maxInstances, int coolingTimeOut, int coolingTimeIn,
                              String[] ruleNames, Map<Group.ResourceRequirement, Integer> minResourceReq, float reliabilityReq)
             throws AutoScalarException {
 
@@ -92,7 +105,7 @@ public class AutoScalarAPI {
             log.error(errorMsg);
             throw new AutoScalarException(errorMsg);
         }
-        return groupManager.createGroup(groupName, minInstances, maxInstances, coolingTimeUp, coolingTimeDown, ruleNames,
+        return groupManager.createGroup(groupName, minInstances, maxInstances, coolingTimeOut, coolingTimeIn, ruleNames,
                 minResourceReq, reliabilityReq);
     }
 

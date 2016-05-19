@@ -29,8 +29,8 @@ public class DynamicEventProfiler {
     private Map<String, ArrayList<MonitoringEvent>> eventsToBeProfiledTempMap = new HashMap<String, ArrayList<MonitoringEvent>>();
 
     private ArrayList<ProfiledEventListener> profiledEventListeners = new ArrayList<ProfiledEventListener>();
-    private MonitoringHandler monitoringHandler;
     private AutoScalingManager autoScalingManager;
+    private MonitoringHandler monitoringHandler;
 
     //TODO make this configurable   (Temporary made this static to refer in test)
     private static int windowSize = 30; //time in ms

@@ -243,6 +243,13 @@ public class KaramelMachineProposer implements MachineProposer {
         }
     }
 
+  /**
+   *
+   * @param noOfMachines
+   * @param priceMap
+   * @param containsSpot : if there are both OD and SI for same price, can select the OD
+   * @return
+   */
     private MachineType[] getCheapestProposals(int noOfMachines, TreeMap<Double, ArrayList<String>> priceMap,
                                                boolean containsSpot) {
         MachineType[] machineProposals = new MachineType[noOfMachines];
@@ -255,7 +262,7 @@ public class KaramelMachineProposer implements MachineProposer {
                 if (instanceProperties.length != 3) {
                     continue;
                 } else {
-                    //TODO - minor : if both OD and spot for the same price and don't need all of them, get spot
+                    //TODO - minor : if(containsSpot) { if both OD and spot for the same price and don't need all of them, get spot}
                     Map<String, String> properties = new HashMap<String, String>();
                     properties.put(MachineType.Properties.INSTANCE_TYPE.name(), instanceProperties[1]);
                     properties.put(MachineType.EC2Properties.REGION.name(), instanceProperties[2]);

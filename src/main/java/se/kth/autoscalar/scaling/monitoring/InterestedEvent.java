@@ -15,7 +15,7 @@ public class InterestedEvent {
     */
 
     //TODO change this as required
-    private String interest;   //resource interests: CPU >= 80%; RAM <= 30%;   CPU avg (10% TO 90%)
+    private String interest;   //resource interests: CPU:>=:80; RAM:<=:30;   CPU:AVG:>=:10:<=:90  ; CPU:>=:70:<=:80
                                // machine interests: KILLED; AT_END_OF_BILLING_PERIOD
 
     public InterestedEvent(String interest) {

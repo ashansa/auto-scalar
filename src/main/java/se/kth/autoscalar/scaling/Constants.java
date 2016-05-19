@@ -15,5 +15,6 @@ public class Constants {
     public static final String BIDDING_PRICE = "bidding_price";
 
     public static final String SEPARATOR = ":";
+    public static final String AVERAGE = "AVG";
 
 }
