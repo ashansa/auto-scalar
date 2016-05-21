@@ -85,6 +85,18 @@ public class AutoScalingManager {
         interestedEvents.add(new InterestedEvent(MachineMonitoringEvent.Status.AT_END_OF_BILLING_PERIOD.name()));
         interestedEvents.add(new InterestedEvent(MachineMonitoringEvent.Status.KILLED.name()));
 
+        Group group = groupManager.getGroup(groupId);
+        if (currentNumberOfMachines < group.getMinInstances() ) {
+            Map<Group.ResourceRequirement, Integer> minResourceReq = group.getMinResourceReq();
+            MachineType[] machineProposals = new KaramelMachineProposer().getMachineProposals(groupId, minResourceReq,
+                    group.getMinInstances() - currentNumberOfMachines, group.getReliabilityReq());
+            scaleOutDecisionMaker.addMachinesToSuggestions(groupId, machineProposals);
+            int noOfMachinesProposed = machineProposals.length;
+            if (noOfMachinesProposed > 0) {
+                activeGroupsInfo.get(groupId).setScaleOutInfo(noOfMachinesProposed);
+            }
+        }
+
         addGroupForScaling(groupId, currentNumberOfMachines);
 
         MonitoringListener monitoringListener = monitoringHandler.addGroupForMonitoring(groupId,
@@ -96,6 +108,7 @@ public class AutoScalingManager {
         final String gId = groupId;
         new Thread() {
             public void run() {
+                System.out.println("========= adding dummy suggestions from AS side to test =================");
                 try {
                     Thread.sleep(60000*2);
                 } catch (InterruptedException e) {
@@ -126,7 +139,8 @@ public class AutoScalingManager {
 
                 suggestionMap.put(gId, suggestionsQueue);
             }
-        }.start();
+        };
+        //}.start();
 
         return monitoringListener;
     }
@@ -331,10 +345,12 @@ public class AutoScalingManager {
                     //int machineChangesDone = handleWithAssumption1(killedInstances, endOfBillingMachineIds, event);
                     if (machineChangesDone > 0) {
                         runtimeGroupInfo.setScaleOutInfo(machineChangesDone);
-                        runtimeGroupInfo.setScaleInInfo(killedInstances);
+                        if (killedInstances > 0) {
+                            runtimeGroupInfo.setScaleInInfo(killedInstances);
+                        }
                     } else if (machineChangesDone < 0){
                         //TODO may need to change this based on assumption 1 or 2 : I think no need since machineChangesDone is returned based on assumption
-                        runtimeGroupInfo.setScaleInInfo(machineChangesDone + killedInstances);
+                        runtimeGroupInfo.setScaleInInfo(Math.abs(machineChangesDone) + killedInstances);
                     }
                 } else {
                     throw new AutoScalarException("Machine event cannot be handled. Group is not in active scaling groups." +

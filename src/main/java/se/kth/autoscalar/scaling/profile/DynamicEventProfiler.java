@@ -362,6 +362,7 @@ public class DynamicEventProfiler {
     }
 
     private void notifyListeners(ProfiledEvent profiledEvent) {
+        System.out.println("================ notifying profiled event listeners by Dynamic event profiler =============");
 
         for (ProfiledEventListener listener : profiledEventListeners) {
             try {

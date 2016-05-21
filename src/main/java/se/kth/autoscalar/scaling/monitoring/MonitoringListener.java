@@ -85,6 +85,7 @@ public class MonitoringListener implements Subscriber {
 
       @Override
       public void onEventArrival(TablespoonEvent event) {
+        System.out.println("==================== table spoon event arrived ==================");
         if (EventType.REGULAR.equals(event.getEventType())) {
           RuleSupport.Comparator filteredComparator = MonitoringUtil.getASComparator(MonitoringUtil.
                   getFilteredComparator(event.getHigh(), event.getLow()));

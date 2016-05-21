@@ -25,13 +25,13 @@ public class MonitoringUtil {
 
   public static Threshold getMonitoringThreshold(String comparator, String thresholdString) {
     double threshold = Double.valueOf(thresholdString);
-    if (">".equals(comparator)) {
+    if (RuleSupport.Comparator.GREATER_THAN.name().equals(comparator)) {
       return new Threshold(threshold, Comparator.GREATER_THAN);
-    } else if (">=".equals(comparator)) {
+    } else if (RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.name().equals(comparator)) {
       return new Threshold(threshold, Comparator.GREATER_THAN_OR_EQUAL);
-    }if ("<".equals(comparator)) {
+    }if (RuleSupport.Comparator.LESS_THAN.name().equals(comparator)) {
       return new Threshold(threshold, Comparator.LESS_THAN);
-    }if ("<=".equals(comparator)) {
+    }if (RuleSupport.Comparator.LESS_THAN_OR_EQUAL.name().equals(comparator)) {
       return new Threshold(threshold, Comparator.LESS_THAN_OR_EQUAL);
     } else {
       throw new IllegalArgumentException("No Comparator found for: " + comparator);
