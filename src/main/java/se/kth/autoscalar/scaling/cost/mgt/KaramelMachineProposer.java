@@ -110,7 +110,7 @@ public class KaramelMachineProposer implements MachineProposer {
                     //TODO propose a good value for bidding price : ie - ondemand price of instance type
                     StringBuilder typeInstanceRegion = new StringBuilder(SPOT).append(Constants.SEPARATOR).
                             append(spotResults.getString(INSTANCE_TYPE_COLUMN)).append(Constants.SEPARATOR).
-                            append(REGION_COLUMN);
+                            append(spotResults.getString(REGION_COLUMN));
                     if (priceMap.containsKey(biddingPrice)) {
                         valueListOfKey = priceMap.get(biddingPrice);
                     } else {
@@ -221,7 +221,9 @@ public class KaramelMachineProposer implements MachineProposer {
 
         for (int i = 0; i < instanceTypeNames.length; ++i) {
             if (i == 0) {
-                selectQuery.append("?");
+                selectQuery.append("(?");
+            } else if (i == (instanceTypeNames.length -1)) {
+                selectQuery.append(",?)");
             } else {
                 selectQuery.append(",?");
             }
@@ -231,10 +233,10 @@ public class KaramelMachineProposer implements MachineProposer {
 
         try {
             PreparedStatement selectInstances = dbConnection.prepareStatement(selectQuery.toString());
-            for (int i = 0; i < instanceTypeNames.length; ++i) {
-                selectInstances.setString(i, instanceTypeNames[i]);
+            for (int i = 1; i <= instanceTypeNames.length; ++i) {
+                selectInstances.setString(i, instanceTypeNames[i -1]);
             }
-            selectInstances.setInt(instanceTypeNames.length + 2, noOfInstances);
+            selectInstances.setInt(instanceTypeNames.length + 1, noOfInstances);
             ResultSet resultSet = selectInstances.executeQuery();
             return resultSet;
         } catch (SQLException e) {
@@ -253,8 +255,12 @@ public class KaramelMachineProposer implements MachineProposer {
     private MachineType[] getCheapestProposals(int noOfMachines, TreeMap<Double, ArrayList<String>> priceMap,
                                                boolean containsSpot) {
         MachineType[] machineProposals = new MachineType[noOfMachines];
+        boolean done = false;
         int index = 0;
         for (Map.Entry<Double, ArrayList<String>> entry : priceMap.entrySet()) {
+            if (done) {
+                break;
+            }
             //fill data
             ArrayList<String> machineProperties = entry.getValue();
             for (String value : machineProperties) {   //value:OD/SI:InstanceType:Region
@@ -278,6 +284,7 @@ public class KaramelMachineProposer implements MachineProposer {
 
                     index ++;
                     if (index == noOfMachines) {
+                        done = true;
                         break;
                     }
                 }
