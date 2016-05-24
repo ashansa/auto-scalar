@@ -270,7 +270,7 @@ public class KaramelMachineProposer implements MachineProposer {
                 } else {
                     //TODO - minor : if(containsSpot) { if both OD and spot for the same price and don't need all of them, get spot}
                     Map<String, String> properties = new HashMap<String, String>();
-                    properties.put(MachineType.Properties.INSTANCE_TYPE.name(), instanceProperties[1]);
+                    properties.put(MachineType.Properties.TYPE.name(), instanceProperties[1]);
                     properties.put(MachineType.EC2Properties.REGION.name(), instanceProperties[2]);
 
                     boolean isPreemptibale = false;

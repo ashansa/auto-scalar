@@ -17,7 +17,7 @@ import java.util.Map;
  */
 public class KaramelProposerTest {
 
-  @Test
+  //@Test
   public void getProposalTest() {
     KaramelMachineProposer proposer = new KaramelMachineProposer();
     Map<Group.ResourceRequirement, Integer> minReq = new HashMap<Group.ResourceRequirement, Integer>();

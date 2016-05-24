@@ -12,7 +12,7 @@ import java.util.Map;
 public class MachineType {
 
     public enum Properties {
-        INSTANCE_TYPE, BIDDING_PRICE;
+        TYPE, BIDDING_PRICE;
     }
 
     public enum EC2Properties {
