@@ -1,8 +1,9 @@
 package se.kth.autoscalar.scaling.monitoring;
 
-import se.kth.tablespoon.client.topics.Comparator;
-import se.kth.tablespoon.client.topics.ResourceType;
-import se.kth.tablespoon.client.topics.Threshold;
+import se.kth.tablespoon.client.events.Comparator;
+import se.kth.tablespoon.client.events.Resource;
+import se.kth.tablespoon.client.events.ResourceType;
+import se.kth.tablespoon.client.events.Threshold;
 
 /**
  * Created with IntelliJ IDEA.
@@ -13,11 +14,11 @@ import se.kth.tablespoon.client.topics.Threshold;
  */
 public class MonitoringUtil {
 
-  public static ResourceType getMonitoringResourceType(String type) {
+  public static Resource getMonitoringResourceType(String type) {
     if (RuleSupport.ResourceType.CPU.name().equals(type)) {
-      return ResourceType.CPU;
+      return new Resource(ResourceType.CPU);
     }else if (RuleSupport.ResourceType.RAM.name().equals(type)) {
-      return ResourceType.CPU;
+      return new Resource(ResourceType.CPU);
     } else {
       throw new IllegalArgumentException("No ResourceType found for: " + type);
     }
