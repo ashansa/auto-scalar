@@ -4,12 +4,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import se.kth.autoscalar.scaling.core.AutoScalarAPI;
 import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
-import se.kth.tablespoon.client.api.Event;
 import se.kth.tablespoon.client.api.Subscriber;
 import se.kth.tablespoon.client.api.TablespoonEvent;
-import se.kth.tablespoon.client.topics.Comparator;
-import se.kth.tablespoon.client.topics.EventType;
-import se.kth.tablespoon.client.topics.Threshold;
+import se.kth.tablespoon.client.events.Comparator;
+import se.kth.tablespoon.client.events.EventType;
+import se.kth.tablespoon.client.events.Threshold;
 
 import java.util.ArrayList;
 import java.util.Arrays;
