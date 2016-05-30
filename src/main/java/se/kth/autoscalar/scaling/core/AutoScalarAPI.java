@@ -10,6 +10,8 @@ import se.kth.autoscalar.scaling.group.GroupManagerImpl;
 import se.kth.autoscalar.scaling.models.MachineInfo;
 import se.kth.autoscalar.scaling.monitoring.MonitoringEvent;
 import se.kth.autoscalar.scaling.monitoring.MonitoringHandler;
+import se.kth.autoscalar.scaling.monitoring.MonitoringHandlerSimulator;
+import se.kth.autoscalar.scaling.monitoring.TSMonitoringHandler;
 import se.kth.autoscalar.scaling.monitoring.MonitoringListener;
 import se.kth.autoscalar.scaling.monitoring.RuleSupport;
 import se.kth.autoscalar.scaling.profile.ProfiledResourceEvent;
@@ -38,7 +40,8 @@ public class AutoScalarAPI {
     private static AutoScalarAPI autoScalarAPI;
 
     private AutoScalarAPI() throws AutoScalarException {
-        MonitoringHandler monitoringHandler = new MonitoringHandler(this);
+        /////////MonitoringHandler monitoringHandler = new TSMonitoringHandler(this);
+        MonitoringHandler monitoringHandler = new MonitoringHandlerSimulator(this);
         autoScalingManager = new AutoScalingManager(monitoringHandler);
         ruleManager = RuleManagerImpl.getInstance();
         groupManager = GroupManagerImpl.getInstance();
