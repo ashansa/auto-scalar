@@ -155,12 +155,13 @@ public class KaramelMachineProposer implements MachineProposer {
 
         //TODO add storage consideration too
         //TODO ECU is in string format :(
-        selectQuery.append(MEMORYGIB_COLUMN).append(" >= ? and ").append(VCPU_COLUMN).append(" >= ?");
+        selectQuery.append(MEMORYGIB_COLUMN).append(" >= ? and ").append(VCPU_COLUMN).append(" >= ? and not (ECU = ?)");
 
         try {
             PreparedStatement selectRuleStatement = dbConnection.prepareStatement(selectQuery.toString());
             selectRuleStatement.setFloat(1, minimumResourceReq.get(MEMORYGIB_COLUMN));
             selectRuleStatement.setInt(2, (int) Math.ceil(minimumResourceReq.get(VCPU_COLUMN)));
+            selectRuleStatement.setString(3, "variable");
             ResultSet resultSet = selectRuleStatement.executeQuery();
             return resultSet;
         } catch (SQLException e) {
