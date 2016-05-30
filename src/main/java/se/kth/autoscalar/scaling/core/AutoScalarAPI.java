@@ -38,6 +38,7 @@ public class AutoScalarAPI {
     private RuleManager ruleManager;
     private GroupManager groupManager;
     private static AutoScalarAPI autoScalarAPI;
+    private int faultToleranceLevel = 1;
 
     private AutoScalarAPI() throws AutoScalarException {
         /////////MonitoringHandler monitoringHandler = new TSMonitoringHandler(this);
@@ -108,6 +109,9 @@ public class AutoScalarAPI {
             log.error(errorMsg);
             throw new AutoScalarException(errorMsg);
         }
+        /*if (reliabilityReq < 100) {
+             minInstances = minInstances + faultToleranceLevel;
+        }*/
         return groupManager.createGroup(groupName, minInstances, maxInstances, coolingTimeOut, coolingTimeIn, ruleNames,
                 minResourceReq, reliabilityReq);
     }

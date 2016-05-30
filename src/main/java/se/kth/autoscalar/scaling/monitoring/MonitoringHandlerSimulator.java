@@ -22,7 +22,7 @@ import java.util.TimerTask;
  */
 public class MonitoringHandlerSimulator implements MonitoringHandler{
 
-  Log log = LogFactory.getLog(TSMonitoringHandler.class);
+  Log log = LogFactory.getLog(MonitoringHandlerSimulator.class);
   private AutoScalarAPI autoScalarAPI;
   MonitoringListener monitoringListener;
   Map<String, EventProducer> producerMap = new HashMap<>();
@@ -49,9 +49,15 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
 
   public void removeGroupFromMonitoring(String groupId) {
     // avoid monitoring and sending events of the machines of the group
+    EventProducer producer = producerMap.get(groupId);
+    if (producer != null) {
+      producer.stopMonitoring();
+    }
   }
 
   public void addInterestedEvent(String groupId, InterestedEvent[] events, int timeDuration) {
+    System.out.println("============= addInterestedEvent with duration not yet implemented ============");
+
     //TODO request events for a limited time
     //should handle all interested event types
     //resource interests: CPU:>=:80; RAM:<=:30;   CPU:AVG:>=:10:<=:90  ; CPU:>=:70:<=:80
@@ -177,6 +183,7 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
     }
 
     public void stopMonitoring() {
+      System.out.println("========= going to stop monitoring of group: " + groupId);
       isMonitoringActivated = false;
     }
 

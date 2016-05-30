@@ -65,7 +65,7 @@ public class AutoScalingManager {
 
     }
 
-    public MonitoringListener startAutoScaling(String groupId, int currentNumberOfMachines) throws AutoScalarException {
+    public MonitoringListener startAutoScaling(final String groupId, int currentNumberOfMachines) throws AutoScalarException {
         ArrayList<InterestedEvent> interestedEvents = new ArrayList<InterestedEvent>();
         String[] ruleNames = groupManager.getRulesForGroup(groupId);
         Rule rule;
@@ -85,6 +85,7 @@ public class AutoScalingManager {
         interestedEvents.add(new InterestedEvent(MachineMonitoringEvent.Status.AT_END_OF_BILLING_PERIOD.name()));
         interestedEvents.add(new InterestedEvent(MachineMonitoringEvent.Status.KILLED.name()));
 
+        addGroupForScaling(groupId, currentNumberOfMachines);
         Group group = groupManager.getGroup(groupId);
         if (currentNumberOfMachines < group.getMinInstances() ) {
             Map<Group.ResourceRequirement, Integer> minResourceReq = group.getMinResourceReq();
@@ -96,8 +97,6 @@ public class AutoScalingManager {
                 activeGroupsInfo.get(groupId).setScaleOutInfo(noOfMachinesProposed);
             }
         }
-
-        addGroupForScaling(groupId, currentNumberOfMachines);
 
         MonitoringListener monitoringListener = monitoringHandler.addGroupForMonitoring(groupId,
                 interestedEvents.toArray(new InterestedEvent[interestedEvents.size()]));
@@ -128,8 +127,8 @@ public class AutoScalingManager {
 
                 //scale out test
                 /*try {
-                    MachineType[] proposals = new KaramelMachineProposer().getMachineProposals(groupId,
-                            groupManager.getGroup(groupId).getMinResourceReq(), 1, 80);
+                    MachineType[] proposals = new KaramelMachineProposer().getMachineProposals(gId,
+                            groupManager.getGroup(gId).getMinResourceReq(), 1, 80);
                     ScalingSuggestion scaleOutSuggestion = new ScalingSuggestion(proposals);
                     suggestionsQueue.add(scaleOutSuggestion);
                 } catch (AutoScalarException e) {
