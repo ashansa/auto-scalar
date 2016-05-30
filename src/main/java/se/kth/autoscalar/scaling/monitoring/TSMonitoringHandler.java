@@ -6,7 +6,7 @@ import se.kth.autoscalar.scaling.Constants;
 import se.kth.autoscalar.scaling.core.AutoScalarAPI;
 import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
 import se.kth.tablespoon.client.api.TablespoonAPI;
-import se.kth.tablespoon.client.topics.EventType;
+import se.kth.tablespoon.client.events.EventType;
 import se.kth.tablespoon.client.topics.ThresholdException;
 
 /**
@@ -37,7 +37,7 @@ public class TSMonitoringHandler implements MonitoringHandler{
                 String[] items = interestedEvent.getInterest().split(Constants.SEPARATOR);
 
                 tablespoonAPI.createTopic(monitoringListener, groupId, EventType.REGULAR, MonitoringUtil.
-                        getMonitoringResourceType(items[0]), 0, MonitoringUtil.getMonitoringThreshold(
+                        getMonitoringResourceType(items[0]), 0, 1, MonitoringUtil.getMonitoringThreshold(
                         items[1], items[2]));
             } catch (Exception e) {
                 log.warn("Could not add the monitoring event: " + interestedEvent.getInterest() + " for group: " +
@@ -62,12 +62,12 @@ public class TSMonitoringHandler implements MonitoringHandler{
                 String items[] = event.getInterest().split(Constants.SEPARATOR);
                 if (event.getInterest().contains(Constants.AVERAGE) && items.length == 6) {  //ie: CPU:AVG:>=:10:<=:90
                     tablespoonAPI.createTopic(monitoringListener, groupId, EventType.GROUP_AVERAGE, MonitoringUtil.
-                            getMonitoringResourceType(items[0]), timeDuration, MonitoringUtil.
+                            getMonitoringResourceType(items[0]), timeDuration, 1, MonitoringUtil.
                             getMonitoringThreshold(items[4], items[5]), MonitoringUtil.getMonitoringThreshold(
                             items[2], items[3]));
                 } else if (items.length == 5) {  //ie: CPU:>=:70:<=:80
                     tablespoonAPI.createTopic(monitoringListener, groupId, EventType.REGULAR, MonitoringUtil.
-                            getMonitoringResourceType(items[0]), timeDuration, MonitoringUtil.getMonitoringThreshold(
+                            getMonitoringResourceType(items[0]), timeDuration, 1, MonitoringUtil.getMonitoringThreshold(
                             items[3], items[4]), MonitoringUtil.getMonitoringThreshold(items[1], items[2]));
                 }
             }catch(ThresholdException e){
