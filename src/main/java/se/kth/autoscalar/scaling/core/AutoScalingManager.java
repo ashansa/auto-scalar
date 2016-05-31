@@ -75,7 +75,7 @@ public class AutoScalingManager {
                 rule = ruleManager.getRule(ruleName);
                 interestedEvents.add(new InterestedEvent(rule.getResourceType().name().concat(Constants.SEPARATOR).
                         concat(rule.getComparator().name().concat(Constants.SEPARATOR).concat(String.valueOf(
-                                rule.getThreshold())))));
+                                rule.getThreshold()))), rule.getComparator()));
             } catch (AutoScalarException e) {
                 log.error("Failed to add rule: " + ruleName + " to interested events.");
             }
@@ -202,7 +202,7 @@ public class AutoScalingManager {
                             append(newThreshold).append(Constants.SEPARATOR).
                             append(RuleSupport.Comparator.LESS_THAN_OR_EQUAL.name()).append(Constants.SEPARATOR).
                             append(rule.getThreshold());
-                    interestedEvents.add(new InterestedEvent(interest.toString()));
+                    interestedEvents.add(new InterestedEvent(interest.toString(), RuleSupport.Comparator.GREATER_THAN_OR_EQUAL));
                 } else if (RuleSupport.Comparator.LESS_THAN_OR_EQUAL.equals(RuleSupport.getNormalizedComparatorType(comparator))) {
                     //CPU < 20 ==>   CPU >=20 & CPU <=30    //CPU:>=:20:<=:30
                     float newThreshold = rule.getThreshold() + thresholdChange;
@@ -212,7 +212,7 @@ public class AutoScalingManager {
                             append(rule.getThreshold()).append(Constants.SEPARATOR).
                             append(RuleSupport.Comparator.LESS_THAN_OR_EQUAL.name()).append(Constants.SEPARATOR).
                             append(newThreshold);
-                    interestedEvents.add(new InterestedEvent(interest.toString()));
+                    interestedEvents.add(new InterestedEvent(interest.toString(), RuleSupport.Comparator.LESS_THAN_OR_EQUAL));
                 }
             } catch (AutoScalarException e) {
                 log.error("Failed to add rule: " + ruleName + " to interested events.");
@@ -224,6 +224,15 @@ public class AutoScalingManager {
 
     }
 
+  /**
+   *
+   * @param groupId
+   * @param resourceType
+   * @param lowerPercentile
+   * @param upperPercentile
+   * @param timeDuration in seconds
+   * @throws AutoScalarException
+   */
     public void addAverageResourceInterests(String groupId, RuleSupport.ResourceType resourceType, float lowerPercentile,
                                             float upperPercentile, int timeDuration) throws AutoScalarException {
 

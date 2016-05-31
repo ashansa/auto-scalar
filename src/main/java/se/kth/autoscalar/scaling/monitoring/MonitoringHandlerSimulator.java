@@ -5,13 +5,20 @@ import org.apache.commons.logging.LogFactory;
 import se.kth.autoscalar.scaling.Constants;
 import se.kth.autoscalar.scaling.core.AutoScalarAPI;
 import se.kth.autoscalar.scaling.exceptions.AutoScalarException;
+import se.kth.tablespoon.client.events.EventType;
 
+import java.util.AbstractList;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created with IntelliJ IDEA.
@@ -26,7 +33,7 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
   private AutoScalarAPI autoScalarAPI;
   MonitoringListener monitoringListener;
   Map<String, EventProducer> producerMap = new HashMap<>();
-
+  private ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(2); //to handle >= and <= ?? or just to be safe??
 
   public MonitoringHandlerSimulator(AutoScalarAPI autoScalarAPI) {
     this.autoScalarAPI = autoScalarAPI;
@@ -55,8 +62,15 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
     }
   }
 
-  public void addInterestedEvent(String groupId, InterestedEvent[] events, int timeDuration) {
+  public void addInterestedEvent(String groupId, InterestedEvent[] events, int timeDurationSec) {
     System.out.println("============= addInterestedEvent with duration not yet implemented ============");
+    EventProducer producer = producerMap.get(groupId);
+    if (producer == null) {
+      log.error("No event producer is available for group: " + groupId + " Cannot add events on duration");
+    } else {
+      TimedEventHandler timedEventHandler = new TimedEventHandler(groupId, events, timeDurationSec, producer);
+      executor.execute(timedEventHandler);
+    }
 
     //TODO request events for a limited time
     //should handle all interested event types
@@ -68,12 +82,12 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
         String items[] = event.getInterest().split(Constants.SEPARATOR);
         if (event.getInterest().contains(Constants.AVERAGE) && items.length == 6) {  //ie: CPU:AVG:>=:10:<=:90
           tablespoonAPI.createTopic(monitoringListener, groupId, EventType.GROUP_AVERAGE, MonitoringUtil.
-                  getMonitoringResourceType(items[0]), timeDuration, MonitoringUtil.
+                  getMonitoringResourceType(items[0]), timeDurationSec, MonitoringUtil.
                   getMonitoringThreshold(items[4], items[5]), MonitoringUtil.getMonitoringThreshold(
                   items[2], items[3]));
         } else if (items.length == 5) {  //ie: CPU:>=:70:<=:80
           tablespoonAPI.createTopic(monitoringListener, groupId, EventType.REGULAR, MonitoringUtil.
-                  getMonitoringResourceType(items[0]), timeDuration, MonitoringUtil.getMonitoringThreshold(
+                  getMonitoringResourceType(items[0]), timeDurationSec, MonitoringUtil.getMonitoringThreshold(
                   items[3], items[4]), MonitoringUtil.getMonitoringThreshold(items[1], items[2]));
         }
       }catch(ThresholdException e){
@@ -89,24 +103,33 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
 
   class EventProducer {
 
-    boolean isMonitoringActivated;
-    String groupId;
-    MonitoringListener monitoringListener;
-    int monitoringFreq;   //each 1sec, 2sec, etc
-    Map<String,Queue<Float>> resourceWorkloadMap = new HashMap<>();   //CPU: 12,12,12,12,52,52,.... (monitoring values)
+    private boolean isMonitoringActivated;
+    private String groupId;
+    private MonitoringListener monitoringListener;
+    private int monitoringFreqSeconds;   //each 1sec, 2sec, etc
+    private Map<String,Queue<Float>> resourceWorkloadMap = new HashMap<>();   //CPU: 12,12,12,12,52,52,.... (monitoring values)
 
-    Map<String, Float> greaterThanRuleMap = new HashMap<>();
-    Map<String, Float> lessThanRuleMap = new HashMap<>();
-    //TODO if we need to handle >1 group, need to have a map of groupId-greater/lessThanRuleMap
+    //ResourceType: Interested threshold Map
+    private Map<String, Float> greaterThanInterestMap = new HashMap<>();
+    private Map<String, Float> lessThanInterestMap = new HashMap<>();
+
+    //ID: <ResourceType:thresholdLow:thresholdHigh> map
+    private Map<String, String> durationGreaterInterestMap = new HashMap<>();
+    private Map<String, String> durationLessInterestMap = new HashMap<>();
+
+    private ReentrantLock durationGreaterLock = new ReentrantLock();
+    private ReentrantLock durationLessLock = new ReentrantLock();
+
+    //TODO if we need to handle >1 group, need to have a map of groupId-greater/lessThanInterestMap
     //workload
 
     //spawning delay
     //monitoring events delay??? (AS can't help if monitoring is delayed)
 
-    EventProducer(String groupId, MonitoringListener monitoringListener, String cpuWorkload, String ramWorkload, int monitoringFreq) {
+    EventProducer(String groupId, MonitoringListener monitoringListener, String cpuWorkload, String ramWorkload, int monitoringFreqSeconds) {
       this.groupId = groupId;
       this.monitoringListener = monitoringListener;
-      this.monitoringFreq = monitoringFreq;
+      this.monitoringFreqSeconds = monitoringFreqSeconds;
 
       //minutes:resource_utilization%
       addWorkload(RuleSupport.ResourceType.CPU.name(), cpuWorkload);
@@ -122,7 +145,7 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
       for (String wl : workloadArray) {
         int durationMin = Integer.valueOf(wl.trim().split(":")[0]);
         float utilization = Float.valueOf(wl.trim().split(":")[1]);
-        for (int i = 0; i < durationMin * 60; i = i + monitoringFreq) {
+        for (int i = 0; i < durationMin * 60; i = i + monitoringFreqSeconds) {
           workloadQueue.add(utilization);
         }
       }
@@ -146,7 +169,14 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
         try {
           String[] items = interestedEvent.getInterest().split(Constants.SEPARATOR);
           if (items.length != 3) {
-            throw new Exception("Interested event is not in the correct format :" + interestedEvent.getInterest());
+            if (MachineMonitoringEvent.Status.KILLED.name().equals(interestedEvent.getInterest()) ||
+                    MachineMonitoringEvent.Status.AT_END_OF_BILLING_PERIOD.name().equals(interestedEvent.getInterest())) {
+
+              log.info("AT_END_OF_BILLING_PERIOD and KILLED events will be handled by Karamel. So will not add to " +
+                      "simulator");
+            } else {
+              throw new Exception("Interested event is not in the correct format :" + interestedEvent.getInterest());
+            }
           }
           RuleSupport.Comparator unifiedComparator = RuleSupport.getNormalizedComparatorType(
                   RuleSupport.Comparator.valueOf(items[1]));
@@ -154,23 +184,23 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
           Float definedThreshold = Float.valueOf(items[2]);
 
           if (RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.equals(unifiedComparator)) {
-            Float existingValue = greaterThanRuleMap.get(items[1]);
+            Float existingValue = greaterThanInterestMap.get(items[1]);
             if (existingValue == null) {
-              greaterThanRuleMap.put(items[1], definedThreshold);
+              greaterThanInterestMap.put(items[1], definedThreshold);
             } else {
               //since greater than, go for the lowest threshold
               if (definedThreshold < existingValue) {
-                greaterThanRuleMap.put(items[1], definedThreshold);
+                greaterThanInterestMap.put(items[1], definedThreshold);
               } //else no need to change since new value includes in existing threshold
             }
           } else { //this is lessThanOrEqual part
-            Float existingValue = lessThanRuleMap.get(items[1]);
+            Float existingValue = lessThanInterestMap.get(items[1]);
             if (existingValue == null) {
-              lessThanRuleMap.put(items[1], definedThreshold);
+              lessThanInterestMap.put(items[1], definedThreshold);
             } else {
               //since less than, go for the highest threshold
               if (definedThreshold > existingValue) {
-                lessThanRuleMap.put(items[1], definedThreshold);
+                lessThanInterestMap.put(items[1], definedThreshold);
               } //else no need to change since new value includes in existing threshold
             }
           }
@@ -205,8 +235,44 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
             ResourceMonitoringEvent resourceMonitoringEvent;
 
             float ramUtilization = ramMonitoring.poll();
-            Float highRamThreshold = greaterThanRuleMap.get(RuleSupport.ResourceType.RAM.name());
-            Float lowRamThreshold = lessThanRuleMap.get(RuleSupport.ResourceType.RAM.name());
+            Float highRamThreshold = greaterThanInterestMap.get(RuleSupport.ResourceType.RAM.name());
+            Float lowRamThreshold = lessThanInterestMap.get(RuleSupport.ResourceType.RAM.name());
+            System.out.println("............ original RAM interests, high:low .............." + highRamThreshold + ":" + lowRamThreshold);
+
+            float cpuUtilization = cpuMonitoring.poll();
+            Float highCpuThreshold = greaterThanInterestMap.get(RuleSupport.ResourceType.CPU.name());
+            Float lowCpuThreshold = lessThanInterestMap.get(RuleSupport.ResourceType.CPU.name());
+            System.out.println("............ original CPU interests, high:low .............." + highCpuThreshold + ":" + lowCpuThreshold);
+
+
+            for (String resThresholdsString : durationGreaterInterestMap.values()) {
+              String[] items = resThresholdsString.split(":"); //ie: CPU:70:80
+              if (items.length == 3) {
+                if (RuleSupport.ResourceType.RAM.name().equals(items[0])) {
+                  //I am just assigning the lower value here since we always add timed events a delta less than original interest
+                  highRamThreshold = Float.valueOf(items[1]);
+                } else if (RuleSupport.ResourceType.CPU.name().equals(items[0])) {
+                  //I am just assigning the lower value here since we always add timed events a delta less than original interest
+                  highCpuThreshold = Float.valueOf(items[1]);
+                }
+              }
+            }
+
+            for (String resThresholdsString : durationLessInterestMap.values()) {
+              String[] items = resThresholdsString.split(":"); //ie: CPU:20:30
+              if (items.length == 3) {
+                if (RuleSupport.ResourceType.RAM.name().equals(items[0])) {
+                  //I am just assigning the lower value here since we always add timed events a delta less than original interest
+                  lowRamThreshold = Float.valueOf(items[2]);
+                } else if (RuleSupport.ResourceType.CPU.name().equals(items[0])) {
+                  //I am just assigning the lower value here since we always add timed events a delta less than original interest
+                  lowCpuThreshold = Float.valueOf(items[2]);
+                }
+              }
+            }
+
+            System.out.println("++++++++++++ new RAM interests, high:low ++++++++++++" + highRamThreshold + ":" + lowRamThreshold);
+            System.out.println("++++++++++++ new CPU interests, high:low ++++++++++++" + highCpuThreshold + ":" + lowCpuThreshold);
 
             if (highRamThreshold != null && ramUtilization >= highRamThreshold) {
               //TODO get machine Ids and send values for all machine Ids
@@ -227,9 +293,6 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
               }
             }
 
-            float cpuUtilization = cpuMonitoring.poll();
-            Float highCpuThreshold = greaterThanRuleMap.get(RuleSupport.ResourceType.CPU.name());
-            Float lowCpuThreshold = lessThanRuleMap.get(RuleSupport.ResourceType.CPU.name());
             if (highCpuThreshold != null && cpuUtilization >= highCpuThreshold) {
               resourceMonitoringEvent = new ResourceMonitoringEvent(groupId,"??machineId", RuleSupport.ResourceType.CPU,
                       RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, cpuUtilization);
@@ -249,39 +312,88 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
             }
           }
         }
-      }, 0, monitoringFreq);
+      }, 0, monitoringFreqSeconds * 1000);
     }
 
-   /* @Override
+    public void addDurationLessInterest(String id, String resourceThreshold) {
+      durationGreaterLock.lock();
+      this.durationGreaterInterestMap.put(id, resourceThreshold);
+      durationGreaterLock.unlock();
+    }
+
+    public void removeDurationLessInterest(String id) {
+      durationGreaterLock.lock();
+      this.durationGreaterInterestMap.remove(id);
+      durationGreaterLock.unlock();
+    }
+
+    public void addDurationGreaterInterest(String id, String resourceThreshold) {
+      durationLessLock.lock();
+      this.durationLessInterestMap.put(id, resourceThreshold);
+      durationLessLock.unlock();
+    }
+
+    public void removeDurationGreaterInterest(String id) {
+      durationLessLock.lock();
+      this.durationLessInterestMap.remove(id);
+      durationLessLock.unlock();
+    }
+  }
+
+  class TimedEventHandler implements Runnable{
+
+    private String groupId;
+    private InterestedEvent[] events;
+    private int timeDurationSec;
+    private EventProducer producer;
+
+    public TimedEventHandler(String groupId, InterestedEvent[] events, int timeDurationSec, EventProducer producer) {
+      this.groupId = groupId;
+      this.events = events;
+      this.timeDurationSec = timeDurationSec;
+      this.producer = producer;
+    }
+
+    @Override
     public void run() {
-      //send events periodically considering the workload and the interested events
-      //ie RAM workload : "1:10, 5:50, 10:95, 5:57, 5:180, 10:62, 5:12"  min:utilization
-      Queue<WLTuple> cpuMonitoring = resourceWorkloadMap.get(RuleSupport.ResourceType.CPU.name());
-      Queue<WLTuple> ramMonitoring = resourceWorkloadMap.get(RuleSupport.ResourceType.RAM.name());
+      ArrayList<String> greaterIds = new ArrayList<>();
+      ArrayList<String> lessIds = new ArrayList<>();
 
-      long startedTime = System.currentTimeMillis();
-      System.out.println("=========== monitoring of group: " + groupId + " started at: " + startedTime);
-      while (isMonitoringActivated) {
+      for (InterestedEvent event : events) {
+        String id;
+        //resource interests: CPU:AVG:>=:10:<=:90  ; CPU:>=:70:<=:80
+        String items[] = event.getInterest().split(Constants.SEPARATOR);
 
-      }
+        if (items.length == 5) {  //ie: CPU:>=:70:<=:80
+          if (RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.equals(RuleSupport.getNormalizedComparatorType(event.getComparator()))) {
 
-      while (isMonitoringActivated) {
-        if (ramUtilizeLevels.length >= cpuUtilizeLevels.length) {
-          for (String ramUtilizeLevel : ramUtilizeLevels) {
-            Float timeInMin = Float.valueOf(ramUtilizeLevel.trim().split(":")[0]);
-            Float utilization = Float.valueOf(ramUtilizeLevel.trim().split(":")[1]);
-
-            long timeToExit =  System.currentTimeMillis() + (long)(timeInMin * 60 * 1000);
-            while (System.currentTimeMillis() <= timeToExit) {
-               if (utilization >= greaterThanRuleMap.get(RuleSupport.ResourceType.RAM.name())) {
-                 monitoringListener.onHighRam(groupId, );
-               } else if (utilization <= lessThanRuleMap.get(RuleSupport.ResourceType.RAM.name())) {
-                 monitoringListener.onLowRam(groupId, );
-               }
-            }
+            id = UUID.randomUUID().toString();
+            greaterIds.add(id);
+            String resourceThreshold = event.getInterest().replace("GREATER_THAN_OR_EQUAL:","").replace("LESS_THAN_OR_EQUAL:","");
+            producer.addDurationGreaterInterest(id, resourceThreshold);    //ID: <ResourceType:thresholdLow:thresholdHigh> map
+          } else if (RuleSupport.Comparator.LESS_THAN_OR_EQUAL.equals(RuleSupport.getNormalizedComparatorType(event.getComparator()))) {
+            id = UUID.randomUUID().toString();
+            lessIds.add(id);
+            String resourceThreshold = event.getInterest().replace("GREATER_THAN_OR_EQUAL:","").replace("LESS_THAN_OR_EQUAL:","");
+            producer.addDurationLessInterest(id, resourceThreshold);    //ID: <ResourceType:thresholdLow:thresholdHigh> map
           }
+        } else if (event.getInterest().contains(Constants.AVERAGE) && items.length == 6) {  //ie: CPU:AVG:>=:10:<=:90
+          //TODO implement
         }
       }
-    }*/
+      try {
+        Thread.sleep(timeDurationSec * 1000);
+      } catch (InterruptedException e) {
+        log.error("Error while waiting until duration is over for duration based interest events for group: " +
+                groupId + "Have to remove the duration based interests now :(");
+      } finally {
+        for (String id : greaterIds) {
+          producer.removeDurationGreaterInterest(id);
+        }
+        for (String id : lessIds) {
+          producer.removeDurationLessInterest(id);
+        }
+      }
+    }
   }
 }
