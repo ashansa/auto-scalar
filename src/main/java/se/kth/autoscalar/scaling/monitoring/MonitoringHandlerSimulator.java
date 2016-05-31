@@ -174,6 +174,7 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
 
               log.info("AT_END_OF_BILLING_PERIOD and KILLED events will be handled by Karamel. So will not add to " +
                       "simulator");
+              continue;
             } else {
               throw new Exception("Interested event is not in the correct format :" + interestedEvent.getInterest());
             }
