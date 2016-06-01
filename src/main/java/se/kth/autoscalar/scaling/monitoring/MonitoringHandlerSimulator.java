@@ -281,6 +281,7 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
           /*  log.info("++++++++++++ new RAM interests, high:low ++++++++++++" + highRamThreshold + ":" + lowRamThreshold);
             log.info("++++++++++++ new CPU interests, high:low ++++++++++++" + highCpuThreshold + ":" + lowCpuThreshold);*/
 
+            boolean eventSent = false;
             if (highRamThreshold != null && ramUtilization >= highRamThreshold) {
               //TODO get machine Ids and send values for all machine Ids
               resourceMonitoringEvent = new ResourceMonitoringEvent(groupId,"??machineId", RuleSupport.ResourceType.RAM,
@@ -288,6 +289,7 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
               try {
                 log.info("....... going to add onHighRam event. Utilization: " + resourceMonitoringEvent.getCurrentValue());
                 monitoringListener.onHighRam(groupId, resourceMonitoringEvent);
+                eventSent = true;
               } catch (AutoScalarException e) {
                 log.error("Error while sending onHighRam event for groupId: " + groupId + " machine: ", e);
               }
@@ -297,6 +299,7 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
               try {
                 log.info("....... going to add onLowRam event. Utilization: " + resourceMonitoringEvent.getCurrentValue());
                 monitoringListener.onLowRam(groupId, resourceMonitoringEvent);
+                eventSent = true;
               } catch (AutoScalarException e) {
                 log.error("Error while sending onLowRam event for groupId: " + groupId + " machine: ", e);
               }
@@ -308,6 +311,7 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
               try {
                 log.info("....... going to add onHighCPU event. Utilization: " + resourceMonitoringEvent.getCurrentValue());
                 monitoringListener.onHighCPU(groupId, resourceMonitoringEvent);
+                eventSent = true;
               } catch (AutoScalarException e) {
                 log.error("Error while sending onHighCPU event for groupId: " + groupId + " machine: ", e);
               }
@@ -318,9 +322,13 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
                 log.info("....... going to add onHighRam event. Utilization: " + resourceMonitoringEvent.getCurrentValue());
 
                 monitoringListener.onLowCPU(groupId, resourceMonitoringEvent);
+                eventSent = true;
               } catch (AutoScalarException e) {
                 log.error("Error while sending onLowCPU event for groupId: " + groupId + " machine: ", e);
               }
+            }
+            if (!eventSent) {
+              log.info(".................. no events occured ..........");
             }
           }
         }
