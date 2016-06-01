@@ -33,7 +33,8 @@ public class TSMonitoringHandler implements MonitoringHandler{
         for (InterestedEvent interestedEvent : interestedEvents) {
             //3 forms of items   RAM:<=:30;   CPU:AVG:>=:10:<=:90;    KILLED;
             //but the initial form will be always the 1st form
-            try {
+            ////////
+           /* try {
                 String[] items = interestedEvent.getInterest().split(Constants.SEPARATOR);
 
                 tablespoonAPI.createTopic(monitoringListener, groupId, EventType.REGULAR, MonitoringUtil.
@@ -42,7 +43,7 @@ public class TSMonitoringHandler implements MonitoringHandler{
             } catch (Exception e) {
                 log.warn("Could not add the monitoring event: " + interestedEvent.getInterest() + " for group: " +
                         groupId, e);
-            }
+            }*/
         }
 
         return monitoringListener;
@@ -58,7 +59,8 @@ public class TSMonitoringHandler implements MonitoringHandler{
         //resource interests: CPU:>=:80; RAM:<=:30;   CPU:AVG:>=:10:<=:90  ; CPU:>=:70:<=:80
         // machine interests: KILLED; AT_END_OF_BILLING_PERIOD
         for (InterestedEvent event : events) {
-            try {
+            ////////
+            /*try {
                 String items[] = event.getInterest().split(Constants.SEPARATOR);
                 if (event.getInterest().contains(Constants.AVERAGE) && items.length == 6) {  //ie: CPU:AVG:>=:10:<=:90
                     tablespoonAPI.createTopic(monitoringListener, groupId, EventType.GROUP_AVERAGE, MonitoringUtil.
@@ -73,7 +75,7 @@ public class TSMonitoringHandler implements MonitoringHandler{
             }catch(ThresholdException e){
                 log.warn("Could not add the monitoring event: " + event.getInterest() + " for group: " +
                         groupId, e);
-            }
+            }*/
         }
     }
 
