@@ -43,9 +43,9 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
   public MonitoringListener addGroupForMonitoring(String groupId, InterestedEvent[] interestedEvents) throws AutoScalarException {
     //TODO stimulator will consider interested events only with = sign (no lessThan, greaterThan for simulation)
     //lessThan =====will be changed as ====> lessThanOrEqual
-    String cuWorkload = "20:1.1";  //no of cus needes for each time point (min vcu req: 2)
+    String cuWorkload = "15:1.1";  //no of cus needes for each time point (min vcu req: 2)
     //String ramWorkload = "1:1, 5:3, 10:3.7, 5:2.5, 5:10, 10:3.8, 4:1";  (min ram req: 4GB)
-    String ramWorkload = "5:1, 2:3, 7:3.7, 6:1";  //memory GB needes for each time point  (min ram req: 4GB)
+    String ramWorkload = "1:1, 3:3, 4:3.7, 5:10, 2:1";  //memory GB needes for each time point  (min ram req: 4GB)
     EventProducer eventProducer = new EventProducer(groupId, monitoringListener, cuWorkload, ramWorkload, 1);
     producerMap.put(groupId, eventProducer);
     eventProducer.addInitialInterestedEvents(interestedEvents);
@@ -237,20 +237,20 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
 
             float ramRequirement = ramWorkload.poll();
             int noOfGBsInSys = 4; //TODO-get this from Karamel API
+            if (ramRequirement > 4 )
+              noOfGBsInSys = 8;    //TODO dynamically update with Karamel API
+
             float ramUtilization = ramRequirement/noOfGBsInSys * 100; //TODO get this for each machine to send utilization events
 
             Float highRamThreshold = greaterThanInterestMap.get(RuleSupport.ResourceType.RAM.name());
             Float lowRamThreshold = lessThanInterestMap.get(RuleSupport.ResourceType.RAM.name());
-            log.info("............ original RAM interests, high:low .............." + highRamThreshold + ":" + lowRamThreshold);
 
             float cuRequirement = cuWorkload.poll();
-            int noOfCUsInSys = 1; //TODO-get this from Karamel API
+            int noOfCUsInSys = 2; //TODO-get this from Karamel API
             float cpuUtilization = cuRequirement/noOfCUsInSys * 100; //TODO get this for each machine to send utilization events
 
             Float highCpuThreshold = greaterThanInterestMap.get(RuleSupport.ResourceType.CPU.name());
             Float lowCpuThreshold = lessThanInterestMap.get(RuleSupport.ResourceType.CPU.name());
-            log.info("............ original CPU interests, high:low .............." + highCpuThreshold + ":" + lowCpuThreshold);
-
 
             for (String resThresholdsString : durationGreaterInterestMap.values()) {
               String[] items = resThresholdsString.split(":"); //ie: CPU:70:80
@@ -278,14 +278,15 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
               }
             }
 
-            log.info("++++++++++++ new RAM interests, high:low ++++++++++++" + highRamThreshold + ":" + lowRamThreshold);
-            log.info("++++++++++++ new CPU interests, high:low ++++++++++++" + highCpuThreshold + ":" + lowCpuThreshold);
+          /*  log.info("++++++++++++ new RAM interests, high:low ++++++++++++" + highRamThreshold + ":" + lowRamThreshold);
+            log.info("++++++++++++ new CPU interests, high:low ++++++++++++" + highCpuThreshold + ":" + lowCpuThreshold);*/
 
             if (highRamThreshold != null && ramUtilization >= highRamThreshold) {
               //TODO get machine Ids and send values for all machine Ids
               resourceMonitoringEvent = new ResourceMonitoringEvent(groupId,"??machineId", RuleSupport.ResourceType.RAM,
                       RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, ramUtilization);
               try {
+                log.info("....... going to add onHighRam event. Utilization: " + resourceMonitoringEvent.getCurrentValue());
                 monitoringListener.onHighRam(groupId, resourceMonitoringEvent);
               } catch (AutoScalarException e) {
                 log.error("Error while sending onHighRam event for groupId: " + groupId + " machine: ", e);
@@ -294,6 +295,7 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
               resourceMonitoringEvent = new ResourceMonitoringEvent(groupId,"??machineId", RuleSupport.ResourceType.RAM,
                       RuleSupport.Comparator.LESS_THAN_OR_EQUAL, ramUtilization);
               try {
+                log.info("....... going to add onLowRam event. Utilization: " + resourceMonitoringEvent.getCurrentValue());
                 monitoringListener.onLowRam(groupId, resourceMonitoringEvent);
               } catch (AutoScalarException e) {
                 log.error("Error while sending onLowRam event for groupId: " + groupId + " machine: ", e);
@@ -304,6 +306,7 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
               resourceMonitoringEvent = new ResourceMonitoringEvent(groupId,"??machineId", RuleSupport.ResourceType.CPU,
                       RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, cpuUtilization);
               try {
+                log.info("....... going to add onHighCPU event. Utilization: " + resourceMonitoringEvent.getCurrentValue());
                 monitoringListener.onHighCPU(groupId, resourceMonitoringEvent);
               } catch (AutoScalarException e) {
                 log.error("Error while sending onHighCPU event for groupId: " + groupId + " machine: ", e);
@@ -312,6 +315,8 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
               resourceMonitoringEvent = new ResourceMonitoringEvent(groupId,"??machineId", RuleSupport.ResourceType.CPU,
                       RuleSupport.Comparator.LESS_THAN_OR_EQUAL, cpuUtilization);
               try {
+                log.info("....... going to add onHighRam event. Utilization: " + resourceMonitoringEvent.getCurrentValue());
+
                 monitoringListener.onLowCPU(groupId, resourceMonitoringEvent);
               } catch (AutoScalarException e) {
                 log.error("Error while sending onLowCPU event for groupId: " + groupId + " machine: ", e);

@@ -253,20 +253,22 @@ public class AutoScalingManager {
                 ProfiledResourceEvent event = (ProfiledResourceEvent)profiledEvent;
                 String groupId = event.getGroupId();
                 if(activeGroupsInfo.containsKey(groupId)) {
-                    boolean inCoolDownPeriod = isInCoolDownPeriod(groupId, ScalingSuggestion.ScalingDirection.SCALE_OUT);
+                    //////boolean inCoolDownPeriod = isInCoolDownPeriod(groupId, ScalingSuggestion.ScalingDirection.SCALE_OUT);
+                    RuntimeGroupInfo runtimeGroupInfo = activeGroupsInfo.get(groupId);
+                    Group group = groupManager.getGroup(groupId);
 
-                    if (!inCoolDownPeriod) {
+                    ///////if (!inCoolDownPeriod) {
                         int maxChangeOfMachines = getNumberOfMachineChanges(event);
-                        if (maxChangeOfMachines > 0) {
-                            RuntimeGroupInfo runtimeGroupInfo = activeGroupsInfo.get(groupId);
+                        if (maxChangeOfMachines > 0 && runtimeGroupInfo.getNumberOfMachinesInGroup() < group.getMaxInstances()
+                                && !isInCoolDownPeriod(groupId, ScalingSuggestion.ScalingDirection.SCALE_OUT)) {
                             scaleOutInternalQueue.add(groupId.concat(":").concat(String.valueOf(maxChangeOfMachines)));
                             runtimeGroupInfo.setScaleOutInfo(maxChangeOfMachines);
-                        } else {
+                        } else if (maxChangeOfMachines < 0 && runtimeGroupInfo.getNumberOfMachinesInGroup() > group.getMinInstances()
+                                && !isInCoolDownPeriod(groupId, ScalingSuggestion.ScalingDirection.SCALE_IN)) {
                             if (optimizedScaleInTmp) {
                                 //no else part
                                 // Scale in will trigger only at the end of a billing period of a machine. This is handled by ProfiledMachineEventListener
                             } else {
-                                RuntimeGroupInfo runtimeGroupInfo = activeGroupsInfo.get(groupId);
                                 ScalingSuggestion suggestion = new ScalingSuggestion(maxChangeOfMachines);
 
                                 ArrayBlockingQueue<ScalingSuggestion> suggestionsQueue;
@@ -281,7 +283,7 @@ public class AutoScalingManager {
                                 runtimeGroupInfo.setScaleInInfo(maxChangeOfMachines);
                             }
                         }
-                    }
+                    /////}
                 } else {
                     throw new AutoScalarException("Resource event cannot be handled. Group is not in active scaling groups." +
                             " Group Id: " + event.getGroupId());
@@ -349,7 +351,7 @@ public class AutoScalingManager {
 
                     RuntimeGroupInfo runtimeGroupInfo = activeGroupsInfo.get(event.getGroupId());
 
-                    int machineChangesDone = handleWithAssumption2(endOfBillingMachineIds, event);
+                    int machineChangesDone = makeScalinDecisionWithAssump2(endOfBillingMachineIds, event);
                     //int machineChangesDone = handleWithAssumption1(killedInstances, endOfBillingMachineIds, event);
                     if (machineChangesDone > 0) {
                         runtimeGroupInfo.setScaleOutInfo(machineChangesDone);
@@ -414,29 +416,27 @@ public class AutoScalingManager {
         }
 
         //Assumption2: effect of killed machines are reflected in resource events. Hence can act on what rules propose
-        private int handleWithAssumption2(ArrayList<String> endOfBillingMachineIds, ProfiledMachineEvent event) throws AutoScalarException {
+        private int makeScalinDecisionWithAssump2(ArrayList<String> endOfBillingMachineIds, ProfiledMachineEvent event) throws AutoScalarException {
             ProfiledResourceEvent resourceEventOfGroup = event.getProfiledResourceEvent();
             String groupId = event.getGroupId();
             RuntimeGroupInfo runtimeGroupInfo = activeGroupsInfo.get(groupId);
+            Group group = groupManager.getGroup(event.getGroupId());
             int machineChanges = 0;
 
             if (resourceEventOfGroup != null) {
-                int maxChangeOfMachines = getNumberOfMachineChanges(event.getProfiledResourceEvent());
+                int requiredMachineChanges = getNumberOfMachineChanges(event.getProfiledResourceEvent());
 
-                if (maxChangeOfMachines > 0) {
+                if (requiredMachineChanges > 0 && runtimeGroupInfo.getNumberOfMachinesInGroup() < group.getMaxInstances()
+                        && !isInCoolDownPeriod(groupId, ScalingSuggestion.ScalingDirection.SCALE_OUT)) {
                     //adding only the maxChangeOfMachines to be spawned. because: Assumption2
-                    boolean inCoolDownPeriod = isInCoolDownPeriod(groupId, ScalingSuggestion.ScalingDirection.SCALE_OUT);
+                        scaleOutInternalQueue.add(groupId.concat(":").concat(String.valueOf(requiredMachineChanges)));
+                        machineChanges = requiredMachineChanges;
 
-                    if (!inCoolDownPeriod) {
-                        scaleOutInternalQueue.add(groupId.concat(":").concat(String.valueOf(maxChangeOfMachines)));
-                        machineChanges = maxChangeOfMachines;
-                    }
+                } else if (requiredMachineChanges < 0 && runtimeGroupInfo.getNumberOfMachinesInGroup() > group.getMinInstances()
+                        && !isInCoolDownPeriod(groupId, ScalingSuggestion.ScalingDirection.SCALE_IN)) {
+                    int machinesToBeRemoved = Math.abs(requiredMachineChanges);
+                    machineChanges = handleScaleIn(groupId, machinesToBeRemoved, endOfBillingMachineIds);
 
-                } else if (maxChangeOfMachines < 0) {
-                    int machinesToBeRemoved = Math.abs(maxChangeOfMachines);
-                    if (!isInCoolDownPeriod(groupId, ScalingSuggestion.ScalingDirection.SCALE_IN)) {
-                        machineChanges = handleScaleIn(groupId, machinesToBeRemoved, endOfBillingMachineIds);
-                    }
                 }
             }//else do nothing. Since no resource events: load not high or low
             return machineChanges;
