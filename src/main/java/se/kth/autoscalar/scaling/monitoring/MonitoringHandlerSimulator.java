@@ -43,10 +43,10 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
   public MonitoringListener addGroupForMonitoring(String groupId, InterestedEvent[] interestedEvents) throws AutoScalarException {
     //TODO stimulator will consider interested events only with = sign (no lessThan, greaterThan for simulation)
     //lessThan =====will be changed as ====> lessThanOrEqual
-    String cpuWorkload = "20:50";
-    //String ramWorkload = "1:10, 5:50, 10:95, 5:57, 5:180, 10:62, 4:12";
-    String ramWorkload = "5:10, 2:50, 7:95, 6:12";
-    EventProducer eventProducer = new EventProducer(groupId, monitoringListener, cpuWorkload, ramWorkload, 1);
+    String cuWorkload = "20:1.1";  //no of cus needes for each time point (min vcu req: 2)
+    //String ramWorkload = "1:1, 5:3, 10:3.7, 5:2.5, 5:10, 10:3.8, 4:1";  (min ram req: 4GB)
+    String ramWorkload = "5:1, 2:3, 7:3.7, 6:1";  //memory GB needes for each time point  (min ram req: 4GB)
+    EventProducer eventProducer = new EventProducer(groupId, monitoringListener, cuWorkload, ramWorkload, 1);
     producerMap.put(groupId, eventProducer);
     eventProducer.addInitialInterestedEvents(interestedEvents);
     eventProducer.startMonitoring();
@@ -63,7 +63,7 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
   }
 
   public void addInterestedEvent(String groupId, InterestedEvent[] events, int timeDurationSec) {
-    System.out.println("============= addInterestedEvent with duration not yet implemented ============");
+    log.info("============= addInterestedEvent with duration not yet implemented ============");
     EventProducer producer = producerMap.get(groupId);
     if (producer == null) {
       log.error("No event producer is available for group: " + groupId + " Cannot add events on duration");
@@ -126,13 +126,13 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
     //spawning delay
     //monitoring events delay??? (AS can't help if monitoring is delayed)
 
-    EventProducer(String groupId, MonitoringListener monitoringListener, String cpuWorkload, String ramWorkload, int monitoringFreqSeconds) {
+    EventProducer(String groupId, MonitoringListener monitoringListener, String cuWorkload, String ramWorkload, int monitoringFreqSeconds) {
       this.groupId = groupId;
       this.monitoringListener = monitoringListener;
       this.monitoringFreqSeconds = monitoringFreqSeconds;
 
       //minutes:resource_utilization%
-      addWorkload(RuleSupport.ResourceType.CPU.name(), cpuWorkload);
+      addWorkload(RuleSupport.ResourceType.CPU.name(), cuWorkload);
       addWorkload(RuleSupport.ResourceType.RAM.name(), ramWorkload); //1 machine range
       isMonitoringActivated = true;
     }
@@ -187,21 +187,21 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
           if (RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.equals(unifiedComparator)) {
             Float existingValue = greaterThanInterestMap.get(items[1]);
             if (existingValue == null) {
-              greaterThanInterestMap.put(items[1], definedThreshold);
+              greaterThanInterestMap.put(items[0], definedThreshold);
             } else {
               //since greater than, go for the lowest threshold
               if (definedThreshold < existingValue) {
-                greaterThanInterestMap.put(items[1], definedThreshold);
+                greaterThanInterestMap.put(items[0], definedThreshold);
               } //else no need to change since new value includes in existing threshold
             }
           } else { //this is lessThanOrEqual part
             Float existingValue = lessThanInterestMap.get(items[1]);
             if (existingValue == null) {
-              lessThanInterestMap.put(items[1], definedThreshold);
+              lessThanInterestMap.put(items[0], definedThreshold);
             } else {
               //since less than, go for the highest threshold
               if (definedThreshold > existingValue) {
-                lessThanInterestMap.put(items[1], definedThreshold);
+                lessThanInterestMap.put(items[0], definedThreshold);
               } //else no need to change since new value includes in existing threshold
             }
           }
@@ -214,18 +214,18 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
     }
 
     public void stopMonitoring() {
-      System.out.println("========= going to stop monitoring of group: " + groupId);
+      log.info("========= going to stop monitoring of group: " + groupId);
       isMonitoringActivated = false;
     }
 
     public void startMonitoring() {
       //send events periodically considering the workload and the interested events
-      //ie RAM workload : "1:10, 5:50, 10:95, 5:57, 5:180, 10:62, 5:12"  min:utilization
-      final Queue<Float> ramMonitoring = resourceWorkloadMap.get(RuleSupport.ResourceType.RAM.name());
-      final Queue<Float> cpuMonitoring = resourceWorkloadMap.get(RuleSupport.ResourceType.CPU.name());
+      //ie ramWorkload = "1:1, 5:3, 10:3.7, 5:2.5, 5:10, 10:3.8, 4:1";  min:utilization
+      final Queue<Float> ramWorkload = resourceWorkloadMap.get(RuleSupport.ResourceType.RAM.name());
+      final Queue<Float> cuWorkload = resourceWorkloadMap.get(RuleSupport.ResourceType.CPU.name());
 
       long startedTime = System.currentTimeMillis();
-      System.out.println("=========== monitoring of group: " + groupId + " started at: " + startedTime);
+      log.info("=========== monitoring of group: " + groupId + " started at: " + startedTime);
 
       final Timer timer = new Timer();
       timer.scheduleAtFixedRate(new TimerTask() {
@@ -235,15 +235,21 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
           if (isMonitoringActivated) {
             ResourceMonitoringEvent resourceMonitoringEvent;
 
-            float ramUtilization = ramMonitoring.poll();
+            float ramRequirement = ramWorkload.poll();
+            int noOfGBsInSys = 4; //TODO-get this from Karamel API
+            float ramUtilization = ramRequirement/noOfGBsInSys * 100; //TODO get this for each machine to send utilization events
+
             Float highRamThreshold = greaterThanInterestMap.get(RuleSupport.ResourceType.RAM.name());
             Float lowRamThreshold = lessThanInterestMap.get(RuleSupport.ResourceType.RAM.name());
-            System.out.println("............ original RAM interests, high:low .............." + highRamThreshold + ":" + lowRamThreshold);
+            log.info("............ original RAM interests, high:low .............." + highRamThreshold + ":" + lowRamThreshold);
 
-            float cpuUtilization = cpuMonitoring.poll();
+            float cuRequirement = cuWorkload.poll();
+            int noOfCUsInSys = 1; //TODO-get this from Karamel API
+            float cpuUtilization = cuRequirement/noOfCUsInSys * 100; //TODO get this for each machine to send utilization events
+
             Float highCpuThreshold = greaterThanInterestMap.get(RuleSupport.ResourceType.CPU.name());
             Float lowCpuThreshold = lessThanInterestMap.get(RuleSupport.ResourceType.CPU.name());
-            System.out.println("............ original CPU interests, high:low .............." + highCpuThreshold + ":" + lowCpuThreshold);
+            log.info("............ original CPU interests, high:low .............." + highCpuThreshold + ":" + lowCpuThreshold);
 
 
             for (String resThresholdsString : durationGreaterInterestMap.values()) {
@@ -272,8 +278,8 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
               }
             }
 
-            System.out.println("++++++++++++ new RAM interests, high:low ++++++++++++" + highRamThreshold + ":" + lowRamThreshold);
-            System.out.println("++++++++++++ new CPU interests, high:low ++++++++++++" + highCpuThreshold + ":" + lowCpuThreshold);
+            log.info("++++++++++++ new RAM interests, high:low ++++++++++++" + highRamThreshold + ":" + lowRamThreshold);
+            log.info("++++++++++++ new CPU interests, high:low ++++++++++++" + highCpuThreshold + ":" + lowCpuThreshold);
 
             if (highRamThreshold != null && ramUtilization >= highRamThreshold) {
               //TODO get machine Ids and send values for all machine Ids
