@@ -16,7 +16,7 @@ import java.util.List;
 public class ScalingSuggestion {
 
     public enum ScalingDirection {
-        SCALE_IN, SCALE_OUT, TMP_SCALEIN;
+        SCALE_IN, SCALE_OUT, TMP_SCALEIN; //TODO remove TMP_SCALEIN usage when vmIds are provided and can decide on which VM to be removed
     }
 
     private ScalingDirection scalingDirection;
