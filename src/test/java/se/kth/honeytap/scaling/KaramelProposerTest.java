@@ -1,6 +1,7 @@
 package se.kth.honeytap.scaling;
 
 import se.kth.honeytap.scaling.cost.mgt.KaramelMachineProposer;
+import se.kth.honeytap.scaling.cost.mgt.MachineProposer;
 import se.kth.honeytap.scaling.group.Group;
 import se.kth.honeytap.scaling.models.MachineType;
 
@@ -18,7 +19,7 @@ public class KaramelProposerTest {
 
   //@Test
   public void getProposalTest() {
-    KaramelMachineProposer proposer = new KaramelMachineProposer();
+    MachineProposer proposer = MachineProposer.getKaramelProposer();
     Map<Group.ResourceRequirement, Integer> minReq = new HashMap<Group.ResourceRequirement, Integer>();
     minReq.put(Group.ResourceRequirement.NUMBER_OF_VCPUS, 2);
     minReq.put(Group.ResourceRequirement.RAM, 4);

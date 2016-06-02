@@ -12,7 +12,7 @@ import java.util.*;
  * @version $Id$
  * @since 1.0
  */
-public class MachineProposerImpl implements MachineProposer {
+public class MachineProposerImpl extends MachineProposer {
 
     ArrayList<CostEffectiveSuggestionProvider> suggestionProviders = new ArrayList<CostEffectiveSuggestionProvider>();
 

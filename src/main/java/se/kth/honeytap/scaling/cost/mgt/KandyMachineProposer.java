@@ -24,10 +24,10 @@ import java.util.TreeMap;
  * @version $Id$
  * @since 1.0
  */
-public class KaramelMachineProposer extends MachineProposer {
+public class KandyMachineProposer extends MachineProposer {
 
     private Connection dbConnection = null;
-    private static final Log log = LogFactory.getLog(KaramelMachineProposer.class);
+    private static final Log log = LogFactory.getLog(KandyMachineProposer.class);
     private static final String AWS_INSTANCES_TABLE = "awsec2_instance";
     private static final String NAME_COLUMN = "NAME";  //varchar
     private static final String ECU_COLUMN = "ECU";   //varchar
@@ -51,7 +51,7 @@ public class KaramelMachineProposer extends MachineProposer {
     private static final String LAUNCHER = "EC2";
 
 
-    protected KaramelMachineProposer() {
+    protected KandyMachineProposer() {
         try {
             dbConnection = DBUtil.getKandyDbConnection();
         } catch (DBConnectionFailureException e) {
@@ -155,14 +155,12 @@ public class KaramelMachineProposer extends MachineProposer {
 
         //TODO add storage consideration too
         //TODO ECU is in string format :(
-        selectQuery.append(MEMORYGIB_COLUMN).append(" >= ? and ").append(VCPU_COLUMN).append(" >= ? and not (").
-                append(STORAGEGB_COLUMN).append(" = ?)");
+        selectQuery.append(MEMORYGIB_COLUMN).append(" >= ? and ").append(VCPU_COLUMN).append(" >= ?");
 
         try {
             PreparedStatement selectRuleStatement = dbConnection.prepareStatement(selectQuery.toString());
             selectRuleStatement.setFloat(1, minimumResourceReq.get(MEMORYGIB_COLUMN));
             selectRuleStatement.setInt(2, (int) Math.ceil(minimumResourceReq.get(VCPU_COLUMN)));
-            selectRuleStatement.setString(3, "ebsonly");
             ResultSet resultSet = selectRuleStatement.executeQuery();
             return resultSet;
         } catch (SQLException e) {

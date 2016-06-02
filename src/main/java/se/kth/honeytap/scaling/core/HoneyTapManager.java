@@ -4,7 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import se.kth.honeytap.scaling.Constants;
 import se.kth.honeytap.scaling.ScalingSuggestion;
-import se.kth.honeytap.scaling.cost.mgt.KaramelMachineProposer;
+import se.kth.honeytap.scaling.cost.mgt.KandyMachineProposer;
 import se.kth.honeytap.scaling.cost.mgt.MachineProposer;
 import se.kth.honeytap.scaling.exceptions.HoneyTapException;
 import se.kth.honeytap.scaling.group.Group;
@@ -97,7 +97,7 @@ public class HoneyTapManager {
         Group group = groupManager.getGroup(groupId);
         if (currentNumberOfMachines < group.getMinInstances() ) {
             Map<Group.ResourceRequirement, Integer> minResourceReq = group.getMinResourceReq();
-            MachineType[] machineProposals = new KaramelMachineProposer().getMachineProposals(groupId, minResourceReq,
+            MachineType[] machineProposals = MachineProposer.getKandyProposer().getMachineProposals(groupId, minResourceReq,
                     group.getMinInstances() - currentNumberOfMachines, group.getReliabilityReq());
             scaleOutDecisionMaker.addMachinesToSuggestions(groupId, machineProposals);
             int noOfMachinesProposed = machineProposals.length;
@@ -543,7 +543,7 @@ public class HoneyTapManager {
      */
     private class ScaleOutDecisionMaker implements Runnable {
 
-        MachineProposer machineProposer = new KaramelMachineProposer();  //TODO: get 'which proposer to use' from a config file
+        MachineProposer machineProposer = MachineProposer.getKandyProposer();  //TODO: get 'which proposer to use' from a config file
 
         public void run() {
             String groupId = "";

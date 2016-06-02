@@ -12,9 +12,17 @@ import java.util.Map;
  * @version $Id$
  * @since 1.0
  */
-public interface MachineProposer {
+public abstract class MachineProposer {
 
-    MachineType[] getMachineProposals(String groupId, Map<Group.ResourceRequirement, Integer> minimumResourceReq,
+    public static MachineProposer getKandyProposer() {
+        return new KandyMachineProposer();
+    }
+
+    public static MachineProposer getKaramelProposer() {
+        return new KandyMachineProposer();
+    }
+
+    public abstract MachineType[] getMachineProposals(String groupId, Map<Group.ResourceRequirement, Integer> minimumResourceReq,
                                       int noOfMachines, float reliabilityPercentage);
 
     //to be supported later
