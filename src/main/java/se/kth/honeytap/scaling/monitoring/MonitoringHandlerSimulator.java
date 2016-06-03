@@ -99,6 +99,10 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
     //TODO remove events for a limited time
   }
 
+  public void addVmInfo(String groupId, String vmId, int numVCpu, double memInGig, Integer numDisks, Integer diskSize, boolean reset) {
+    producerMap.get(groupId).addVMInfo(vmId, numVCpu, memInGig, numDisks, diskSize, reset);
+  }
+
   class EventProducer {
 
     private boolean isMonitoringActivated;
@@ -117,6 +121,8 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
 
     private ReentrantLock durationGreaterLock = new ReentrantLock();
     private ReentrantLock durationLessLock = new ReentrantLock();
+
+    private HashMap<String, VM> vmMap = new HashMap<>();
 
     //TODO if we need to handle >1 group, need to have a map of groupId-greater/lessThanInterestMap
     //workload
@@ -234,9 +240,10 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
             ResourceMonitoringEvent resourceMonitoringEvent;
 
             float ramRequirement = ramWorkload.poll();
-            int noOfGBsInSys = 4; //TODO-get this from Karamel API
+           /* int noOfGBsInSys = 4; //TODO-get this from Karamel API
             if (ramRequirement > 4 )
-              noOfGBsInSys = 8;    //TODO dynamically update with Karamel API
+              noOfGBsInSys = 8;    //TODO dynamically update with Karamel API*/
+            float noOfGBsInSys = getTotalRamInGroup();
 
             float ramUtilization = ramRequirement/noOfGBsInSys * 100; //TODO get this for each machine to send utilization events
 
@@ -244,7 +251,9 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
             Float lowRamThreshold = lessThanInterestMap.get(RuleSupport.ResourceType.RAM.name());
 
             float cuRequirement = cuWorkload.poll();
-            int noOfCUsInSys = 2; //TODO-get this from Karamel API
+            ////int noOfCUsInSys = 2; //TODO-get this from Karamel API
+            int noOfCUsInSys = getTotalCusInGroup();
+
             float cpuUtilization = cuRequirement/noOfCUsInSys * 100; //TODO get this for each machine to send utilization events
 
             Float highCpuThreshold = greaterThanInterestMap.get(RuleSupport.ResourceType.CPU.name());
@@ -333,6 +342,28 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
       }, 0, monitoringFreqSeconds * 1000);
     }
 
+    private float getTotalRamInGroup() {
+      float gbs = 0.0f;
+      for (VM vmInfo : vmMap.values()) {
+        gbs += vmInfo.memInGig;
+      }
+      if (gbs == 0.0f) {
+        return 3.75f;
+      }
+      return gbs;
+    }
+
+    private int getTotalCusInGroup() {
+      int cus = 0;
+      for (VM vmInfo : vmMap.values()) {
+        cus += vmInfo.numVCpu;
+      }
+      if (cus == 0) {
+        return 1;
+      }
+      return cus;
+    }
+
     public void addDurationLessInterest(String id, String resourceThreshold) {
       durationGreaterLock.lock();
       this.durationGreaterInterestMap.put(id, resourceThreshold);
@@ -355,6 +386,30 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
       durationLessLock.lock();
       this.durationLessInterestMap.remove(id);
       durationLessLock.unlock();
+    }
+
+    public void addVMInfo(String vmId, int numVCpu, double memInGig, Integer numDisks, Integer diskSize, boolean reset) {
+      if (reset) {
+        vmMap = new HashMap<>();
+      }
+      VM vm = new VM(vmId, numVCpu, memInGig, numDisks, diskSize);
+      vmMap.put(vmId, vm);
+    }
+
+    private class VM {
+      String vmId;
+      int numVCpu;
+      double memInGig;
+      Integer numDisks;
+      Integer diskSize;
+
+      public VM(String vmId, int numVCpu, double memInGig, Integer numDisks, Integer diskSize) {
+        this.vmId = vmId;
+        this.numVCpu = numVCpu;
+        this.memInGig = memInGig;
+        this.numDisks = numDisks;
+        this.diskSize = diskSize;
+      }
     }
   }
 

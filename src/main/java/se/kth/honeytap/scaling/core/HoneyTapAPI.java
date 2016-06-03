@@ -38,10 +38,11 @@ public class HoneyTapAPI {
     private GroupManager groupManager;
     private static HoneyTapAPI honeyTapAPI;
     private int faultToleranceLevel = 1;
+    MonitoringHandler monitoringHandler;
 
     private HoneyTapAPI() throws HoneyTapException {
         /////////MonitoringHandler monitoringHandler = new TSMonitoringHandler(this);
-        MonitoringHandler monitoringHandler = new MonitoringHandlerSimulator(this);
+        monitoringHandler = new MonitoringHandlerSimulator(this);
         honeyTapManager = new HoneyTapManager(monitoringHandler);
         ruleManager = RuleManagerImpl.getInstance();
         groupManager = GroupManagerImpl.getInstance();
@@ -171,6 +172,9 @@ public class HoneyTapAPI {
         return honeyTapManager.getNumberOfMachineChanges(event);
     }
 
+    public void addVmInfo(String groupId, String vmId, int numVCpu, double memInGig, Integer numDisks, Integer diskSize, boolean reset) {
+        ((MonitoringHandlerSimulator) monitoringHandler).addVmInfo(groupId, vmId, numVCpu, memInGig, numDisks, diskSize, reset);
+    }
     public void tempMethodDeleteTables() throws SQLException {
         ruleManager.deleteTables();
         groupManager.deleteTables();
