@@ -183,6 +183,10 @@ public class HoneyTapAPI {
     public void removeSimulatedVmInfo(String groupId, String vmId) {
         ((MonitoringHandlerSimulator) monitoringHandler).removeSimulatedVMInfo(groupId, vmId);
     }
+
+    public String[] getAllVmIds(String groupId) {
+      return ((MonitoringHandlerSimulator) monitoringHandler).getAllVmIds(groupId);
+    }
     public void tempMethodDeleteTables() throws SQLException {
         ruleManager.deleteTables();
         groupManager.deleteTables();

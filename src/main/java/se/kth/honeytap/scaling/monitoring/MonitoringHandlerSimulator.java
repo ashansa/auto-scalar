@@ -111,6 +111,10 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
     producerMap.get(groupId).removeSimulatedVMInfo(vmId);
   }
 
+  public String[] getAllVmIds(String groupId) {
+    return producerMap.get(groupId).getAllVmIds();
+  }
+
   class EventProducer {
 
     private boolean isMonitoringActivated;
@@ -434,6 +438,17 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
     public void removeSimulatedVMInfo(String vmId) {
       simulatedVmMap.remove(vmId);
       log.info("====== removing a simulated VM. System status ram, cus : " + getTotalRamInGroup() + ", " + getTotalCusInGroup());
+    }
+
+    public String[] getAllVmIds() {
+      ArrayList<String> allVms = new ArrayList<>();
+      for (String vmId : vmMap.keySet()) {
+        allVms.add(vmId);
+      }
+      for (String vmId : simulatedVmMap.keySet()) {
+        allVms.add(vmId);
+      }
+      return allVms.toArray(new String[allVms.size()]);
     }
 
     private class VM {
