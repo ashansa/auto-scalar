@@ -145,6 +145,8 @@ public class HoneyTapManager {
                 }*/
 
                 suggestionMap.put(gId, suggestionsQueue);
+                log.info("@@@@@@@@@@@@@@@ suggestion added @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
+
             }
         };
         //}.start();
@@ -287,6 +289,7 @@ public class HoneyTapManager {
                                 }
                                 suggestionsQueue.add(suggestion);
                                 suggestionMap.put(groupId, suggestionsQueue);
+                                log.info("@@@@@@@@@@@@@@@ suggestion added @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
 
                                 runtimeGroupInfo.setScaleInInfo(maxChangeOfMachines);
                             }
@@ -480,6 +483,8 @@ public class HoneyTapManager {
                 }
                 suggestionsQueue.add(suggestion);
                 suggestionMap.put(groupId, suggestionsQueue);
+                log.info("@@@@@@@@@@@@@@@ suggestion added @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
+
                 machineChanges = (-1) * machinesToBeRemoved;
             }
 
@@ -503,6 +508,8 @@ public class HoneyTapManager {
             }
             suggestionsQueue.add(suggestion);
             suggestionMap.put(groupId, suggestionsQueue);
+            log.info("@@@@@@@@@@@@@@@ suggestion added @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
+
         }
 
     }
@@ -579,6 +586,8 @@ public class HoneyTapManager {
             }
             suggestionsQueue.add(suggestion);
             suggestionMap.put(groupId, suggestionsQueue);
+            log.info("@@@@@@@@@@@@@@@ suggestion added @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
+
         }
     }
 
