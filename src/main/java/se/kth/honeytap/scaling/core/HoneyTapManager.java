@@ -46,7 +46,7 @@ public class HoneyTapManager {
     private DynamicEventProfiler eventProfiler;
     private MonitoringHandler monitoringHandler;
     private ScaleOutDecisionMaker scaleOutDecisionMaker;
-    private boolean optimizedScaleInTmp = true;
+    private boolean optimizedScaleInTmp = false;
 
     private Map<String, RuntimeGroupInfo> activeGroupsInfo = new HashMap<String, RuntimeGroupInfo>();
     private Map<String, ArrayBlockingQueue<ScalingSuggestion>> suggestionMap = new HashMap<String, ArrayBlockingQueue<ScalingSuggestion>>();
