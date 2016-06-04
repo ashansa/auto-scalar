@@ -111,8 +111,8 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
     producerMap.get(groupId).removeSimulatedVMInfo(vmId);
   }
 
-  public String[] getAllVmIds(String groupId) {
-    return producerMap.get(groupId).getAllVmIds();
+  public String[] getAllSimulatedVmIds(String groupId) {
+    return producerMap.get(groupId).getAllSimulatedVmIds();
   }
 
   class EventProducer {
@@ -436,26 +436,16 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
     }
 
     public void removeSimulatedVMInfo(String vmId) {
-      //simulator can propose removing an actual vm
-      log.info("======== request to remove vmId info from simulator: " + vmId);
-      if (simulatedVmMap.containsKey(vmId)) {
         simulatedVmMap.remove(vmId);
         log.info("====== removing a simulated VM. System status ram, cus : " + getTotalRamInGroup() + ", " + getTotalCusInGroup());
-      } else if (vmMap.containsKey(vmId)) {
-        vmMap.remove(vmId);
-        log.info("====== removing a real VM proposed by SIMULATOR. System status ram, cus : " + getTotalRamInGroup() + ", " + getTotalCusInGroup());
-      }
     }
 
-    public String[] getAllVmIds() {
-      ArrayList<String> allVms = new ArrayList<>();
-      for (String vmId : vmMap.keySet()) {
-        allVms.add(vmId);
-      }
+    public String[] getAllSimulatedVmIds() {
+      ArrayList<String> simulatedVmIds = new ArrayList<>();
       for (String vmId : simulatedVmMap.keySet()) {
-        allVms.add(vmId);
+        simulatedVmIds.add(vmId);
       }
-      return allVms.toArray(new String[allVms.size()]);
+      return simulatedVmIds.toArray(new String[simulatedVmIds.size()]);
     }
 
     private class VM {
