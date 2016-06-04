@@ -41,9 +41,9 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
   public MonitoringListener addGroupForMonitoring(String groupId, InterestedEvent[] interestedEvents) throws HoneyTapException {
     //TODO stimulator will consider interested events only with = sign (no lessThan, greaterThan for simulation)
     //lessThan =====will be changed as ====> lessThanOrEqual
-    String cuWorkload = "8:1.1";  //no of cus needes for each time point (min vcu req: 2)
+    String cuWorkload = "7:1.1";  //no of cus needes for each time point (min vcu req: 2)
     //String ramWorkload = "1:1, 5:3, 10:3.7, 5:2.5, 5:10, 10:3.8, 4:1";  (min ram req: 4GB)
-    String ramWorkload = "1:1, 1:3, 4:3.7, 2:1";  //memory GB needes for each time point  (min ram req: 4GB)
+    String ramWorkload = "1:3, 2:3.7, 4:1";  //memory GB needes for each time point  (min ram req: 4GB)
     EventProducer eventProducer = new EventProducer(groupId, monitoringListener, cuWorkload, ramWorkload, 1);
     producerMap.put(groupId, eventProducer);
     eventProducer.addInitialInterestedEvents(interestedEvents);
@@ -436,8 +436,15 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
     }
 
     public void removeSimulatedVMInfo(String vmId) {
-      simulatedVmMap.remove(vmId);
-      log.info("====== removing a simulated VM. System status ram, cus : " + getTotalRamInGroup() + ", " + getTotalCusInGroup());
+      //simulator can propose removing an actual vm
+      log.info("======== request to remove vmId info from simulator: " + vmId);
+      if (simulatedVmMap.containsKey(vmId)) {
+        simulatedVmMap.remove(vmId);
+        log.info("====== removing a simulated VM. System status ram, cus : " + getTotalRamInGroup() + ", " + getTotalCusInGroup());
+      } else if (vmMap.containsKey(vmId)) {
+        vmMap.remove(vmId);
+        log.info("====== removing a real VM proposed by SIMULATOR. System status ram, cus : " + getTotalRamInGroup() + ", " + getTotalCusInGroup());
+      }
     }
 
     public String[] getAllVmIds() {
