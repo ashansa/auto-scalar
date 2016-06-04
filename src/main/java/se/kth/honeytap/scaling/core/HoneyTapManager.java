@@ -108,48 +108,6 @@ public class HoneyTapManager {
 
         MonitoringListener monitoringListener = monitoringHandler.addGroupForMonitoring(groupId,
                 interestedEvents.toArray(new InterestedEvent[interestedEvents.size()]));
-        //TODO temporary returning  MonitoringListener to emulate monitoring events by tests
-        //TODO call monitoring component and give the listener
-
-        /////TODO-AS temp adding suggestions here to test
-        final String gId = groupId;
-        new Thread() {
-            public void run() {
-                System.out.println("========= adding dummy suggestions from AS side to test =================");
-                try {
-                    Thread.sleep(60000*2);
-                } catch (InterruptedException e) {
-                    throw new IllegalStateException(e);
-                }
-
-                ArrayBlockingQueue<ScalingSuggestion> suggestionsQueue;
-                if (suggestionMap.containsKey(gId)) {
-                    suggestionsQueue = suggestionMap.get(gId);
-                } else {
-                    suggestionsQueue = new ArrayBlockingQueue<ScalingSuggestion>(50);   //TODO: make 50 configurable
-                }
-
-                //scale in test
-                ScalingSuggestion scaleInSuggestion = new ScalingSuggestion(new String[]{"vm1"});
-                suggestionsQueue.add(scaleInSuggestion);
-
-                //scale out test
-                /*try {
-                    MachineType[] proposals = new KaramelMachineProposer().getMachineProposals(gId,
-                            groupManager.getGroup(gId).getMinResourceReq(), 1, 80);
-                    ScalingSuggestion scaleOutSuggestion = new ScalingSuggestion(proposals);
-                    suggestionsQueue.add(scaleOutSuggestion);
-                } catch (HoneyTapException e) {
-                    log.error("################## Could not get the proposals from Karamel Proposar when " +
-                            "creating dummy suggestions ##############");
-                }*/
-
-                suggestionMap.put(gId, suggestionsQueue);
-                log.info("@@@@@@@@@@@@@@@ suggestion added @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
-
-            }
-        };
-        //}.start();
 
         return monitoringListener;
     }
@@ -289,7 +247,7 @@ public class HoneyTapManager {
                                 }
                                 suggestionsQueue.add(suggestion);
                                 suggestionMap.put(groupId, suggestionsQueue);
-                                log.info("@@@@@@@@@@@@@@@ suggestion added @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
+                                log.info("@@@@@@@@@@@@@@@ scale-in suggestion added @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
 
                                 runtimeGroupInfo.setScaleInInfo(maxChangeOfMachines);
                             }
@@ -483,7 +441,7 @@ public class HoneyTapManager {
                 }
                 suggestionsQueue.add(suggestion);
                 suggestionMap.put(groupId, suggestionsQueue);
-                log.info("@@@@@@@@@@@@@@@ suggestion added @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
+                log.info("@@@@@@@@@@@@@@@ scalein-tmp suggestion added @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
 
                 machineChanges = (-1) * machinesToBeRemoved;
             }
@@ -508,7 +466,7 @@ public class HoneyTapManager {
             }
             suggestionsQueue.add(suggestion);
             suggestionMap.put(groupId, suggestionsQueue);
-            log.info("@@@@@@@@@@@@@@@ suggestion added @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
+            log.info("@@@@@@@@@@@@@@@ scale-in suggestion added @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
 
         }
 
@@ -586,7 +544,7 @@ public class HoneyTapManager {
             }
             suggestionsQueue.add(suggestion);
             suggestionMap.put(groupId, suggestionsQueue);
-            log.info("@@@@@@@@@@@@@@@ suggestion added @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
+            log.info("@@@@@@@@@@@@@@@ scale-out suggestion added @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
 
         }
     }

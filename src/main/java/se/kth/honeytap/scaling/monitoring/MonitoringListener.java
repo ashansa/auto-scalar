@@ -33,6 +33,7 @@ public class MonitoringListener implements Subscriber {
     public void onHighCPU(String groupId, ResourceMonitoringEvent event) throws HoneyTapException {
         try {
             honeyTapAPI.handleEvent(groupId, event);
+            log.info("@@@@@@@@@@@@@@@ High event received @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
         } catch (HoneyTapException e) {
             log.error("Error while handling onHighCPU event for group: " + groupId + " . " + e.getMessage());
             throw e;
@@ -42,6 +43,7 @@ public class MonitoringListener implements Subscriber {
     public void onLowCPU(String groupId, ResourceMonitoringEvent event) throws HoneyTapException {
         try {
             honeyTapAPI.handleEvent(groupId, event);
+            log.info("@@@@@@@@@@@@@@@ Low event received @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
         } catch (HoneyTapException e) {
             log.error("Error while handling onHighCPU event for group: " + groupId + " . " + e.getMessage());
             throw e;
@@ -51,6 +53,7 @@ public class MonitoringListener implements Subscriber {
     public void onHighRam(String groupId, ResourceMonitoringEvent event) throws HoneyTapException {
         try {
             honeyTapAPI.handleEvent(groupId, event);
+            log.info("@@@@@@@@@@@@@@@ High event received @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
         } catch (HoneyTapException e) {
             log.error("Error while handling onHighCPU event for group: " + groupId + " . " + e.getMessage());
             throw e;
@@ -60,6 +63,7 @@ public class MonitoringListener implements Subscriber {
     public void onLowRam(String groupId, ResourceMonitoringEvent event) throws HoneyTapException {
         try {
             honeyTapAPI.handleEvent(groupId, event);
+            log.info("@@@@@@@@@@@@@@@ Low event received @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
         } catch (HoneyTapException e) {
             log.error("Error while handling onHighCPU event for group: " + groupId + " . " + e.getMessage());
             throw e;

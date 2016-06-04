@@ -165,7 +165,6 @@ public class HoneyTapAPI {
     }
 
     public void handleEvent(String groupId, MonitoringEvent monitoringEvent) throws HoneyTapException {
-        log.info("@@@@@@@@@@@@@@@ event received @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
         honeyTapManager.getEventProfiler().profileEvent(groupId, monitoringEvent);
     }
 
