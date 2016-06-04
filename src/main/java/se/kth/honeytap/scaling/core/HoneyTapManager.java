@@ -247,7 +247,7 @@ public class HoneyTapManager {
                                 }
                                 suggestionsQueue.add(suggestion);
                                 suggestionMap.put(groupId, suggestionsQueue);
-                                log.info("@@@@@@@@@@@@@@@ scale-in suggestion added @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
+                                log.info("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ scale-in suggestion added @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ " + System.currentTimeMillis());
 
                                 runtimeGroupInfo.setScaleInInfo(maxChangeOfMachines);
                             }
@@ -441,7 +441,7 @@ public class HoneyTapManager {
                 }
                 suggestionsQueue.add(suggestion);
                 suggestionMap.put(groupId, suggestionsQueue);
-                log.info("@@@@@@@@@@@@@@@ scalein-tmp suggestion added @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
+                log.info("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ scalein-tmp suggestion added @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ " + System.currentTimeMillis());
 
                 machineChanges = (-1) * machinesToBeRemoved;
             }
@@ -466,7 +466,7 @@ public class HoneyTapManager {
             }
             suggestionsQueue.add(suggestion);
             suggestionMap.put(groupId, suggestionsQueue);
-            log.info("@@@@@@@@@@@@@@@ scale-in suggestion added @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
+            log.info("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ scale-in suggestion added @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ " + System.currentTimeMillis());
 
         }
 
@@ -544,7 +544,7 @@ public class HoneyTapManager {
             }
             suggestionsQueue.add(suggestion);
             suggestionMap.put(groupId, suggestionsQueue);
-            log.info("@@@@@@@@@@@@@@@ scale-out suggestion added @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
+            log.info("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ scale-out suggestion added @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ " + System.currentTimeMillis());
 
         }
     }
