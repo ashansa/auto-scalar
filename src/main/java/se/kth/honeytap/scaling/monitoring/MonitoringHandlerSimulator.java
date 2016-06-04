@@ -6,10 +6,15 @@ import se.kth.honeytap.scaling.Constants;
 import se.kth.honeytap.scaling.core.HoneyTapAPI;
 import se.kth.honeytap.scaling.exceptions.HoneyTapException;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -41,9 +46,27 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
   public MonitoringListener addGroupForMonitoring(String groupId, InterestedEvent[] interestedEvents) throws HoneyTapException {
     //TODO stimulator will consider interested events only with = sign (no lessThan, greaterThan for simulation)
     //lessThan =====will be changed as ====> lessThanOrEqual
-    String cuWorkload = "7:1.1";  //no of cus needes for each time point (min vcu req: 2)
+    String cuWorkload = "";
+    String ramWorkload = "";
+
+    Properties workloadProp = new Properties();
+    String workloadFilePath = System.getProperty("user.home").concat(File.separator).concat(
+            ".karamel/rules/workload.properties");
+
+    try {
+      InputStream is = new FileInputStream(new File((workloadFilePath)));
+      log.info("........... reading workload from file.........");
+      workloadProp.load(is);
+      cuWorkload = workloadProp.getProperty("cpu");
+      ramWorkload = workloadProp.getProperty("ram");
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+
+    /*cuWorkload = "10:1.1";  //no of cus needs for each time point (min vcu req: 2)
     //String ramWorkload = "1:1, 5:3, 10:3.7, 5:2.5, 5:10, 10:3.8, 4:1";  (min ram req: 4GB)
-    String ramWorkload = "1:3, 2:3.7, 4:1";  //memory GB needes for each time point  (min ram req: 4GB)
+    ramWorkload = "1:3, 2:3.5, 3:7.1, 2:1";  //memory GB needes for each time point  (min ram req: 4GB)*/
+
     EventProducer eventProducer = new EventProducer(groupId, monitoringListener, cuWorkload, ramWorkload, 1);
     producerMap.put(groupId, eventProducer);
     eventProducer.addInitialInterestedEvents(interestedEvents);
