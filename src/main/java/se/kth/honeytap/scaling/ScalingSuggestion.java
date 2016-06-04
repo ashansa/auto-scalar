@@ -70,4 +70,8 @@ public class ScalingSuggestion {
     public ArrayList<String> getScaleInSuggestions() {
         return scaleInSuggestions;
     }
+
+    public int getScaleInNumber() {
+        return scaleInNumber;
+    }
 }
