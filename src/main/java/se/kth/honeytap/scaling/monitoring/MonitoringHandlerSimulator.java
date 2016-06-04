@@ -103,6 +103,14 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
     producerMap.get(groupId).addVMInfo(vmId, numVCpu, memInGig, numDisks, diskSize, reset);
   }
 
+  public void addSimulatedVMInfo(String groupId, String vmId, int numVCpu, double memInGig, Integer numDisks, Integer diskSize) {
+    producerMap.get(groupId).addSimulatedVMInfo(vmId, numVCpu, memInGig, numDisks, diskSize);
+  }
+
+  public void removeSimulatedVMInfo(String groupId, String vmId) {
+    producerMap.get(groupId).removeSimulatedVMInfo(vmId);
+  }
+
   class EventProducer {
 
     private boolean isMonitoringActivated;
@@ -123,6 +131,10 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
     private ReentrantLock durationLessLock = new ReentrantLock();
 
     private HashMap<String, VM> vmMap = new HashMap<>();
+    private HashMap<String, VM> simulatedVmMap = new HashMap<>();
+
+    float initialSystemRam = 3.75f;
+    int initialSystemCus = 1;
 
     //TODO if we need to handle >1 group, need to have a map of groupId-greater/lessThanInterestMap
     //workload
@@ -344,23 +356,39 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
 
     private float getTotalRamInGroup() {
       float gbs = 0.0f;
+
+      //fill machine runtime info
       for (VM vmInfo : vmMap.values()) {
         gbs += vmInfo.memInGig;
       }
       if (gbs == 0.0f) {
-        return 3.75f;
+        gbs = initialSystemRam;
       }
+
+      //fill simulated machine info
+      for (VM vmInfo : simulatedVmMap.values()) {
+        gbs += vmInfo.memInGig;
+      }
+
       return gbs;
     }
 
     private int getTotalCusInGroup() {
       int cus = 0;
+
+      //fill machine runtime info
       for (VM vmInfo : vmMap.values()) {
         cus += vmInfo.numVCpu;
       }
       if (cus == 0) {
-        return 1;
+        cus = initialSystemCus;
       }
+
+      //fill simulated machine info
+      for (VM vmInfo : simulatedVmMap.values()) {
+        cus += vmInfo.numVCpu;
+      }
+
       return cus;
     }
 
@@ -394,6 +422,15 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
       }
       VM vm = new VM(vmId, numVCpu, memInGig, numDisks, diskSize);
       vmMap.put(vmId, vm);
+    }
+
+    public void addSimulatedVMInfo(String vmId, int numVCpu, double memInGig, Integer numDisks, Integer diskSize) {
+      VM vm = new VM(vmId, numVCpu, memInGig, numDisks, diskSize);
+      simulatedVmMap.put(vmId, vm);
+    }
+
+    public void removeSimulatedVMInfo(String vmId) {
+      simulatedVmMap.remove(vmId);
     }
 
     private class VM {

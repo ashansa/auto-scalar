@@ -175,6 +175,14 @@ public class HoneyTapAPI {
     public void addVmInfo(String groupId, String vmId, int numVCpu, double memInGig, Integer numDisks, Integer diskSize, boolean reset) {
         ((MonitoringHandlerSimulator) monitoringHandler).addVmInfo(groupId, vmId, numVCpu, memInGig, numDisks, diskSize, reset);
     }
+
+    public void addSimulatedVmInfo(String groupId, String vmId, int numVCpu, double memInGig, Integer numDisks, Integer diskSize) {
+        ((MonitoringHandlerSimulator) monitoringHandler).addSimulatedVMInfo(groupId, vmId, numVCpu, memInGig, numDisks, diskSize);
+    }
+
+    public void removeSimulatedVmInfo(String groupId, String vmId) {
+        ((MonitoringHandlerSimulator) monitoringHandler).removeSimulatedVMInfo(groupId, vmId);
+    }
     public void tempMethodDeleteTables() throws SQLException {
         ruleManager.deleteTables();
         groupManager.deleteTables();
