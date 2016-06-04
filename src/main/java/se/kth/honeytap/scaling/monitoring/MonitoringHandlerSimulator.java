@@ -41,9 +41,9 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
   public MonitoringListener addGroupForMonitoring(String groupId, InterestedEvent[] interestedEvents) throws HoneyTapException {
     //TODO stimulator will consider interested events only with = sign (no lessThan, greaterThan for simulation)
     //lessThan =====will be changed as ====> lessThanOrEqual
-    String cuWorkload = "15:1.1";  //no of cus needes for each time point (min vcu req: 2)
+    String cuWorkload = "8:1.1";  //no of cus needes for each time point (min vcu req: 2)
     //String ramWorkload = "1:1, 5:3, 10:3.7, 5:2.5, 5:10, 10:3.8, 4:1";  (min ram req: 4GB)
-    String ramWorkload = "1:1, 3:3, 4:3.7, 5:10, 2:1";  //memory GB needes for each time point  (min ram req: 4GB)
+    String ramWorkload = "1:1, 1:3, 4:3.7, 2:1";  //memory GB needes for each time point  (min ram req: 4GB)
     EventProducer eventProducer = new EventProducer(groupId, monitoringListener, cuWorkload, ramWorkload, 1);
     producerMap.put(groupId, eventProducer);
     eventProducer.addInitialInterestedEvents(interestedEvents);
@@ -394,25 +394,25 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
 
     public void addDurationLessInterest(String id, String resourceThreshold) {
       durationGreaterLock.lock();
-      this.durationGreaterInterestMap.put(id, resourceThreshold);
+      this.durationLessInterestMap.put(id, resourceThreshold);
       durationGreaterLock.unlock();
     }
 
     public void removeDurationLessInterest(String id) {
       durationGreaterLock.lock();
-      this.durationGreaterInterestMap.remove(id);
+      this.durationLessInterestMap.remove(id);
       durationGreaterLock.unlock();
     }
 
     public void addDurationGreaterInterest(String id, String resourceThreshold) {
       durationLessLock.lock();
-      this.durationLessInterestMap.put(id, resourceThreshold);
+      this.durationGreaterInterestMap.put(id, resourceThreshold);
       durationLessLock.unlock();
     }
 
     public void removeDurationGreaterInterest(String id) {
       durationLessLock.lock();
-      this.durationLessInterestMap.remove(id);
+      this.durationGreaterInterestMap.remove(id);
       durationLessLock.unlock();
     }
 
@@ -422,15 +422,18 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
       }
       VM vm = new VM(vmId, numVCpu, memInGig, numDisks, diskSize);
       vmMap.put(vmId, vm);
+      log.info("====== resetting a real VM. System status ram, cus : " + getTotalRamInGroup() + ", " + getTotalCusInGroup());
     }
 
     public void addSimulatedVMInfo(String vmId, int numVCpu, double memInGig, Integer numDisks, Integer diskSize) {
       VM vm = new VM(vmId, numVCpu, memInGig, numDisks, diskSize);
       simulatedVmMap.put(vmId, vm);
+      log.info("====== adding a simulated VM. System status ram, cus : " + getTotalRamInGroup() + ", " + getTotalCusInGroup());
     }
 
     public void removeSimulatedVMInfo(String vmId) {
       simulatedVmMap.remove(vmId);
+      log.info("====== removing a simulated VM. System status ram, cus : " + getTotalRamInGroup() + ", " + getTotalCusInGroup());
     }
 
     private class VM {
