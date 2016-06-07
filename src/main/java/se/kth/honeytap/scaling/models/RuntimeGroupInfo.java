@@ -40,6 +40,7 @@ public class RuntimeGroupInfo {
     }
 
     public synchronized void setScaleInInfo(int numberOfMachines) {
+        numberOfMachines = Math.abs(numberOfMachines);
         numberOfMachinesInGroup -= numberOfMachines;
         lastScaleInTime = Calendar.getInstance().getTime();
     }

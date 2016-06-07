@@ -374,7 +374,8 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
               }
             }
             if (!eventSent) {
-              log.info(".................. no events occured ..........");
+              log.info(".................. no events occured .......... Cpu, Ram ........." + cpuUtilization + "," +
+                      ramUtilization);
             }
           }
         }
