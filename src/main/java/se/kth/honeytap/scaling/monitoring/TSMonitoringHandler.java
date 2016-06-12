@@ -4,7 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import se.kth.honeytap.scaling.core.HoneyTapAPI;
 import se.kth.honeytap.scaling.exceptions.HoneyTapException;
-import se.kth.tablespoon.client.api.TablespoonAPI;
+import se.kth.tablespoon.client.api.TablespoonApi;
 
 /**
  * Created with IntelliJ IDEA.
@@ -17,12 +17,12 @@ public class TSMonitoringHandler implements MonitoringHandler{
 
     Log log = LogFactory.getLog(TSMonitoringHandler.class);
     private HoneyTapAPI honeyTapAPI;
-    private TablespoonAPI tablespoonAPI;
+    private TablespoonApi tablespoonAPI;
     MonitoringListener monitoringListener;
 
-    public TSMonitoringHandler(HoneyTapAPI honeyTapAPI) {
+    public TSMonitoringHandler(HoneyTapAPI honeyTapAPI, TablespoonApi tablespoonApi) {
         this.honeyTapAPI = honeyTapAPI;
-        this.tablespoonAPI = TablespoonAPI.getInstance();
+        this.tablespoonAPI = tablespoonApi;
         this.monitoringListener = new MonitoringListener(this.honeyTapAPI);
     }
 
