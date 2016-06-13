@@ -38,7 +38,7 @@ public class GroupTest {
         } catch (InterruptedException e) {
             throw new IllegalStateException(e);
         }
-        honeyTapAPI = HoneyTapAPI.getInstance();
+        honeyTapAPI = new HoneyTapAPI();
     }
 
     @Test

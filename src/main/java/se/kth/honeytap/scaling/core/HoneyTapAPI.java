@@ -36,27 +36,15 @@ public class HoneyTapAPI {
     private HoneyTapManager honeyTapManager;
     private RuleManager ruleManager;
     private GroupManager groupManager;
-    private static HoneyTapAPI honeyTapAPI;
     private int faultToleranceLevel = 1;
     MonitoringHandler monitoringHandler;
 
-    private HoneyTapAPI() throws HoneyTapException {
+    public HoneyTapAPI() throws HoneyTapException {
         /////////MonitoringHandler monitoringHandler = new TSMonitoringHandler(this);
         monitoringHandler = new MonitoringHandlerSimulator(this);
         honeyTapManager = new HoneyTapManager(monitoringHandler);
         ruleManager = RuleManagerImpl.getInstance();
         groupManager = GroupManagerImpl.getInstance();
-    }
-
-    public static HoneyTapAPI getInstance() throws HoneyTapException {
-        try {
-            if (honeyTapAPI == null) {
-                honeyTapAPI = new HoneyTapAPI();
-            }
-            return honeyTapAPI;
-        } catch (HoneyTapException e) {
-            throw new HoneyTapException("Error while initializing HoneyTapAPI", e);
-        }
     }
 
     public Rule createRule(String ruleName, RuleSupport.ResourceType resourceType, RuleSupport.Comparator comparator, float thresholdPercentage, int operationAction) throws HoneyTapException {

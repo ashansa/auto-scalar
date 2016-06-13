@@ -39,7 +39,7 @@ public class HoneyTapTest {
 
     @BeforeClass
     public static void init() throws HoneyTapException {
-        honeyTapAPI = HoneyTapAPI.getInstance();
+        honeyTapAPI = new HoneyTapAPI();
     }
 
     @Test

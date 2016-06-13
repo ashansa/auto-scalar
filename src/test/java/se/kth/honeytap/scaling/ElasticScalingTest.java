@@ -46,7 +46,7 @@ public class ElasticScalingTest {
 
     @BeforeClass
     public static void init() throws HoneyTapException {
-        honeyTapAPI = HoneyTapAPI.getInstance();
+        honeyTapAPI = new HoneyTapAPI();
         windowSize = DynamicEventProfiler.getWindowSize();
     }
 
