@@ -38,7 +38,7 @@ public class DynamicEventProfiler {
     private MonitoringHandler monitoringHandler;
 
     //TODO make this configurable   (Temporary made this static to refer in test)
-    private static int windowSize = 10; //time in seconds
+    private static int windowSize = (10 * 1000)/60; //time in milliseconds
     private int windowFractionSize = windowSize/3;
     private boolean isProcessingInProgress;
     private Lock tempMaplock = new ReentrantLock();
@@ -204,7 +204,7 @@ public class DynamicEventProfiler {
                     }
                 }
             }
-        }, 0, windowSize * 1000);
+        }, 0, windowSize);
     }
 
     private synchronized ArrayList<MonitoringEvent> combineEvents(ArrayList<MonitoringEvent> existingEvents, ArrayList<MonitoringEvent> newEvents) {

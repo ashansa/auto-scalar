@@ -182,6 +182,20 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
 
     private void addWorkload(String resourceType, String workload) {
       Queue<Float> workloadQueue = new LinkedList<Float>();
+      //workload:    "10:10, 3:50, 10:95"
+      String[] workloadArray = workload.split(",");
+      for (String wl : workloadArray) {
+        int durationSeconds = Integer.valueOf(wl.trim().split(":")[0]);
+        float utilization = Float.valueOf(wl.trim().split(":")[1]);
+        for (int i = 0; i < durationSeconds; i = i + monitoringFreqSeconds) {
+          workloadQueue.add(utilization);
+        }
+      }
+      resourceWorkloadMap.put(resourceType, workloadQueue);
+    }
+
+    private void addWorkloadOri(String resourceType, String workload) {
+      Queue<Float> workloadQueue = new LinkedList<Float>();
 
       //workload:    "1:10, 5:50, 10:95, 5:57, 5:180, 10:62, 4:12"
       String[] workloadArray = workload.split(",");
