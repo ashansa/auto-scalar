@@ -430,11 +430,12 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
               remainingCuReq = 0;
             }
             log.info("&&&&&&&&&&&&&& remaining cu, ram &&&&&&&&&&& " + remainingCuReq + ", " + remainingRamReq);
+            if (ramWorkload.size() == 0) {
+              StatManager.storeValues();
+            }
           }
         } catch (Exception e) {
           log.error("------ Monitoring Simulation Exception --------- " + e);
-        } finally {
-          StatManager.storeValues();
         }
       }
     }

@@ -15,10 +15,10 @@ import java.util.Properties;
  */
 public class StatManager {
 
-  static HashMap<Long,String> ramChanges = new HashMap<>();   //high:v1, low:v2  , normal:v3
-  static HashMap<Long,String> cuChanges = new HashMap<>();   //high:v1, low:v2  , normal:v3
-  static HashMap<Long,String> machineReq = new HashMap<>();   //2,  3,  4,  3
-  static HashMap<Long,String> machineAllocation = new HashMap<>();     //1:t2.medium  ,   -1,Id2
+  static HashMap<String,String> ramChanges = new HashMap<>();   //high:v1, low:v2  , normal:v3
+  static HashMap<String,String> cuChanges = new HashMap<>();   //high:v1, low:v2  , normal:v3
+  static HashMap<String,String> machineReq = new HashMap<>();   //2,  3,  4,  3
+  static HashMap<String,String> machineAllocation = new HashMap<>();     //1:t2.medium  ,   -1,Id2
 
   public static void addRamChanges(Long key, String level, float value) {
     String valueSet = "";
@@ -27,7 +27,7 @@ public class StatManager {
     }
     String newValue = level + ":" + value;
     valueSet = valueSet.concat(newValue);
-    ramChanges.put(key, valueSet);
+    ramChanges.put(String.valueOf(key), valueSet);
   }
 
   public static void addCuChanges(Long key, String level, float value) {
@@ -37,7 +37,7 @@ public class StatManager {
     }
     String newValue = level + ":" + value;
     valueSet = valueSet.concat(newValue);
-    cuChanges.put(key, valueSet);
+    cuChanges.put(String.valueOf(key), valueSet);
   }
 
   public static void setMachineReq(Long key, int no) {
@@ -46,7 +46,7 @@ public class StatManager {
       valueSet = machineReq.get(key).concat(",");
     }
     valueSet = valueSet + no;
-    machineReq.put(key, valueSet);
+    machineReq.put(String.valueOf(key), valueSet);
   }
 
   public static void setMachineAllocation(Long key, int no, String option) {
@@ -56,7 +56,7 @@ public class StatManager {
     }
     String newValue = no + ":" + option;
     valueSet = valueSet.concat(newValue);
-    machineAllocation.put(key, valueSet);
+    machineAllocation.put(String.valueOf(key), valueSet);
   }
 
   public static void storeValues() {
@@ -65,16 +65,16 @@ public class StatManager {
     Properties machineReqProperties = new Properties();
     Properties machineAllocProperties = new Properties();
 
-    for (Map.Entry<Long,String> entry : ramChanges.entrySet()) {
+    for (Map.Entry<String,String> entry : ramChanges.entrySet()) {
       ramProperties.put(entry.getKey(), entry.getValue());
     }
-    for (Map.Entry<Long,String> entry : cuChanges.entrySet()) {
+    for (Map.Entry<String,String> entry : cuChanges.entrySet()) {
       cuProperties.put(entry.getKey(), entry.getValue());
     }
-    for (Map.Entry<Long,String> entry : machineReq.entrySet()) {
+    for (Map.Entry<String,String> entry : machineReq.entrySet()) {
       machineReqProperties.put(entry.getKey(), entry.getValue());
     }
-    for (Map.Entry<Long,String> entry : machineAllocation.entrySet()) {
+    for (Map.Entry<String,String> entry : machineAllocation.entrySet()) {
       machineAllocProperties.put(entry.getKey(), entry.getValue());
     }
 
