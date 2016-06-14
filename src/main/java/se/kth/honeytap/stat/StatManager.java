@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TreeMap;
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,10 +16,10 @@ import java.util.Properties;
  */
 public class StatManager {
 
-  static HashMap<String,String> ramChanges = new HashMap<>();   //high:v1, low:v2  , normal:v3
-  static HashMap<String,String> cuChanges = new HashMap<>();   //high:v1, low:v2  , normal:v3
-  static HashMap<String,String> machineReq = new HashMap<>();   //2,  3,  4,  3
-  static HashMap<String,String> machineAllocation = new HashMap<>();     //1:t2.medium  ,   -1,Id2
+  static TreeMap<String,String> ramChanges = new TreeMap<>();   //high:v1, low:v2  , normal:v3
+  static TreeMap<String,String> cuChanges = new TreeMap<>();   //high:v1, low:v2  , normal:v3
+  static TreeMap<String,String> machineReq = new TreeMap<>();   //2,  3,  4,  3
+  static TreeMap<String,String> machineAllocation = new TreeMap<>();     //1:t2.medium  ,   -1,Id2
 
   public static void addRamChanges(Long key, String level, float value) {
     String valueSet = "";
