@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import se.kth.honeytap.scaling.Constants;
 import se.kth.honeytap.scaling.core.HoneyTapAPI;
 import se.kth.honeytap.scaling.exceptions.HoneyTapException;
+import se.kth.honeytap.stat.StatManager;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -307,125 +308,135 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
       @Override
       public void run() {
 
-        if (isMonitoringActivated) {
-          ResourceMonitoringEvent resourceMonitoringEvent;
+        try {
+          if (isMonitoringActivated) {
+            ResourceMonitoringEvent resourceMonitoringEvent;
 
-          float originalRamReq = ramWorkload.poll();
-          float ramRequirement = originalRamReq + remainingRamReq;
+            float originalRamReq = ramWorkload.poll();
+            float ramRequirement = originalRamReq + remainingRamReq;
            /* int noOfGBsInSys = 4; //TODO-get this from Karamel API
             if (ramRequirement > 4 )
               noOfGBsInSys = 8;    //TODO dynamically update with Karamel API*/
-          float noOfGBsInSys = getTotalRamInGroup();
+            float noOfGBsInSys = getTotalRamInGroup();
 
-          float ramUtilization = ramRequirement/noOfGBsInSys * 100; //TODO get this for each machine to send utilization events
+            float ramUtilization = ramRequirement/noOfGBsInSys * 100; //TODO get this for each machine to send utilization events
 
-          Float highRamThreshold = greaterThanInterestMap.get(RuleSupport.ResourceType.RAM.name());
-          Float lowRamThreshold = lessThanInterestMap.get(RuleSupport.ResourceType.RAM.name());
+            Float highRamThreshold = greaterThanInterestMap.get(RuleSupport.ResourceType.RAM.name());
+            Float lowRamThreshold = lessThanInterestMap.get(RuleSupport.ResourceType.RAM.name());
 
-          float originalCuReq = cuWorkload.poll();
-          float cuRequirement = originalCuReq + remainingCuReq;
+            float originalCuReq = cuWorkload.poll();
+            float cuRequirement = originalCuReq + remainingCuReq;
 
-          ////int noOfCUsInSys = 2; //TODO-get this from Karamel API
-          int noOfCUsInSys = getTotalCusInGroup();
+            ////int noOfCUsInSys = 2; //TODO-get this from Karamel API
+            int noOfCUsInSys = getTotalCusInGroup();
 
-          float cpuUtilization = cuRequirement/noOfCUsInSys * 100; //TODO get this for each machine to send utilization events
+            float cpuUtilization = cuRequirement/noOfCUsInSys * 100; //TODO get this for each machine to send utilization events
 
-          Float highCpuThreshold = greaterThanInterestMap.get(RuleSupport.ResourceType.CPU.name());
-          Float lowCpuThreshold = lessThanInterestMap.get(RuleSupport.ResourceType.CPU.name());
+            Float highCpuThreshold = greaterThanInterestMap.get(RuleSupport.ResourceType.CPU.name());
+            Float lowCpuThreshold = lessThanInterestMap.get(RuleSupport.ResourceType.CPU.name());
 
-          for (String resThresholdsString : durationGreaterInterestMap.values()) {
-            String[] items = resThresholdsString.split(":"); //ie: CPU:70:80
-            if (items.length == 3) {
-              if (RuleSupport.ResourceType.RAM.name().equals(items[0])) {
-                //I am just assigning the lower value here since we always add timed events a delta less than original interest
-                highRamThreshold = Float.valueOf(items[1]);
-              } else if (RuleSupport.ResourceType.CPU.name().equals(items[0])) {
-                //I am just assigning the lower value here since we always add timed events a delta less than original interest
-                highCpuThreshold = Float.valueOf(items[1]);
+            for (String resThresholdsString : durationGreaterInterestMap.values()) {
+              String[] items = resThresholdsString.split(":"); //ie: CPU:70:80
+              if (items.length == 3) {
+                if (RuleSupport.ResourceType.RAM.name().equals(items[0])) {
+                  //I am just assigning the lower value here since we always add timed events a delta less than original interest
+                  highRamThreshold = Float.valueOf(items[1]);
+                } else if (RuleSupport.ResourceType.CPU.name().equals(items[0])) {
+                  //I am just assigning the lower value here since we always add timed events a delta less than original interest
+                  highCpuThreshold = Float.valueOf(items[1]);
+                }
               }
             }
-          }
 
-          for (String resThresholdsString : durationLessInterestMap.values()) {
-            String[] items = resThresholdsString.split(":"); //ie: CPU:20:30
-            if (items.length == 3) {
-              if (RuleSupport.ResourceType.RAM.name().equals(items[0])) {
-                //I am just assigning the lower value here since we always add timed events a delta less than original interest
-                lowRamThreshold = Float.valueOf(items[2]);
-              } else if (RuleSupport.ResourceType.CPU.name().equals(items[0])) {
-                //I am just assigning the lower value here since we always add timed events a delta less than original interest
-                lowCpuThreshold = Float.valueOf(items[2]);
+            for (String resThresholdsString : durationLessInterestMap.values()) {
+              String[] items = resThresholdsString.split(":"); //ie: CPU:20:30
+              if (items.length == 3) {
+                if (RuleSupport.ResourceType.RAM.name().equals(items[0])) {
+                  //I am just assigning the lower value here since we always add timed events a delta less than original interest
+                  lowRamThreshold = Float.valueOf(items[2]);
+                } else if (RuleSupport.ResourceType.CPU.name().equals(items[0])) {
+                  //I am just assigning the lower value here since we always add timed events a delta less than original interest
+                  lowCpuThreshold = Float.valueOf(items[2]);
+                }
               }
             }
-          }
 
           /*  log.info("++++++++++++ new RAM interests, high:low ++++++++++++" + highRamThreshold + ":" + lowRamThreshold);
             log.info("++++++++++++ new CPU interests, high:low ++++++++++++" + highCpuThreshold + ":" + lowCpuThreshold);*/
 
-          boolean eventSent = false;
-          if (highRamThreshold != null && ramUtilization >= highRamThreshold) {
-            //TODO get machine Ids and send values for all machine Ids
-            resourceMonitoringEvent = new ResourceMonitoringEvent(groupId,"??machineId", RuleSupport.ResourceType.RAM,
-                    RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, ramUtilization);
-            try {
-              log.info("....... going to add onHighRam event. Utilization: " + resourceMonitoringEvent.getCurrentValue());
-              monitoringListener.onHighRam(groupId, resourceMonitoringEvent);
-              eventSent = true;
-            } catch (HoneyTapException e) {
-              log.error("Error while sending onHighRam event for groupId: " + groupId + " machine: ", e);
+            boolean eventSent = false;
+            if (highRamThreshold != null && ramUtilization >= highRamThreshold) {
+              //TODO get machine Ids and send values for all machine Ids
+              resourceMonitoringEvent = new ResourceMonitoringEvent(groupId,"??machineId", RuleSupport.ResourceType.RAM,
+                      RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, ramUtilization);
+              try {
+                log.info("....... going to add onHighRam event. Utilization: " + resourceMonitoringEvent.getCurrentValue());
+                monitoringListener.onHighRam(groupId, resourceMonitoringEvent);
+                eventSent = true;
+              } catch (HoneyTapException e) {
+                log.error("Error while sending onHighRam event for groupId: " + groupId + " machine: ", e);
+              }
+            } else if (lowRamThreshold != null && ramUtilization <= lowRamThreshold) {
+              resourceMonitoringEvent = new ResourceMonitoringEvent(groupId,"??machineId", RuleSupport.ResourceType.RAM,
+                      RuleSupport.Comparator.LESS_THAN_OR_EQUAL, ramUtilization);
+              try {
+                log.info("....... going to add onLowRam event. Utilization: " + resourceMonitoringEvent.getCurrentValue());
+                monitoringListener.onLowRam(groupId, resourceMonitoringEvent);
+                eventSent = true;
+              } catch (HoneyTapException e) {
+                log.error("Error while sending onLowRam event for groupId: " + groupId + " machine: ", e);
+              }
             }
-          } else if (lowRamThreshold != null && ramUtilization <= lowRamThreshold) {
-            resourceMonitoringEvent = new ResourceMonitoringEvent(groupId,"??machineId", RuleSupport.ResourceType.RAM,
-                    RuleSupport.Comparator.LESS_THAN_OR_EQUAL, ramUtilization);
-            try {
-              log.info("....... going to add onLowRam event. Utilization: " + resourceMonitoringEvent.getCurrentValue());
-              monitoringListener.onLowRam(groupId, resourceMonitoringEvent);
-              eventSent = true;
-            } catch (HoneyTapException e) {
-              log.error("Error while sending onLowRam event for groupId: " + groupId + " machine: ", e);
-            }
-          }
 
-          if (highCpuThreshold != null && cpuUtilization >= highCpuThreshold) {
-            resourceMonitoringEvent = new ResourceMonitoringEvent(groupId,"??machineId", RuleSupport.ResourceType.CPU,
-                    RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, cpuUtilization);
-            try {
-              log.info("....... going to add onHighCPU event. Utilization: " + resourceMonitoringEvent.getCurrentValue());
-              monitoringListener.onHighCPU(groupId, resourceMonitoringEvent);
-              eventSent = true;
-            } catch (HoneyTapException e) {
-              log.error("Error while sending onHighCPU event for groupId: " + groupId + " machine: ", e);
-            }
-          } else if (lowCpuThreshold != null && cpuUtilization <= lowCpuThreshold) {
-            resourceMonitoringEvent = new ResourceMonitoringEvent(groupId,"??machineId", RuleSupport.ResourceType.CPU,
-                    RuleSupport.Comparator.LESS_THAN_OR_EQUAL, cpuUtilization);
-            try {
-              log.info("....... going to add onHighRam event. Utilization: " + resourceMonitoringEvent.getCurrentValue());
+            if (highCpuThreshold != null && cpuUtilization >= highCpuThreshold) {
+              resourceMonitoringEvent = new ResourceMonitoringEvent(groupId,"??machineId", RuleSupport.ResourceType.CPU,
+                      RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, cpuUtilization);
+              try {
+                log.info("....... going to add onHighCPU event. Utilization: " + resourceMonitoringEvent.getCurrentValue());
+                monitoringListener.onHighCPU(groupId, resourceMonitoringEvent);
+                eventSent = true;
+              } catch (HoneyTapException e) {
+                log.error("Error while sending onHighCPU event for groupId: " + groupId + " machine: ", e);
+              }
+            } else if (lowCpuThreshold != null && cpuUtilization <= lowCpuThreshold) {
+              resourceMonitoringEvent = new ResourceMonitoringEvent(groupId,"??machineId", RuleSupport.ResourceType.CPU,
+                      RuleSupport.Comparator.LESS_THAN_OR_EQUAL, cpuUtilization);
+              try {
+                log.info("....... going to add onHighRam event. Utilization: " + resourceMonitoringEvent.getCurrentValue());
 
-              monitoringListener.onLowCPU(groupId, resourceMonitoringEvent);
-              eventSent = true;
-            } catch (HoneyTapException e) {
-              log.error("Error while sending onLowCPU event for groupId: " + groupId + " machine: ", e);
+                monitoringListener.onLowCPU(groupId, resourceMonitoringEvent);
+                eventSent = true;
+              } catch (HoneyTapException e) {
+                log.error("Error while sending onLowCPU event for groupId: " + groupId + " machine: ", e);
+              }
             }
-          }
-          if (!eventSent) {
-            log.info(".................. no events occured .......... Cpu, Ram ........." + cpuUtilization + "," +
-                    ramUtilization);
-          }
+            if (!eventSent) {
+              ////////log.info(".................. no events occured .......... Cpu, Ram ........." + cpuUtilization + "," +ramUtilization);
+              StatManager.addRamChanges(System.currentTimeMillis(), "normal", ramUtilization);
+              StatManager.addCuChanges(System.currentTimeMillis(), "normal", cpuUtilization);
+            }
 
-          if (ramRequirement - noOfGBsInSys > 0) {
-            remainingRamReq = ramRequirement - noOfGBsInSys;
-            remainingRamReq = remainingRamReq > 4 ? 4 : remainingRamReq;
-          } else {
-            remainingRamReq = 0;
+            if (ramRequirement - noOfGBsInSys > 0) {
+              remainingRamReq = ramRequirement - noOfGBsInSys;
+              remainingRamReq = remainingRamReq > 4 ? 4 : remainingRamReq;
+            } else {
+              remainingRamReq = 0;
+            }
+            if (cuRequirement - noOfCUsInSys > 0) {
+              remainingCuReq = cuRequirement - noOfCUsInSys;
+              remainingCuReq = remainingCuReq > 2 ? 2 : remainingCuReq;
+            } else {
+              remainingCuReq = 0;
+            }
+            log.info("&&&&&&&&&&&&&& remaining cu, ram &&&&&&&&&&& " + remainingCuReq + ", " + remainingRamReq);
           }
-          if (cuRequirement - noOfCUsInSys > 0) {
-            remainingCuReq = cuRequirement - noOfCUsInSys;
-            remainingCuReq = remainingCuReq > 2 ? 2 : remainingCuReq;
-          } else {
-            remainingCuReq = 0;
-          }
-          log.info("&&&&&&&&&&&&&& remaining cu, ram &&&&&&&&&&& " + remainingCuReq + ", " + remainingRamReq);
+        } catch (Exception e) {
+          log.error("--------------------------------------------------------------");
+          log.error("--------------------------------------------------------------");
+          log.error("----------------- exception. Logging info --------------------");
+          log.error("--------------------------------------------------------------");
+          log.error("--------------------------------------------------------------");
+          StatManager.storeValues();
         }
       }
     }
