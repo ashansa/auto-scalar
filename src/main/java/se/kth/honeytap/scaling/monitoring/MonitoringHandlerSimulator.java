@@ -160,8 +160,8 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
     private HashMap<String, VM> vmMap = new HashMap<>();
     private HashMap<String, VM> simulatedVmMap = new HashMap<>();
 
-    float initialSystemRam = 3.75f;
-    int initialSystemCus = 1;
+    float initialSystemRam = 4f;
+    int initialSystemCus = 2;
 
     //TODO if we need to handle >1 group, need to have a map of groupId-greater/lessThanInterestMap
     //workload
@@ -200,10 +200,19 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
       //workload:    "1:10, 5:50, 10:95, 5:57, 5:180, 10:62, 4:12"
       String[] workloadArray = workload.split(",");
       for (String wl : workloadArray) {
-        int durationMin = Integer.valueOf(wl.trim().split(":")[0]);
         float utilization = Float.valueOf(wl.trim().split(":")[1]);
-        for (int i = 0; i < durationMin * 60; i = i + monitoringFreqSeconds) {
-          workloadQueue.add(utilization);
+        float duration = Float.valueOf(wl.trim().split(":")[0]);
+        if (duration % 1 == 0) {
+          int durationMin = (int) duration;
+          for (int i = 0; i < durationMin * 60; i = i + monitoringFreqSeconds) {
+            workloadQueue.add(utilization);
+          }
+        } else {
+          //This will work only for floating points with non zero end
+          int durationSec = (int) (duration % 1);
+          for (int i = 0; i < durationSec; i = i + monitoringFreqSeconds) {
+            workloadQueue.add(utilization);
+          }
         }
       }
       resourceWorkloadMap.put(resourceType, workloadQueue);

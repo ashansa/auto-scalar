@@ -22,13 +22,15 @@ public class DBUtil {
     private static final Log log = LogFactory.getLog(DBUtil.class);
 
     //TODO copy the properties file to outside and use only the dbConnection.properties as the below value
-    private static final String DB_PROPERTY_FILE = "src/main/resources/dbConnection.properties";
+    private static final String DB_PROPERTY_FILE = "/karamel-core/src/main/resources/dbConnection.properties";
 
     public static Connection getDBConnection() throws DBConnectionFailureException {
         Properties prop = new Properties();
         InputStream in = null;
+        String propertyFilePath = DB_PROPERTY_FILE;
         try {
-            in = new FileInputStream(new File(DB_PROPERTY_FILE));
+            propertyFilePath =  getPropertyFilePath();
+            in = new FileInputStream(new File(propertyFilePath));
             prop.load(in);
             in.close();
 
@@ -37,7 +39,7 @@ public class DBUtil {
             throw exception;
         } catch (IOException e) {
             DBConnectionFailureException exception = handleDBConnectionException("Error occurred while reading " +
-                    DB_PROPERTY_FILE, e);
+                    propertyFilePath, e);
             throw exception;
         }
 
@@ -73,8 +75,10 @@ public class DBUtil {
     public static Connection getInMemoryDBConnection() throws DBConnectionFailureException {
         Properties prop = new Properties();
         InputStream in = null;
+        String propertyFilePath = DB_PROPERTY_FILE;
         try {
-            in = new FileInputStream(new File(DB_PROPERTY_FILE));
+            propertyFilePath =  getPropertyFilePath();
+            in = new FileInputStream(new File(propertyFilePath));
             prop.load(in);
             in.close();
 
@@ -83,7 +87,7 @@ public class DBUtil {
             throw exception;
         } catch (IOException e) {
             DBConnectionFailureException exception = handleDBConnectionException("Error occurred while reading " +
-                    DB_PROPERTY_FILE, e);
+                    propertyFilePath, e);
             throw exception;
         }
 
@@ -110,8 +114,10 @@ public class DBUtil {
     public static Connection getKandyDbConnection() throws DBConnectionFailureException {
         Properties prop = new Properties();
         InputStream in = null;
+        String propertyFilePath = DB_PROPERTY_FILE;
         try {
-            in = new FileInputStream(new File(DB_PROPERTY_FILE));
+            propertyFilePath =  getPropertyFilePath();
+            in = new FileInputStream(new File(propertyFilePath));
             prop.load(in);
             in.close();
 
@@ -120,7 +126,7 @@ public class DBUtil {
             throw exception;
         } catch (IOException e) {
             DBConnectionFailureException exception = handleDBConnectionException("Error occurred while reading " +
-                    DB_PROPERTY_FILE, e);
+                    propertyFilePath, e);
             throw exception;
         }
 
@@ -157,5 +163,9 @@ public class DBUtil {
         log.error(msg);
         e.printStackTrace();
         return new DBConnectionFailureException(msg, e.getCause());
+    }
+
+    private static String getPropertyFilePath() throws IOException {
+        return new File(".").getCanonicalPath().concat(DB_PROPERTY_FILE);
     }
 }
