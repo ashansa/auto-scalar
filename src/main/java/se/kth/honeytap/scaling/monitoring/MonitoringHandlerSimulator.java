@@ -59,6 +59,7 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
       workloadProp.load(is);
       cuWorkload = workloadProp.getProperty("cpu");
       ramWorkload = workloadProp.getProperty("ram");
+      log.info("......... ram workload ........." + ramWorkload);
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
@@ -180,7 +181,7 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
       isMonitoringActivated = true;
     }
 
-    private void addWorkload(String resourceType, String workload) {
+    private void addWorkloadBk(String resourceType, String workload) {
       Queue<Float> workloadQueue = new LinkedList<Float>();
       //workload:    "10:10, 3:50, 10:95"
       String[] workloadArray = workload.split(",");
@@ -194,22 +195,30 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
       resourceWorkloadMap.put(resourceType, workloadQueue);
     }
 
-    private void addWorkloadOri(String resourceType, String workload) {
+    private void addWorkload(String resourceType, String workload) {
       Queue<Float> workloadQueue = new LinkedList<Float>();
 
       //workload:    "1:10, 5:50, 10:95, 5:57, 5:180, 10:62, 4:12"
       String[] workloadArray = workload.split(",");
       for (String wl : workloadArray) {
+        String durationString = wl.trim().split(":")[0];
         float utilization = Float.valueOf(wl.trim().split(":")[1]);
-        float duration = Float.valueOf(wl.trim().split(":")[0]);
-        if (duration % 1 == 0) {
-          int durationMin = (int) duration;
+        int durationMin = 0;
+        int durationSec = 0;
+        if (durationString.contains(".")) {
+          //will have both min and sec
+          durationMin = Integer.valueOf(durationString.split("\\.")[0]);
+          durationSec = Integer.valueOf(durationString.split("\\.")[1]);
+        } else {
+          durationMin = Integer.valueOf(durationString);
+        }
+
+        if (durationMin > 0) {
           for (int i = 0; i < durationMin * 60; i = i + monitoringFreqSeconds) {
             workloadQueue.add(utilization);
           }
-        } else {
-          //This will work only for floating points with non zero end
-          int durationSec = (int) (duration % 1);
+        }
+        if (durationSec > 0) {
           for (int i = 0; i < durationSec; i = i + monitoringFreqSeconds) {
             workloadQueue.add(utilization);
           }
@@ -406,11 +415,13 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
 
           if (ramRequirement - noOfGBsInSys > 0) {
             remainingRamReq = ramRequirement - noOfGBsInSys;
+            remainingRamReq = remainingRamReq > 4 ? 4 : remainingRamReq;
           } else {
             remainingRamReq = 0;
           }
           if (cuRequirement - noOfCUsInSys > 0) {
             remainingCuReq = cuRequirement - noOfCUsInSys;
+            remainingCuReq = remainingCuReq > 2 ? 2 : remainingCuReq;
           } else {
             remainingCuReq = 0;
           }
@@ -627,8 +638,8 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
     }
 
     public void removeSimulatedVMInfo(String vmId) {
-        simulatedVmMap.remove(vmId);
-        log.info("====== removing a simulated VM. System status ram, cus : " + getTotalRamInGroup() + ", " + getTotalCusInGroup());
+      simulatedVmMap.remove(vmId);
+      log.info("====== removing a simulated VM. System status ram, cus : " + getTotalRamInGroup() + ", " + getTotalCusInGroup());
     }
 
     public String[] getAllSimulatedVmIds() {
