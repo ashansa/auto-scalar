@@ -22,41 +22,45 @@ public class StatManager {
 
   public static void addRamChanges(Long key, String level, float value) {
     String valueSet = "";
-    if (ramChanges.containsKey(key)) {
-      valueSet = ramChanges.get(key).concat(",");
+    String keyString = String.valueOf(key);
+    if (ramChanges.containsKey(keyString)) {
+      valueSet = ramChanges.get(keyString).concat(",");
     }
     String newValue = level + ":" + value;
     valueSet = valueSet.concat(newValue);
-    ramChanges.put(String.valueOf(key), valueSet);
+    ramChanges.put(keyString, valueSet);
   }
 
   public static void addCuChanges(Long key, String level, float value) {
     String valueSet = "";
-    if (cuChanges.containsKey(key)) {
-      valueSet = cuChanges.get(key).concat(",");
+    String keyString = String.valueOf(key);
+    if (cuChanges.containsKey(keyString)) {
+      valueSet = cuChanges.get(keyString).concat(",");
     }
     String newValue = level + ":" + value;
     valueSet = valueSet.concat(newValue);
-    cuChanges.put(String.valueOf(key), valueSet);
+    cuChanges.put(String.valueOf(keyString), valueSet);
   }
 
   public static void setMachineReq(Long key, int no) {
     String valueSet = "";
-    if (machineReq.containsKey(key)) {
-      valueSet = machineReq.get(key).concat(",");
+    String keyString = String.valueOf(key);
+    if (machineReq.containsKey(keyString)) {
+      valueSet = machineReq.get(keyString).concat(",");
     }
     valueSet = valueSet + no;
-    machineReq.put(String.valueOf(key), valueSet);
+    machineReq.put(String.valueOf(keyString), valueSet);
   }
 
   public static void setMachineAllocation(Long key, int no, String option) {
     String valueSet = "";
-    if (machineAllocation.containsKey(key)) {
-      valueSet = machineAllocation.get(key).concat(",");
+    String keyString = String.valueOf(key);
+    if (machineAllocation.containsKey(keyString)) {
+      valueSet = machineAllocation.get(keyString).concat(",");
     }
     String newValue = no + ":" + option;
     valueSet = valueSet.concat(newValue);
-    machineAllocation.put(String.valueOf(key), valueSet);
+    machineAllocation.put(keyString, valueSet);
   }
 
   public static void storeValues() {
