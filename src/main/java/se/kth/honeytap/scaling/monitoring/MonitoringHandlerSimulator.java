@@ -515,15 +515,15 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
           /*  log.info("++++++++++++ new RAM interests, high:low ++++++++++++" + highRamThreshold + ":" + lowRamThreshold);
             log.info("++++++++++++ new CPU interests, high:low ++++++++++++" + highCpuThreshold + ":" + lowCpuThreshold);*/
 
-            boolean eventSent = false;
+            boolean eventOccoured = false;
             if (highRamThreshold != null && ramUtilization >= highRamThreshold) {
               //TODO get machine Ids and send values for all machine Ids
               resourceMonitoringEvent = new ResourceMonitoringEvent(groupId,"??machineId", RuleSupport.ResourceType.RAM,
                       RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, ramUtilization);
               try {
                 ////////log.info("....... going to add onHighRam event. Utilization: " + resourceMonitoringEvent.getCurrentValue());
+                eventOccoured = true;
                 monitoringListener.onHighRam(groupId, resourceMonitoringEvent);
-                eventSent = true;
               } catch (HoneyTapException e) {
                 log.error("Error while sending onHighRam event for groupId: " + groupId + " machine: ", e);
               }
@@ -532,8 +532,8 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
                       RuleSupport.Comparator.LESS_THAN_OR_EQUAL, ramUtilization);
               try {
                 //////////log.info("....... going to add onLowRam event. Utilization: " + resourceMonitoringEvent.getCurrentValue());
+                eventOccoured = true;
                 monitoringListener.onLowRam(groupId, resourceMonitoringEvent);
-                eventSent = true;
               } catch (HoneyTapException e) {
                 log.error("Error while sending onLowRam event for groupId: " + groupId + " machine: ", e);
               }
@@ -544,8 +544,8 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
                       RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, cpuUtilization);
               try {
                 /////////log.info("....... going to add onHighCPU event. Utilization: " + resourceMonitoringEvent.getCurrentValue());
+                eventOccoured = true;
                 monitoringListener.onHighCPU(groupId, resourceMonitoringEvent);
-                eventSent = true;
               } catch (HoneyTapException e) {
                 log.error("Error while sending onHighCPU event for groupId: " + groupId + " machine: ", e);
               }
@@ -554,14 +554,13 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
                       RuleSupport.Comparator.LESS_THAN_OR_EQUAL, cpuUtilization);
               try {
                 /////////log.info("....... going to add onHighRam event. Utilization: " + resourceMonitoringEvent.getCurrentValue());
-
+                eventOccoured = true;
                 monitoringListener.onLowCPU(groupId, resourceMonitoringEvent);
-                eventSent = true;
               } catch (HoneyTapException e) {
                 log.error("Error while sending onLowCPU event for groupId: " + groupId + " machine: ", e);
               }
             }
-            if (!eventSent) {
+            if (!eventOccoured) {
               log.info(".................. no events occured .......... Cpu, Ram ........." + cpuUtilization + "," +
                       ramUtilization);
             }
