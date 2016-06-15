@@ -1,5 +1,9 @@
 package se.kth.honeytap.stat;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -17,8 +21,42 @@ import java.util.TreeMap;
  * @since 1.0
  */
 public class StatAnalyzer {
-  public static void main(String[] args) {
-    sortAllVals();
+  static Log log = LogFactory.getLog(StatAnalyzer.class);
+  static String resultPath = "a_results/30sec_window_1/";
+
+  public static void analyze() {
+    try {
+
+      File resultDir = new File(resultPath);
+
+      if (!new File(resultPath).exists()) {
+        new File(resultPath).mkdirs();
+      }
+
+      FileUtils.copyDirectory(new File("filtered"), resultDir);
+      PrintWriter writer = new PrintWriter(resultPath.concat("all.txt"), "UTF-8");
+      for (File file : resultDir.listFiles()) {
+        if (!".DS_Store".equals(file.getName())) {
+          BufferedReader br;
+
+          try {
+            String line = null;
+            br = new BufferedReader(new FileReader(file));
+
+            while ((line = br.readLine()) != null) {
+              writer.println(line);
+            }
+            writer.flush();
+            br.close();
+          } catch (IOException e) {
+            throw new IllegalStateException(e);
+          }
+        }
+      }
+      sortAllVals();
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   public static void sortAllVals() {
@@ -26,8 +64,8 @@ public class StatAnalyzer {
     PrintWriter writer;
     try {
       String line = null;
-      br = new BufferedReader(new FileReader("a_results/10sec_window_1/all.txt"));
-      writer = new PrintWriter("a_results/10sec_window_1/allSorted.txt", "UTF-8");
+      br = new BufferedReader(new FileReader(resultPath.concat("all.txt")));
+      writer = new PrintWriter(resultPath.concat("allSorted.txt"), "UTF-8");
       float prev = 0;
       TreeMap<Long, String> valueMap = new TreeMap<>();
       while ((line = br.readLine()) != null) {
@@ -75,5 +113,10 @@ public class StatAnalyzer {
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
+    log.info("==========================================================");
+    log.info("==========================================================");
+    log.info("================== logging data done===================");
+    log.info("==========================================================");
+    log.info("==========================================================");
   }
 }

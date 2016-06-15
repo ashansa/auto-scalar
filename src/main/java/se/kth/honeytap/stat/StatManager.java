@@ -149,10 +149,24 @@ public class StatManager {
       writer = new PrintWriter("filtered/ramChangesFiltered.txt", "UTF-8");
       float prev = 0;
       while ((line = br.readLine()) != null) {   //1465949322168=high:82.5
-        float value = Float.valueOf(line.split(":")[1]);
-        if ( value != prev) {
-          writer.println(line);
-          prev = value;
+        //float value = Float.valueOf(line.split(":")[1]);
+        String valueString = line.split(":")[1];
+        if (valueString.contains(",")) {
+          valueString = line.split("=")[1];
+          String[] eventVals = valueString.split(",");
+          for (String eventVal : eventVals) {
+            float value = Float.valueOf(eventVal.split(":")[1]);
+            if (value != prev) {
+              writer.println(line.split("=")[0] + "=" + eventVal);
+              prev = value;
+            }
+          }
+        } else {
+          float value = Float.valueOf(line.split(":")[1]);
+          if (value != prev) {
+            writer.println(line);
+            prev = value;
+          }
         }
       }
       writer.flush();
@@ -167,10 +181,28 @@ public class StatManager {
       writer = new PrintWriter("filtered/cuChangesFiltered.txt", "UTF-8");
       float prev = 0;
       while ((line = br.readLine()) != null) {   //1465949206171=normal:55.0
-        float value = Float.valueOf(line.split(":")[1]);
+        /*float value = Float.valueOf(line.split(":")[1]);
         if ( value != prev) {
           writer.println(line);
           prev = value;
+        }*/
+        String valueString = line.split(":")[1];
+        if (valueString.contains(",")) {
+          valueString = line.split("=")[1];
+          String[] eventVals = valueString.split(",");
+          for (String eventVal : eventVals) {
+            float value = Float.valueOf(eventVal.split(":")[1]);
+            if (value != prev) {
+              writer.println(line.split("=")[0] + "=" + eventVal);
+              prev = value;
+            }
+          }
+        } else {
+          float value = Float.valueOf(line.split(":")[1]);
+          if (value != prev) {
+            writer.println(line);
+            prev = value;
+          }
         }
       }
       writer.flush();
@@ -210,6 +242,6 @@ public class StatManager {
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
-
+    StatAnalyzer.analyze();
   }
 }

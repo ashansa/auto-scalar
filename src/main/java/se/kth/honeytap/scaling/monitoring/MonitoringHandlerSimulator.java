@@ -436,7 +436,6 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
           }
         } catch (Exception e) {
           log.error("------ Monitoring Simulation Exception --------- " + e);
-          StatManager.storeValues();
         }
       }
     }
