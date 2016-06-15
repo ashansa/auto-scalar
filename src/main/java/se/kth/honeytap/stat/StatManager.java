@@ -1,7 +1,13 @@
 package se.kth.honeytap.stat;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -64,7 +70,7 @@ public class StatManager {
     machineAllocation.put(keyString, valueSet);
   }
 
-  public static void storeValues() {
+  public static void storeValuesBk() {
     Properties ramProperties = new Properties();
     Properties cuProperties = new Properties();
     Properties machineReqProperties = new Properties();
@@ -91,5 +97,119 @@ public class StatManager {
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
+  }
+
+  public static void storeValues() {
+    PrintWriter writer = null;
+    try {
+      writer = new PrintWriter("ramChanges.txt", "UTF-8");
+      for (Map.Entry<String,String> entry : ramChanges.entrySet()) {
+        writer.println(entry.getKey() + "=" + entry.getValue());
+      }
+      writer.flush();
+      writer.close();
+
+      writer = new PrintWriter("cuChanges.txt", "UTF-8");
+      for (Map.Entry<String,String> entry : cuChanges.entrySet()) {
+        writer.println(entry.getKey() + "=" + entry.getValue());
+      }
+      writer.flush();
+      writer.close();
+
+      writer = new PrintWriter("machineReq.txt", "UTF-8");
+      for (Map.Entry<String,String> entry : machineReq.entrySet()) {
+        writer.println(entry.getKey() + "=" + entry.getValue());
+      }
+      writer.flush();
+      writer.close();
+
+      writer = new PrintWriter("machineAlloc.txt", "UTF-8");
+      for (Map.Entry<String,String> entry : machineAllocation.entrySet()) {
+        writer.println(entry.getKey() + "=" + entry.getValue());
+      }
+      writer.flush();
+      writer.close();
+    } catch (FileNotFoundException e) {
+      throw new IllegalStateException(e);
+    } catch (UnsupportedEncodingException e) {
+      throw new IllegalStateException(e);
+    }
+    filterNStore();
+  }
+
+  public static void filterNStore() {
+    BufferedReader br;
+    PrintWriter writer;
+    if (!new File("filtered").exists()) {
+      new File("filtered").mkdir();
+    }
+    try {
+      String line = null;
+      br = new BufferedReader(new FileReader("ramChanges.txt"));
+      writer = new PrintWriter("filtered/ramChangesFiltered.txt", "UTF-8");
+      float prev = 0;
+      while ((line = br.readLine()) != null) {   //1465949322168=high:82.5
+        float value = Float.valueOf(line.split(":")[1]);
+        if ( value != prev) {
+          writer.println(line);
+          prev = value;
+        }
+      }
+      writer.flush();
+      br.close();
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+
+    try {
+      String line = null;
+      br = new BufferedReader(new FileReader("cuChanges.txt"));
+      writer = new PrintWriter("filtered/cuChangesFiltered.txt", "UTF-8");
+      float prev = 0;
+      while ((line = br.readLine()) != null) {   //1465949206171=normal:55.0
+        float value = Float.valueOf(line.split(":")[1]);
+        if ( value != prev) {
+          writer.println(line);
+          prev = value;
+        }
+      }
+      writer.flush();
+      br.close();
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+
+    try {
+      String line = null;
+      br = new BufferedReader(new FileReader("machineReq.txt"));
+      writer = new PrintWriter("filtered/machineReqFiltered.txt", "UTF-8");
+      float prev = 0;
+      while ((line = br.readLine()) != null) {   //1465951148117=2
+        float value = Float.valueOf(line.split("=")[1]);
+        if ( value != prev) {
+          writer.println(line);
+          prev = value;
+        }
+      }
+      writer.flush();
+      br.close();
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+
+    try {
+      String line = null;
+      br = new BufferedReader(new FileReader("machineAlloc.txt"));
+      writer = new PrintWriter("filtered/machineAllocFiltered.txt", "UTF-8");
+
+      while ((line = br.readLine()) != null) {   //1465951245253=1:t2.medium
+        writer.println(line);
+      }
+      writer.flush();
+      br.close();
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+
   }
 }

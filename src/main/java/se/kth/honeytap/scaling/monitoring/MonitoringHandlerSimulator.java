@@ -331,7 +331,7 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
             int noOfCUsInSys = getTotalCusInGroup();
 
             float cpuUtilization = cuRequirement/noOfCUsInSys * 100; //TODO get this for each machine to send utilization events
-            int reqMachines = (int) Math.ceil(ramRequirement/4 > cuRequirement/ 2 ? ramRequirement/4 : cuRequirement/ 2);
+            int reqMachines = (int) Math.ceil(ramRequirement/3.2);
             StatManager.setMachineReq(System.currentTimeMillis(), reqMachines);
 
             Float highCpuThreshold = greaterThanInterestMap.get(RuleSupport.ResourceType.CPU.name());
@@ -436,6 +436,7 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
           }
         } catch (Exception e) {
           log.error("------ Monitoring Simulation Exception --------- " + e);
+          StatManager.storeValues();
         }
       }
     }
