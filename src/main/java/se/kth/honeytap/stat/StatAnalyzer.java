@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.TreeMap;
 
 /**
@@ -37,13 +39,25 @@ public class StatAnalyzer {
         valueMap.put(key, val);
       }
 
-      /*long yourmilliseconds = System.currentTimeMillis();
-      SimpleDateFormat sdf = new SimpleDateFormat("MMM dd,yyyy HH:mm");
-      Date resultdate = new Date(yourmilliseconds);
-      System.out.println(sdf.format(resultdate));*/
+      for (Long timeKey : valueMap.keySet()) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date resultDate = new Date(timeKey);
+        String time = sdf.format(resultDate);
+        String value = valueMap.get(timeKey);
+        if (value.contains(",")) {
+          String[] values = value.split(",");
+          for (String val : values) {
+            writer.println((time) + "=" + val);
+          }
+        } else {
+          writer.println((time) + "=" + value );
+        }
+      }
+      writer.flush();
+      br.close();
 
       //creating the sorted list with the difference of milliseconds
-      Long firstTime = valueMap.firstKey();
+      /*Long firstTime = valueMap.firstKey();
 
       for (Long timeKey : valueMap.keySet()) {
         String value = valueMap.get(timeKey);
@@ -57,7 +71,7 @@ public class StatAnalyzer {
         }
       }
       writer.flush();
-      br.close();
+      br.close();*/
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
