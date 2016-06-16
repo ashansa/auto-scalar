@@ -332,7 +332,7 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
 
             float cpuUtilization = cuRequirement/noOfCUsInSys * 100; //TODO get this for each machine to send utilization events
             int reqMachines = (int) Math.ceil(ramRequirement/3.2);
-            StatManager.setMachineReq(System.currentTimeMillis(), reqMachines);
+            //StatManager.setMachineReq(System.currentTimeMillis(), reqMachines);
 
             Float highCpuThreshold = greaterThanInterestMap.get(RuleSupport.ResourceType.CPU.name());
             Float lowCpuThreshold = lessThanInterestMap.get(RuleSupport.ResourceType.CPU.name());

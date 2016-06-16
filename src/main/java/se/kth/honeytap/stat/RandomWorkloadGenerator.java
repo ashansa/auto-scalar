@@ -17,8 +17,23 @@ public class RandomWorkloadGenerator {
             "1:3.3", "1:6.8", "1:3.3", "1:6.8", "1:3.3", "1:6.8", "1:3.3", "1:6.8","1:10", "1:3.3", "1:6.8", "1:3.3",
             "1:2.2", "1:6.8", "1:3.3", "1:6.8"};
     StringBuilder workload = new StringBuilder("1:2.2, ");
+    String prev = "0.8:2.2";
+    int no = 1;
     for (int i = 0; i < 24; ++i) {
-        workload.append(candidates[new Random().nextInt(25)]).append(", ");
+      String newCandidate = candidates[new Random().nextInt(25)];
+      if (newCandidate.equals(prev)) {
+        if (no >= 2) {
+          i--;
+          continue;
+        } else {
+          workload.append(newCandidate).append(", ");
+          no ++;
+        }
+      } else {
+        workload.append(newCandidate).append(", ");
+        prev = newCandidate;
+        no = 1;
+      }
     }
     System.out.println(workload);
     String ramWorkload = workload.substring(0, workload.lastIndexOf(","));
