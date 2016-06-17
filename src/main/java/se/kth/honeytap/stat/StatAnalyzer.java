@@ -22,7 +22,7 @@ import java.util.TreeMap;
  */
 public class StatAnalyzer {
   static Log log = LogFactory.getLog(StatAnalyzer.class);
-  static String resultPath = "a_results/30sec_window_1/";
+  static String resultPath = "17June/wl1/10sec_window_2/";
 
   public static void analyze() {
     try {

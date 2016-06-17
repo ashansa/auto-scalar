@@ -8,10 +8,12 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created with IntelliJ IDEA.
@@ -27,6 +29,10 @@ public class StatManager {
   static TreeMap<String,String> machineReq = new TreeMap<>();   //2,  3,  4,  3
   static TreeMap<String,String> machineAllocation = new TreeMap<>();     //1:t2.medium  ,   -1,Id2
 
+  static TreeMap<Long, ArrayList<Tuple>> changes = new TreeMap<>();
+  static ReentrantLock lock = new ReentrantLock();
+  static Tuple previousTuple = new Tuple(System.currentTimeMillis(), 55.0f, 1);
+
   public static void addRamChanges(Long key, String level, float value) {
     String valueSet = "";
     String keyString = String.valueOf(key);
@@ -36,6 +42,26 @@ public class StatManager {
     String newValue = level + ":" + value;
     valueSet = valueSet.concat(newValue);
     ramChanges.put(keyString, valueSet);
+
+    lock.lock();
+    ArrayList<Tuple> tupleArray = new ArrayList<>();
+    Tuple newTuple;
+
+    if (changes.containsKey(key)) {
+      tupleArray = changes.get(key);
+    }
+
+    if (previousTuple != null) {
+      newTuple = new Tuple(key, value, previousTuple.noOfMachines);
+    } else {
+      newTuple = new Tuple(key, value, 1);
+    }
+
+    tupleArray.add(newTuple);
+    previousTuple = newTuple;
+    changes.put(key, tupleArray);
+    lock.unlock();
+
   }
 
   public static void addCuChanges(Long key, String level, float value) {
@@ -68,6 +94,24 @@ public class StatManager {
     String newValue = no + ":" + option;
     valueSet = valueSet.concat(newValue);
     machineAllocation.put(keyString, valueSet);
+
+    lock.lock();
+    ArrayList<Tuple> tupleArray = new ArrayList<>();
+    Tuple newTuple;
+    if (changes.containsKey(key)) {
+      tupleArray = changes.get(key);
+    }
+
+    if (previousTuple != null) {
+      newTuple = new Tuple(key, previousTuple.ramUtilization, previousTuple.noOfMachines + no);
+    } else {
+      newTuple = new Tuple(key, 0.0000000000f, no);
+    }
+
+    tupleArray.add(newTuple);
+    previousTuple = newTuple;
+    changes.put(key, tupleArray);
+    lock.unlock();
   }
 
   public static void storeValuesBk() {
@@ -129,6 +173,16 @@ public class StatManager {
       }
       writer.flush();
       writer.close();
+
+      writer = new PrintWriter("tupleValues.txt", "UTF-8");
+      for (ArrayList<Tuple> tupleArray : changes.values()) {
+        for (Tuple tuple : tupleArray) {
+          writer.println(tuple.time + ", " + tuple.ramUtilization + ", " + tuple.noOfMachines);
+        }
+      }
+      writer.flush();
+      writer.close();
+
     } catch (FileNotFoundException e) {
       throw new IllegalStateException(e);
     } catch (UnsupportedEncodingException e) {
@@ -243,5 +297,17 @@ public class StatManager {
       throw new IllegalStateException(e);
     }
     StatAnalyzer.analyze();
+  }
+
+  static class Tuple {
+    long time;
+    float ramUtilization;
+    int noOfMachines;
+
+    public Tuple(long time, float ramUtilization, int noOfMachines) {
+      this.time = time;
+      this.ramUtilization = ramUtilization;
+      this.noOfMachines = noOfMachines;
+    }
   }
 }
