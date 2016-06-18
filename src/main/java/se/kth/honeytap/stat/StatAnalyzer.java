@@ -32,7 +32,7 @@ public class StatAnalyzer {
     writeFinalResults();
   }
 
-  public static void analyze() throws Exception {
+  public static void analyze() {
     try {
 
       File resultDir = new File(resultPath);
@@ -66,7 +66,7 @@ public class StatAnalyzer {
     } catch (IOException e) {
       throw new IllegalStateException(e);
     } catch (Exception e) {
-      throw e;
+      log.error("Failed to write final results?? " + e.getStackTrace());
     }
   }
 
