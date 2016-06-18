@@ -32,7 +32,7 @@ public class StatAnalyzer {
     writeFinalResults();
   }
 
-  public static void analyze() {
+  public static void analyze() throws Exception {
     try {
 
       File resultDir = new File(resultPath);
@@ -62,8 +62,11 @@ public class StatAnalyzer {
         }
       }
       sortAllVals();
+      writeFinalResults();
     } catch (IOException e) {
       throw new IllegalStateException(e);
+    } catch (Exception e) {
+      throw e;
     }
   }
 
