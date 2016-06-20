@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import se.kth.honeytap.scaling.Constants;
 import se.kth.honeytap.scaling.core.HoneyTapAPI;
 import se.kth.honeytap.scaling.exceptions.HoneyTapException;
+import se.kth.honeytap.scaling.rules.Rule;
 import se.kth.honeytap.stat.StatManager;
 
 import java.io.File;
@@ -299,6 +300,7 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
       Queue<Float> cuWorkload;
       float remainingCuReq = 0;
       float remainingRamReq = 0;
+      boolean ruleUpdated = false;
 
       public MonitoringTimer() {
         ramWorkload = resourceWorkloadMap.get(RuleSupport.ResourceType.RAM.name());
@@ -326,6 +328,19 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
             float noOfGBsInSys = getTotalRamInGroup();
 
             float ramUtilization = ramRequirement/noOfGBsInSys * 100; //TODO get this for each machine to send utilization events
+            if (!ruleUpdated && ramUtilization > 240) {
+              Rule rule1 = honeyTapAPI.getRule("rule1");
+              rule1.setOperationAction(2);
+              honeyTapAPI.updateRule(rule1.getRuleName(), rule1);
+              log.info("....................................... rule action 1 : " + honeyTapAPI.getRule("rule1").getOperationAction());
+              ruleUpdated = true;
+            } else if (ruleUpdated && ramUtilization <= 240) {
+              Rule rule1 = honeyTapAPI.getRule("rule1");
+              rule1.setOperationAction(1);
+              honeyTapAPI.updateRule(rule1.getRuleName(), rule1);
+              log.info("....................................... rule action 2 : " + honeyTapAPI.getRule("rule1").getOperationAction());
+              ruleUpdated = false;
+            }
 
             Float highRamThreshold = greaterThanInterestMap.get(RuleSupport.ResourceType.RAM.name());
             Float lowRamThreshold = lessThanInterestMap.get(RuleSupport.ResourceType.RAM.name());

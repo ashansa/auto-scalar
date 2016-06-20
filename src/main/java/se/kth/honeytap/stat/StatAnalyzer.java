@@ -24,8 +24,9 @@ import java.util.TreeMap;
  */
 public class StatAnalyzer {
   static Log log = LogFactory.getLog(StatAnalyzer.class);
-  static String resultPath = "17June/wl2/10sec_window_4_noBilling/";
-  static String wl1 = "0.5:1, 5:2, 5:3, 5:4, 8:5, 1:4, 1:3, 1:2, 0.5:1";
+  static String resultPath = "1_experiments/wl2/10sec_window_noBilling_new_2/";
+  static String wl1 = "0.5:1, 10:3, 5:4, 8:5, 1:4, 1:3, 1:2, 0.5:1";
+  //static String wl1 = "0.5:1, 3:2, 3:3, 1:2, 0.5:1";
   static String wl2 = "1:1, 1:2, 1:3, 1:2, 1:3, 1:3, 1:2, 1:3, 1:2, 1:2, 1:3, 1:3, 1:2, 1:2, 1:1, 1:2, 1:2, 1:3, 1:2, 1:1, 1:3, 1:3, 1:2, 1:3, 1:2";
 
   public static void main(String[] args) throws Exception {
@@ -66,7 +67,8 @@ public class StatAnalyzer {
     } catch (IOException e) {
       throw new IllegalStateException(e);
     } catch (Exception e) {
-      log.error("Failed to write final results?? " + e.getStackTrace());
+      log.error("Failed to write final results?? ");
+      e.printStackTrace();
     }
   }
 
@@ -189,7 +191,11 @@ public class StatAnalyzer {
 
         float utilization = Float.valueOf(utilizationString);
         utilization = Float.parseFloat(String.format("%.2f", utilization));   //limiting to two decimal points
-        if (previousTuple.utilization == utilization && previousTuple.originalReq == originalReq && utilization <= 100) {
+        /////////////if (previousTuple.utilization == utilization && previousTuple.originalReq == originalReq && utilization <= 100) {
+        if (previousTuple.utilization == utilization && previousTuple.originalReq == originalReq) {
+          //this condition is used to avoid the situations where the resources are allocated and the resource utilization
+          //is not updated yet since we update one variable in a tuple at a time (if we use the same equation of ceil(..)
+          //since the allocation is increased and utilization has not decreased yet, withFeedbackReq end up having a very high value
           withFeedbackReq = previousTuple.withFeedbackReq;
         } else if (utilization >= 30 && utilization <= 80) {
           if (originalReq == alloc) {
@@ -204,7 +210,11 @@ public class StatAnalyzer {
           if (previousUtilization == utilization) { // we have already reduced the machine
             withFeedbackReq = previousTuple.withFeedbackReq;
           } else {
-            withFeedbackReq = previousTuple.withFeedbackReq -1;
+            if (previousTuple.withFeedbackReq > 1) {
+              withFeedbackReq = previousTuple.withFeedbackReq -1;
+            } else {
+              withFeedbackReq = previousTuple.withFeedbackReq; //won't reduce than 1 machine
+            }
           }
         }
 
