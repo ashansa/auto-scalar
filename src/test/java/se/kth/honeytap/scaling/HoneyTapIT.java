@@ -21,7 +21,7 @@ import java.util.Map;
  * @version $Id$
  * @since 1.0
  */
-public class HoneyTapTest {
+public class HoneyTapIT {
 
     private static HoneyTapAPI honeyTapAPI;
 

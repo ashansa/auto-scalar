@@ -23,7 +23,7 @@ import static org.junit.Assert.fail;
  * @version $Id$
  * @since 1.0
  */
-public class GroupTest {
+public class GroupTestIT {
 
     private static HoneyTapAPI honeyTapAPI;
     private String groupBaseName = "my_group";
