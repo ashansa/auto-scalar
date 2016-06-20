@@ -199,7 +199,8 @@ public class StatAnalyzer {
         } else if (utilization > 80) {
           withFeedbackReq = (int) Math.ceil((utilization/80) * alloc);
         } else {
-          if (previousUtilization < 30) { // we have already reduced the machine
+          //if (previousUtilization < 30) { // we have already reduced the machine
+          if (previousUtilization == utilization) { // we have already reduced the machine
             withFeedbackReq = Integer.valueOf(previousTuple.withFeedbackReq);
           } else {
             withFeedbackReq = Integer.valueOf(previousTuple.withFeedbackReq) -1;

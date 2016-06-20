@@ -312,7 +312,13 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
           if (isMonitoringActivated) {
             ResourceMonitoringEvent resourceMonitoringEvent;
 
-            float originalRamReq = ramWorkload.poll();
+            float originalRamReq;
+            try {
+              originalRamReq = ramWorkload.poll();
+            } catch (Exception e) {
+              log.error("++++++++++++++++++++++ ramWorkload.poll() exception ++++++++++++++++++++++++++++++ " + e.getMessage());
+              return;
+            }
             float ramRequirement = originalRamReq + remainingRamReq;
            /* int noOfGBsInSys = 4; //TODO-get this from Karamel API
             if (ramRequirement > 4 )
@@ -324,7 +330,13 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
             Float highRamThreshold = greaterThanInterestMap.get(RuleSupport.ResourceType.RAM.name());
             Float lowRamThreshold = lessThanInterestMap.get(RuleSupport.ResourceType.RAM.name());
 
-            float originalCuReq = cuWorkload.poll();
+            float originalCuReq;
+            try {
+              originalCuReq = cuWorkload.poll();
+            }  catch (Exception e) {
+              log.error("++++++++++++++++++++++++ cuWorkload.poll() exception ++++++++++++++++++++++++++++ " + e.getMessage());
+              return;
+            }
             float cuRequirement = originalCuReq + remainingCuReq;
 
             ////int noOfCUsInSys = 2; //TODO-get this from Karamel API
@@ -388,6 +400,8 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
               } catch (HoneyTapException e) {
                 log.error("Error while sending onLowRam event for groupId: " + groupId + " machine: ", e);
               }
+            } else {
+              StatManager.addRamChanges(System.currentTimeMillis(), "normal", ramUtilization);
             }
 
             if (highCpuThreshold != null && cpuUtilization >= highCpuThreshold) {
@@ -410,12 +424,14 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
               } catch (HoneyTapException e) {
                 log.error("Error while sending onLowCPU event for groupId: " + groupId + " machine: ", e);
               }
+            } else {
+              StatManager.addCuChanges(System.currentTimeMillis(), "normal", cpuUtilization);
             }
-            if (!eventSent) {
+            /*if (!eventSent) {
               ////////log.info(".................. no events occured .......... Cpu, Ram ........." + cpuUtilization + "," +ramUtilization);
               StatManager.addRamChanges(System.currentTimeMillis(), "normal", ramUtilization);
               StatManager.addCuChanges(System.currentTimeMillis(), "normal", cpuUtilization);
-            }
+            }*/
 
             if (ramRequirement - noOfGBsInSys > 0) {
               remainingRamReq = ramRequirement - noOfGBsInSys;
