@@ -17,7 +17,7 @@ import se.kth.honeytap.scaling.monitoring.RuleSupport;
  * @version $Id$
  * @since 1.0
  */
-public class RuleTest {
+public class RuleTestIT {
 
     private static final String ruleNameBase = "testRule";
     private static final RuleSupport.ResourceType cpu = RuleSupport.ResourceType.CPU;
