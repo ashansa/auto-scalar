@@ -316,7 +316,7 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
             try {
               originalRamReq = ramWorkload.poll();
             } catch (Exception e) {
-              log.error("++++++++++++++++++++++ ramWorkload.poll() exception ++++++++++++++++++++++++++++++ " + e.getMessage());
+              log.error("============ ramWorkload.poll() exception ========= " + e.getMessage());
               return;
             }
             float ramRequirement = originalRamReq + remainingRamReq;
@@ -333,8 +333,8 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
             float originalCuReq;
             try {
               originalCuReq = cuWorkload.poll();
-            }  catch (Exception e) {
-              log.error("++++++++++++++++++++++++ cuWorkload.poll() exception ++++++++++++++++++++++++++++ " + e.getMessage());
+            } catch (Exception e) {
+              log.error("============ cuWorkload.poll() exception ========= " + e.getMessage());
               return;
             }
             float cuRequirement = originalCuReq + remainingCuReq;
@@ -447,6 +447,7 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
             }
             log.info("&&&&&&&&&&&&&& remaining cu, ram &&&&&&&&&&& " + remainingCuReq + ", " + remainingRamReq);
             if (ramWorkload.size() == 0) {
+              timer.cancel();
               StatManager.storeValues();
             }
           }
@@ -456,13 +457,13 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
       }
     }
 
+    final Timer timer = new Timer();
+
     public void startMonitoring() {
       long startedTime = System.currentTimeMillis();
       log.info("=========== monitoring of group: " + groupId + " started at: " + startedTime);
 
-      final Timer timer = new Timer();
       timer.scheduleAtFixedRate(new MonitoringTimer(),0, monitoringFreqSeconds * 1000);
-
     }
 
     public void startMonitoringBk() {
