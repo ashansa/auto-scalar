@@ -134,7 +134,8 @@ public class StatAnalyzer {
     Queue<Integer> originalReqQueue = getOriginalReq();
     try {
       String line = null;
-      br = new BufferedReader(new FileReader("tupleValues.txt"));
+      FileUtils.copyFile(new File("tupleValues.txt"), new File(resultPath.concat("tupleValues.txt")));
+      br = new BufferedReader(new FileReader(resultPath.concat("tupleValues.txt")));
       writer = new PrintWriter(resultPath.concat("finalResult.csv"), "UTF-8");
       ResultTuple previousTuple = new ResultTuple("6/17/2016 16:06:14", 1, 1, 1, 55.0f);  //time,withFeedbackReq,alloc,originalReq
       float previousUtilization = 55.0f;
@@ -188,7 +189,7 @@ public class StatAnalyzer {
 
         float utilization = Float.valueOf(utilizationString);
         utilization = Float.parseFloat(String.format("%.2f", utilization));   //limiting to two decimal points
-        if (previousTuple.utilization == utilization && previousTuple.originalReq == originalReq) {
+        if (previousTuple.utilization == utilization && previousTuple.originalReq == originalReq && utilization <= 100) {
           withFeedbackReq = previousTuple.withFeedbackReq;
         } else if (utilization >= 30 && utilization <= 80) {
           if (originalReq == alloc) {
@@ -201,9 +202,9 @@ public class StatAnalyzer {
         } else {
           //if (previousUtilization < 30) { // we have already reduced the machine
           if (previousUtilization == utilization) { // we have already reduced the machine
-            withFeedbackReq = Integer.valueOf(previousTuple.withFeedbackReq);
+            withFeedbackReq = previousTuple.withFeedbackReq;
           } else {
-            withFeedbackReq = Integer.valueOf(previousTuple.withFeedbackReq) -1;
+            withFeedbackReq = previousTuple.withFeedbackReq -1;
           }
         }
 
