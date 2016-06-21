@@ -300,7 +300,8 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
       Queue<Float> cuWorkload;
       float remainingCuReq = 0;
       float remainingRamReq = 0;
-      boolean ruleUpdated = false;
+      boolean ruleUpdatedOut = false;
+      boolean ruleUpdatedIn = false;
 
       public MonitoringTimer() {
         ramWorkload = resourceWorkloadMap.get(RuleSupport.ResourceType.RAM.name());
@@ -328,18 +329,30 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
             float noOfGBsInSys = getTotalRamInGroup();
 
             float ramUtilization = ramRequirement/noOfGBsInSys * 100; //TODO get this for each machine to send utilization events
-            if (!ruleUpdated && ramUtilization > 240) {
+            if (ramUtilization > 240 && !ruleUpdatedOut) {
               Rule rule1 = honeyTapAPI.getRule("rule1");
               rule1.setOperationAction(2);
               honeyTapAPI.updateRule(rule1.getRuleName(), rule1);
-              log.info("....................................... rule action 1 : " + honeyTapAPI.getRule("rule1").getOperationAction());
-              ruleUpdated = true;
-            } else if (ruleUpdated && ramUtilization <= 240) {
+              log.info("....................................... rule_1 action 1 : " + honeyTapAPI.getRule("rule1").getOperationAction());
+              ruleUpdatedOut = true;
+            } else if (ruleUpdatedOut && ramUtilization <= 240) {
               Rule rule1 = honeyTapAPI.getRule("rule1");
               rule1.setOperationAction(1);
               honeyTapAPI.updateRule(rule1.getRuleName(), rule1);
-              log.info("....................................... rule action 2 : " + honeyTapAPI.getRule("rule1").getOperationAction());
-              ruleUpdated = false;
+              log.info("....................................... rule_1 action 2 : " + honeyTapAPI.getRule("rule1").getOperationAction());
+              ruleUpdatedOut = false;
+            } else if (ramUtilization < 23 && !ruleUpdatedIn) {
+              Rule rule1 = honeyTapAPI.getRule("rule2");
+              rule1.setOperationAction(-2);
+              honeyTapAPI.updateRule(rule1.getRuleName(), rule1);
+              log.info("....................................... rule_2 action 1 : " + honeyTapAPI.getRule("rule2").getOperationAction());
+              ruleUpdatedIn = true;
+            } else if (ruleUpdatedIn && ramUtilization >= 23 && ramUtilization <= 30) {
+              Rule rule1 = honeyTapAPI.getRule("rule2");
+              rule1.setOperationAction(-1);
+              honeyTapAPI.updateRule(rule1.getRuleName(), rule1);
+              log.info("....................................... rule_2 action 2 : " + honeyTapAPI.getRule("rule2").getOperationAction());
+              ruleUpdatedIn = false;
             }
 
             Float highRamThreshold = greaterThanInterestMap.get(RuleSupport.ResourceType.RAM.name());
