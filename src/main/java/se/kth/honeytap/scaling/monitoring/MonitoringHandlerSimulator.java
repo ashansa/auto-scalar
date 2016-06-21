@@ -357,12 +357,12 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
             }*/
 
             //Workload 1 predictor
-            if (originalRamReq == 3.3f) {
+           /* if (originalRamReq == 3.3f) {
               Rule rule1 = honeyTapAPI.getRule("rule1");
               rule1.setOperationAction(2);
               honeyTapAPI.updateRule(rule1.getRuleName(), rule1);
               log.info("....................................... rule_1 action 1 : " + honeyTapAPI.getRule("rule1").getOperationAction());
-            }
+            }*/
 
             Float highRamThreshold = greaterThanInterestMap.get(RuleSupport.ResourceType.RAM.name());
             Float lowRamThreshold = lessThanInterestMap.get(RuleSupport.ResourceType.RAM.name());

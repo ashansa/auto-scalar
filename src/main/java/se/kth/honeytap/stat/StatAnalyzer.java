@@ -25,9 +25,9 @@ import java.util.TreeMap;
 public class StatAnalyzer {
   static Log log = LogFactory.getLog(StatAnalyzer.class);
   static String resultPath = "1_experiments/wl2/10sec_window_noBilling_new_2/";
-  static String wl1 = "0.5:1, 10:3, 5:4, 8:5, 1:4, 1:3, 1:2, 0.5:1";
-  //static String wl1 = "0.5:1, 3:2, 3:3, 1:2, 0.5:1";
-  static String wl2 = "1:1, 1:2, 1:3, 1:2, 1:3, 1:3, 1:2, 1:3, 1:2, 1:2, 1:3, 1:3, 1:2, 1:2, 1:1, 1:2, 1:2, 1:3, 1:2, 1:1, 1:3, 1:3, 1:2, 1:3, 1:2";
+  static String wl1 = "0.35:1, 1.15:2, 1.15:3, 1.15:4, 4:5";  // 10sec, 1min, 2min
+  static String wl2 = "0.13:5, 0.6:4, 0.6:3, 0.6:2, 1:1";   //3,8,14 seconds
+  static String wl3 = "1:1, 1:2, 1:3, 1:2, 1:3, 1:3, 1:2, 1:3, 1:2, 1:2, 1:3, 1:2, 1:2, 1:1, 1:2";
 
   public static void main(String[] args) throws Exception {
     writeFinalResults();
@@ -247,6 +247,8 @@ public class StatAnalyzer {
       originalReqDef = wl1;
     } else if (resultPath.contains("wl2")) {
       originalReqDef = wl2;
+    } else if (resultPath.contains("wl3")) {
+      originalReqDef = wl3;
     } else {
       throw new Exception("Couldnt find the matching workload");
     }
