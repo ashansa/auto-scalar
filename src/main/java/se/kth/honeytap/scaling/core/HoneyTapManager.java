@@ -229,6 +229,9 @@ public class HoneyTapManager {
                         int maxChangeOfMachines = getNumberOfMachineChanges(event);
                         if (maxChangeOfMachines > 0 && runtimeGroupInfo.getNumberOfMachinesInGroup() < group.getMaxInstances()
                                 && !isInCoolDownPeriod(groupId, ScalingSuggestion.ScalingDirection.SCALE_OUT)) {
+                            if (group.getMaxInstances() - runtimeGroupInfo.getNumberOfMachinesInGroup() < maxChangeOfMachines) {
+                                maxChangeOfMachines = group.getMaxInstances() - runtimeGroupInfo.getNumberOfMachinesInGroup();
+                            }
                             scaleOutInternalQueue.add(groupId.concat(":").concat(String.valueOf(maxChangeOfMachines)));
                             runtimeGroupInfo.setScaleOutInfo(maxChangeOfMachines);
                         } else if (maxChangeOfMachines < 0 && runtimeGroupInfo.getNumberOfMachinesInGroup() > group.getMinInstances()
@@ -237,6 +240,9 @@ public class HoneyTapManager {
                                 //no else part
                                 // Scale in will trigger only at the end of a billing period of a machine. This is handled by ProfiledMachineEventListener
                             } else {
+                                if (runtimeGroupInfo.getNumberOfMachinesInGroup() - group.getMinInstances() < Math.abs(maxChangeOfMachines)) {
+                                    maxChangeOfMachines = (-1) * (runtimeGroupInfo.getNumberOfMachinesInGroup() - group.getMinInstances());
+                                }
                                 ScalingSuggestion suggestion = new ScalingSuggestion(maxChangeOfMachines);
 
                                 ArrayBlockingQueue<ScalingSuggestion> suggestionsQueue;

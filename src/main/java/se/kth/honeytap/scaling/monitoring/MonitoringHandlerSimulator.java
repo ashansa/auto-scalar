@@ -329,6 +329,7 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
             float noOfGBsInSys = getTotalRamInGroup();
 
             float ramUtilization = ramRequirement/noOfGBsInSys * 100; //TODO get this for each machine to send utilization events
+
             if (ramUtilization > 240 && !ruleUpdatedOut) {
               Rule rule1 = honeyTapAPI.getRule("rule1");
               rule1.setOperationAction(2);
@@ -353,6 +354,14 @@ public class MonitoringHandlerSimulator implements MonitoringHandler{
               honeyTapAPI.updateRule(rule1.getRuleName(), rule1);
               log.info("....................................... rule_2 action 2 : " + honeyTapAPI.getRule("rule2").getOperationAction());
               ruleUpdatedIn = false;
+            }
+
+            //Workload 1 predictor
+            if (originalRamReq == 3.3) {
+              Rule rule1 = honeyTapAPI.getRule("rule1");
+              rule1.setOperationAction(2);
+              honeyTapAPI.updateRule(rule1.getRuleName(), rule1);
+              log.info("....................................... rule_1 action 1 : " + honeyTapAPI.getRule("rule1").getOperationAction());
             }
 
             Float highRamThreshold = greaterThanInterestMap.get(RuleSupport.ResourceType.RAM.name());
