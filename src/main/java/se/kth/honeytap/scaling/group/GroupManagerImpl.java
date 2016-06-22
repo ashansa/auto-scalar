@@ -55,6 +55,8 @@ public class GroupManagerImpl implements GroupManager {
             try {
                 Group group = new Group(groupName, minInstances, maxInstances, coolingTimeUp, coolingTimeDown, validRules, minResourceReq, reliabilityReq);
                 groupDAO.createGroup(group);
+                log.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> coolingTimeUp >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " + coolingTimeUp);
+                log.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> coolingTimeDown >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " + coolingTimeDown);
                 return group;
             } catch (SQLException e) {
                 throw new HoneyTapException("Failed to create the scaling group: " + groupName, e.getCause());

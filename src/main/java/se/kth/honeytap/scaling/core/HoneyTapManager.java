@@ -70,7 +70,7 @@ public class HoneyTapManager {
         //starting decision maker threads
         (new Thread(scaleOutDecisionMaker)).start();
 
-
+        log.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> optimizedScaleInTmp >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " + optimizedScaleInTmp);
     }
 
     public MonitoringListener startAutoScaling(final String groupId, int currentNumberOfMachines) throws HoneyTapException {

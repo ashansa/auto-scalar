@@ -47,6 +47,7 @@ public class DynamicEventProfiler {
         this.monitoringHandler = monitoringHandler;
         this.honeyTapManager = honeyTapManager;
         init();
+        log.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> windowSize >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " + windowSize/1000);
     }
 
     public void addListener(ProfiledEventListener listener) {
