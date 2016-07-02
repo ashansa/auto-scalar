@@ -1,5 +1,7 @@
 package se.kth.honeytap.stat;
 
+import org.apache.commons.io.FileUtils;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -9,7 +11,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
@@ -32,6 +33,10 @@ public class StatManager {
   static TreeMap<Long, ArrayList<Tuple>> changes = new TreeMap<>();
   static ReentrantLock lock = new ReentrantLock();
   static Tuple previousTuple = new Tuple(System.currentTimeMillis(), 55.0f, 1);
+
+  public static void main(String[] args) throws IOException {
+    filterNStore();
+  }
 
   public static void addRamChanges(Long key, String level, float value) {
     String valueSet = "";
@@ -143,7 +148,7 @@ public class StatManager {
     }
   }
 
-  public static void storeValues() {
+  public static void storeValues() throws IOException {
     PrintWriter writer = null;
     try {
       writer = new PrintWriter("ramChanges.txt", "UTF-8");
@@ -191,16 +196,23 @@ public class StatManager {
     filterNStore();
   }
 
-  public static void filterNStore() {
+  public static void filterNStore() throws IOException {
+
+    FileUtils.copyFile(new File("ramChanges.txt"), new File(StatAnalyzer.resultPath.concat("ramChanges.txt")));
+    FileUtils.copyFile(new File("cuChanges.txt"), new File(StatAnalyzer.resultPath.concat("cuChanges.txt")));
+    FileUtils.copyFile(new File("machineReq.txt"), new File(StatAnalyzer.resultPath.concat("machineReq.txt")));
+    FileUtils.copyFile(new File("machineAlloc.txt"), new File(StatAnalyzer.resultPath.concat("machineAlloc.txt")));
+    FileUtils.copyFile(new File("tupleValues.txt"), new File(StatAnalyzer.experimentPath.concat("tupleValues.txt")));
+
     BufferedReader br;
     PrintWriter writer;
-    if (!new File("filtered").exists()) {
-      new File("filtered").mkdir();
+    if (!new File(StatAnalyzer.filteredPath).exists()) {
+      new File(StatAnalyzer.filteredPath).mkdir();
     }
     try {
       String line = null;
-      br = new BufferedReader(new FileReader("ramChanges.txt"));
-      writer = new PrintWriter("filtered/ramChangesFiltered.txt", "UTF-8");
+      br = new BufferedReader(new FileReader(StatAnalyzer.resultPath.concat("ramChanges.txt")));
+      writer = new PrintWriter(StatAnalyzer.filteredPath.concat("ramChangesFiltered.txt"), "UTF-8");
       float prev = 0;
       while ((line = br.readLine()) != null) {   //1465949322168=high:82.5
         //float value = Float.valueOf(line.split(":")[1]);
@@ -231,8 +243,8 @@ public class StatManager {
 
     try {
       String line = null;
-      br = new BufferedReader(new FileReader("cuChanges.txt"));
-      writer = new PrintWriter("filtered/cuChangesFiltered.txt", "UTF-8");
+      br = new BufferedReader(new FileReader(StatAnalyzer.resultPath.concat("cuChanges.txt")));
+      writer = new PrintWriter(StatAnalyzer.filteredPath.concat("cuChangesFiltered.txt"), "UTF-8");
       float prev = 0;
       while ((line = br.readLine()) != null) {   //1465949206171=normal:55.0
         /*float value = Float.valueOf(line.split(":")[1]);
@@ -267,8 +279,8 @@ public class StatManager {
 
     try {
       String line = null;
-      br = new BufferedReader(new FileReader("machineReq.txt"));
-      writer = new PrintWriter("filtered/machineReqFiltered.txt", "UTF-8");
+      br = new BufferedReader(new FileReader(StatAnalyzer.resultPath.concat("machineReq.txt")));
+      writer = new PrintWriter(StatAnalyzer.filteredPath.concat("machineReqFiltered.txt"), "UTF-8");
       float prev = 0;
       while ((line = br.readLine()) != null) {   //1465951148117=2
         float value = Float.valueOf(line.split("=")[1]);
@@ -285,8 +297,8 @@ public class StatManager {
 
     try {
       String line = null;
-      br = new BufferedReader(new FileReader("machineAlloc.txt"));
-      writer = new PrintWriter("filtered/machineAllocFiltered.txt", "UTF-8");
+      br = new BufferedReader(new FileReader(StatAnalyzer.resultPath.concat("machineAlloc.txt")));
+      writer = new PrintWriter(StatAnalyzer.filteredPath.concat("machineAllocFiltered.txt"), "UTF-8");
 
       while ((line = br.readLine()) != null) {   //1465951245253=1:t2.medium
         writer.println(line);

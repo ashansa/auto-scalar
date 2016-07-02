@@ -24,13 +24,26 @@ import java.util.TreeMap;
  */
 public class StatAnalyzer {
   static Log log = LogFactory.getLog(StatAnalyzer.class);
-  static String resultPath = "1_experiments/wl2/10sec_window_noBilling_new_2/";
+  static String experimentPath = "experiments/June_22/predict/wl3/wl3_Off_wi10sec_out50sec_in10sec_new/";
+  static String resultPath = experimentPath.concat("results/");
+  static String filteredPath = experimentPath.concat("filtered/");
+  //static String wl0 = "0.35:1, 1.15:2, 1.15:3, 1.15:4, 1.15:5, 4:6";  // 10sec, 20sec, 35sec, 50sec, 100sec
+  static String wl0 = "0.15:1, 0.35:2, 0.40:2, 0.35:3, 0.40:3, 0.35:4, 0.40:4, 0.35:5, 0.40:5, 0.35:6, 3.25:6";  // 10sec, 20sec, 35sec, 50sec, 100sec
   static String wl1 = "0.35:1, 1.15:2, 1.15:3, 1.15:4, 4:5";  // 10sec, 1min, 2min
   static String wl2 = "0.13:5, 0.6:4, 0.6:3, 0.6:2, 1:1";   //3,8,14 seconds
-  static String wl3 = "1:1, 1:2, 1:3, 1:2, 1:3, 1:3, 1:2, 1:3, 1:2, 1:2, 1:3, 1:2, 1:2, 1:1, 1:2";
+  //static String wl3 = "1:1, 1:2, 1:3, 1:2, 1:3, 1:3, 1:2, 1:3, 1:2, 1:2, 1:3, 1:4, 1:2, 1:1, 1:2";   //10:1, 20:2, 35:3,50:5,100:10
+  static String wl3 = "0.40:1, 0.20:2, 0.40:2, 0.20:3, 0.40:3, 1:2, 0.20:3, 0.40:3, 1:3, 1:2, 0.20:3, 0.40:3, 1:2, 1:2, 0.20:3, 0.40:3, 0.2:4, 0.3:4, 1:2, 1:1, 0.20:2, 0.40:2";   //10:1, 20:2, 35:3,50:5,100:10
+  //static String wlx = "1:1, 0.71: 1:2, 1:3, 1:2, 1:3, 1:3, 1:2, 1:3, 1:2, 1:2, 1:3, 1:4, 1:2, 1:1, 1:2";   //10:1, 20:2, 35:3,50:5,100:10
+  static String wlx = "0.45:1, 0.15:2, 0.45:2, 0.15:3, 0.45:3, 0.15:2, 0.45:2, 0.15:3, 0.45:3, 0.15:3, 0.45:3, 0.15:2, 0.45:2, 0.15:3, 0.45:3, 0.15:2,  0.45:2, 0.15:2, 0.45:2, 0.15:3, 0.45:3, 0.15:4, 0.45:4, 0.15:2, 0.45:2, 0.15:1, 0.45:1, 1:2";   //10:1, 20:2, 35:3,50:5,100:10
+  static String wl4 = "3:1, 3:2, 3:3, 3:2, 3:3, 3:3, 3:2, 3:3, 3:2, 3:2, 3:3, 0.5:4, 3:2, 3:1, 3:2";   //10:1, 20:2, 35:3,50:5,100:10
 
   public static void main(String[] args) throws Exception {
     writeFinalResults();
+  }
+
+  {
+    new File(resultPath).mkdir();
+    new File(filteredPath).mkdir();
   }
 
   public static void analyze() {
@@ -38,11 +51,11 @@ public class StatAnalyzer {
 
       File resultDir = new File(resultPath);
 
-      if (!new File(resultPath).exists()) {
-        new File(resultPath).mkdirs();
+      if (!resultDir.exists()) {
+        throw new Exception("Results are not available in " + resultDir.getAbsolutePath());
       }
 
-      FileUtils.copyDirectory(new File("filtered"), resultDir);
+      ////FileUtils.copyDirectory(new File("filtered"), resultDir);
       PrintWriter writer = new PrintWriter(resultPath.concat("all.txt"), "UTF-8");
       for (File file : resultDir.listFiles()) {
         if (!".DS_Store".equals(file.getName())) {
@@ -136,9 +149,9 @@ public class StatAnalyzer {
     Queue<Integer> originalReqQueue = getOriginalReq();
     try {
       String line = null;
-      FileUtils.copyFile(new File("tupleValues.txt"), new File(resultPath.concat("tupleValues.txt")));
-      br = new BufferedReader(new FileReader(resultPath.concat("tupleValues.txt")));
-      writer = new PrintWriter(resultPath.concat("finalResult.csv"), "UTF-8");
+      /////FileUtils.copyFile(new File("tupleValues.txt"), new File(experimentPath.concat("tupleValues.txt")));
+      br = new BufferedReader(new FileReader(experimentPath.concat("tupleValues.txt")));
+      writer = new PrintWriter(experimentPath.concat("finalResult.csv"), "UTF-8");
       ResultTuple previousTuple = new ResultTuple("6/17/2016 16:06:14", 1, 1, 1, 55.0f);  //time,withFeedbackReq,alloc,originalReq
       float previousUtilization = 55.0f;
 
@@ -207,7 +220,9 @@ public class StatAnalyzer {
           withFeedbackReq = (int) Math.ceil((utilization/80) * alloc);
         } else {
           //if (previousUtilization < 30) { // we have already reduced the machine
-          if (previousUtilization == utilization) { // we have already reduced the machine
+          if (alloc > originalReq) {
+            withFeedbackReq = originalReq;
+          } else if (previousUtilization == utilization) { // we have already reduced the machine
             withFeedbackReq = previousTuple.withFeedbackReq;
           } else {
             if (previousTuple.withFeedbackReq > 1) {
@@ -241,14 +256,24 @@ public class StatAnalyzer {
   private static Queue<Integer> getOriginalReq() throws Exception {
     Queue<Integer> reqQueue = new LinkedList<>();
 
+   /* SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    Date resultDate = new Date(Long.valueOf(timeString));
+    time = sdf.format(resultDate);*/
+
     //originalReqDef:    0.5:1, 5:2, 5:3, 5:4, 8:5, 1:4, 1:3, 1:2, 0.5:1
     String originalReqDef = "";
-    if (resultPath.contains("wl1")) {
+    if (experimentPath.contains("wl0")) {
+      originalReqDef = wl0;
+    } else if (experimentPath.contains("wl1")) {
       originalReqDef = wl1;
-    } else if (resultPath.contains("wl2")) {
+    } else if (experimentPath.contains("wl2")) {
       originalReqDef = wl2;
-    } else if (resultPath.contains("wl3")) {
+    } else if (experimentPath.contains("wl3")) {
       originalReqDef = wl3;
+    } else if (experimentPath.contains("wlx")) {
+      originalReqDef = wlx;
+    }  else if (experimentPath.contains("wl4")) {
+      originalReqDef = wl4;
     } else {
       throw new Exception("Couldnt find the matching workload");
     }
