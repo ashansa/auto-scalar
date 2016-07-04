@@ -18,6 +18,7 @@ import se.kth.honeytap.scaling.profile.ProfiledResourceEvent;
 import se.kth.honeytap.scaling.rules.Rule;
 import se.kth.honeytap.scaling.rules.RuleManager;
 import se.kth.honeytap.scaling.rules.RuleManagerImpl;
+import se.kth.tablespoon.client.api.TablespoonApi;
 
 import java.sql.SQLException;
 import java.util.Map;
@@ -41,7 +42,16 @@ public class HoneyTapAPI {
     MonitoringHandler monitoringHandler;
 
     public HoneyTapAPI() throws HoneyTapException {
-        MonitoringHandler monitoringHandler = new TSMonitoringHandler(this, null);
+        ///////MonitoringHandler monitoringHandler = new TSMonitoringHandler(this, null);
+        monitoringHandler = new MonitoringHandlerSimulator(this);
+        honeyTapManager = new HoneyTapManager(monitoringHandler);
+        ruleManager = RuleManagerImpl.getInstance();
+        groupManager = GroupManagerImpl.getInstance();
+    }
+
+    //customized constructor for Karamel
+    public HoneyTapAPI(TablespoonApi tablespoonApi) throws HoneyTapException {
+        MonitoringHandler monitoringHandler = new TSMonitoringHandler(this, tablespoonApi);
         ///////monitoringHandler = new MonitoringHandlerSimulator(this);
         honeyTapManager = new HoneyTapManager(monitoringHandler);
         ruleManager = RuleManagerImpl.getInstance();
