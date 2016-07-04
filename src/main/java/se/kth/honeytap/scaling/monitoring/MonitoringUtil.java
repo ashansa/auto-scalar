@@ -14,11 +14,11 @@ import se.kth.tablespoon.client.events.Threshold;
  */
 public class MonitoringUtil {
 
-  public static Resource getMonitoringResourceType(String type) {
+  public static ResourceType getMonitoringResourceType(String type) {
     if (RuleSupport.ResourceType.CPU.name().equals(type)) {
-      return new Resource(ResourceType.CPU);
+      return ResourceType.CPU;
     }else if (RuleSupport.ResourceType.RAM.name().equals(type)) {
-      return new Resource(ResourceType.CPU);
+      return ResourceType.CPU;
     } else {
       throw new IllegalArgumentException("No ResourceType found for: " + type);
     }
