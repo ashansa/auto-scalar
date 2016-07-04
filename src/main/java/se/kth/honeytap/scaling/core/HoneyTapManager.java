@@ -12,6 +12,7 @@ import se.kth.honeytap.scaling.group.GroupManager;
 import se.kth.honeytap.scaling.group.GroupManagerImpl;
 import se.kth.honeytap.scaling.models.MachineType;
 import se.kth.honeytap.scaling.models.RuntimeGroupInfo;
+import se.kth.honeytap.scaling.monitoring.ResourceMonitoringEvent;
 import se.kth.honeytap.scaling.rules.Rule;
 import se.kth.honeytap.scaling.rules.RuleManager;
 import se.kth.honeytap.scaling.rules.RuleManagerImpl;
@@ -106,8 +107,28 @@ public class HoneyTapManager {
             }
         }
 
-        MonitoringListener monitoringListener = monitoringHandler.addGroupForMonitoring(groupId,
+        final MonitoringListener monitoringListener = monitoringHandler.addGroupForMonitoring(groupId,
                 interestedEvents.toArray(new InterestedEvent[interestedEvents.size()]));
+
+        /////TODO temp code for testing
+        new Thread(){
+            public void run() {
+                System.out.println("..................... will add an event after 15 min .............group: " + groupId);
+                log.info("..................... will add an event after 15 min .............group: " + groupId);
+                try {
+                    Thread.sleep(1000 * 60 * 15);
+                    monitoringListener.onHighRam(groupId, new ResourceMonitoringEvent(
+                            groupId, "id1", RuleSupport.ResourceType.RAM, RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, 85));
+                } catch (InterruptedException e) {
+                    System.out.println("................. INTERRUPTED: will add an event after 15 min.................");
+                    log.info("................. INTERRUPTED: will add an event after 15 min.................");
+                } catch (HoneyTapException e) {
+                    System.out.println("................. HoneyTapException while sending dummy high RAM event .............");
+                    log.info("................. HoneyTapException while sending dummy high RAM event .............");
+                }
+            }
+        }.start();
+
 
         return monitoringListener;
     }

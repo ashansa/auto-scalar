@@ -13,6 +13,7 @@ import se.kth.honeytap.scaling.monitoring.MonitoringHandler;
 import se.kth.honeytap.scaling.monitoring.MonitoringHandlerSimulator;
 import se.kth.honeytap.scaling.monitoring.MonitoringListener;
 import se.kth.honeytap.scaling.monitoring.RuleSupport;
+import se.kth.honeytap.scaling.monitoring.TSMonitoringHandler;
 import se.kth.honeytap.scaling.profile.ProfiledResourceEvent;
 import se.kth.honeytap.scaling.rules.Rule;
 import se.kth.honeytap.scaling.rules.RuleManager;
@@ -40,8 +41,8 @@ public class HoneyTapAPI {
     MonitoringHandler monitoringHandler;
 
     public HoneyTapAPI() throws HoneyTapException {
-        /////////MonitoringHandler monitoringHandler = new TSMonitoringHandler(this);
-        monitoringHandler = new MonitoringHandlerSimulator(this);
+        MonitoringHandler monitoringHandler = new TSMonitoringHandler(this, null);
+        ///////monitoringHandler = new MonitoringHandlerSimulator(this);
         honeyTapManager = new HoneyTapManager(monitoringHandler);
         ruleManager = RuleManagerImpl.getInstance();
         groupManager = GroupManagerImpl.getInstance();
