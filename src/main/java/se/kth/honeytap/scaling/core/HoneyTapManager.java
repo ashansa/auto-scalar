@@ -91,8 +91,9 @@ public class HoneyTapManager {
         }
 
         //adding machine status interests
-        interestedEvents.add(new InterestedEvent(MachineMonitoringEvent.Status.AT_END_OF_BILLING_PERIOD.name()));
-        interestedEvents.add(new InterestedEvent(MachineMonitoringEvent.Status.KILLED.name()));
+        //////////TODO temp removing since tablespoon does not provide them
+        /*interestedEvents.add(new InterestedEvent(MachineMonitoringEvent.Status.AT_END_OF_BILLING_PERIOD.name()));
+        interestedEvents.add(new InterestedEvent(MachineMonitoringEvent.Status.KILLED.name()));*/
 
         addGroupForScaling(groupId, currentNumberOfMachines);
         Group group = groupManager.getGroup(groupId);
@@ -113,21 +114,22 @@ public class HoneyTapManager {
         /////TODO temp code for testing
         new Thread(){
             public void run() {
-                System.out.println("..................... will add an event after 15 min .............group: " + groupId);
-                log.info("..................... will add an event after 15 min .............group: " + groupId);
+                System.out.println("..................... will add an event after 1 min .............group: " + groupId);
+                log.info("..................... will add an event after 1 min .............group: " + groupId);
                 try {
-                    Thread.sleep(1000 * 60 * 15);
+                    Thread.sleep(1000 * 60);
                     monitoringListener.onHighRam(groupId, new ResourceMonitoringEvent(
-                            groupId, "id1", RuleSupport.ResourceType.RAM, RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, 85));
+                            groupId, "id1", RuleSupport.ResourceType.CPU, RuleSupport.Comparator.GREATER_THAN_OR_EQUAL, 85));
                 } catch (InterruptedException e) {
-                    System.out.println("................. INTERRUPTED: will add an event after 15 min.................");
-                    log.info("................. INTERRUPTED: will add an event after 15 min.................");
+                    System.out.println("................. INTERRUPTED: will add an event after 1 min.................");
+                    log.info("................. INTERRUPTED: will add an event after 1 min.................");
                 } catch (HoneyTapException e) {
                     System.out.println("................. HoneyTapException while sending dummy high RAM event .............");
                     log.info("................. HoneyTapException while sending dummy high RAM event .............");
                 }
             }
-        }.start();
+        };
+        //}.start();
 
 
         return monitoringListener;
@@ -321,6 +323,7 @@ public class HoneyTapManager {
                         maxChangeOfMachines = rule.getOperationAction();
                 }
             }
+            //TODO test this method, maxChangeOfMachines was 0
             noOfMachineChanges.add(maxChangeOfMachines);
         }
         return Collections.max(noOfMachineChanges);
