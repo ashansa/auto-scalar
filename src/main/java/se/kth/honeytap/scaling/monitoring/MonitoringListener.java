@@ -34,7 +34,7 @@ public class MonitoringListener implements Subscriber {
     public void onHighCPU(String groupId, ResourceMonitoringEvent event) throws HoneyTapException {
         try {
             honeyTapAPI.handleEvent(groupId, event);
-            ///////log.info("@@@@@@@@@@@@@@@ High event received @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
+            log.info("@@@@@@@@@@@@@@@ High event received @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
           StatManager.addCuChanges(System.currentTimeMillis(), "high",event.getCurrentValue());
         } catch (HoneyTapException e) {
             log.error("Error while handling onHighCPU event for group: " + groupId + " . " + e.getMessage());
@@ -45,7 +45,7 @@ public class MonitoringListener implements Subscriber {
     public void onLowCPU(String groupId, ResourceMonitoringEvent event) throws HoneyTapException {
         try {
             honeyTapAPI.handleEvent(groupId, event);
-            /////////log.info("@@@@@@@@@@@@@@@ Low event received @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
+            log.info("@@@@@@@@@@@@@@@ Low event received @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
           StatManager.addCuChanges(System.currentTimeMillis(), "low",event.getCurrentValue());
         } catch (HoneyTapException e) {
             log.error("Error while handling onHighCPU event for group: " + groupId + " . " + e.getMessage());
@@ -56,7 +56,7 @@ public class MonitoringListener implements Subscriber {
     public void onHighRam(String groupId, ResourceMonitoringEvent event) throws HoneyTapException {
         try {
             honeyTapAPI.handleEvent(groupId, event);
-            ///////log.info("@@@@@@@@@@@@@@@ High event received @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
+            log.info("@@@@@@@@@@@@@@@ High event received @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
           StatManager.addRamChanges(System.currentTimeMillis(), "high",event.getCurrentValue());
         } catch (HoneyTapException e) {
             log.error("Error while handling onHighCPU event for group: " + groupId + " . " + e.getMessage());
@@ -67,7 +67,7 @@ public class MonitoringListener implements Subscriber {
     public void onLowRam(String groupId, ResourceMonitoringEvent event) throws HoneyTapException {
         try {
             honeyTapAPI.handleEvent(groupId, event);
-            /////////log.info("@@@@@@@@@@@@@@@ Low event received @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
+            log.info("@@@@@@@@@@@@@@@ Low event received @@@@@@@@@@@@@@@ " + System.currentTimeMillis());
           StatManager.addRamChanges(System.currentTimeMillis(), "low",event.getCurrentValue());
         } catch (HoneyTapException e) {
             log.error("Error while handling onHighCPU event for group: " + groupId + " . " + e.getMessage());
@@ -88,7 +88,7 @@ public class MonitoringListener implements Subscriber {
 
       @Override
       public void onEventArrival(TablespoonEvent event) {
-        System.out.println("==================== table spoon event arrived ==================");
+        log.info("==================== table spoon event arrived ==================");
         if (EventType.REGULAR.equals(event.getEventType())) {
           RuleSupport.Comparator filteredComparator = MonitoringUtil.getASComparator(MonitoringUtil.
                   getFilteredComparator(event.getHigh(), event.getLow()));
