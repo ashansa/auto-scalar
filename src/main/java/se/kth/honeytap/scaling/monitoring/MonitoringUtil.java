@@ -70,9 +70,9 @@ public class MonitoringUtil {
          //ie:   cpu > 70 and < 80
         return lowThreshold.comparator;
       }
-    } else if (lowThreshold == null) {
+    } else if (highThreshold != null) {
       return highThreshold.comparator;
-    } else if (highThreshold == null) {
+    } else if (lowThreshold != null) {
       return lowThreshold.comparator;
     }
     throw new IllegalArgumentException("Could not finalize the comparator. Both thresholds are null");

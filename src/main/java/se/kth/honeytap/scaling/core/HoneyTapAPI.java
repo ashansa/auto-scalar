@@ -155,7 +155,7 @@ public class HoneyTapAPI {
         return honeyTapManager.startAutoScaling(groupId, currentNumberOfMachines);
     }
 
-    public void stopElasticScaling(String groupId) {
+    public void stopAutoScaling(String groupId) {
         honeyTapManager.stopAutoScaling(groupId);
     }
 
@@ -186,8 +186,5 @@ public class HoneyTapAPI {
     public String[] getAllSimulatedVmIds(String groupId) {
       return ((MonitoringHandlerSimulator) monitoringHandler).getAllSimulatedVmIds(groupId);
     }
-    public void tempMethodDeleteTables() throws SQLException {
-        ruleManager.deleteTables();
-        groupManager.deleteTables();
-    }
+
 }
