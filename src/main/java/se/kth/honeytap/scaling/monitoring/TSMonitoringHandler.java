@@ -64,8 +64,8 @@ public class TSMonitoringHandler implements MonitoringHandler{
                 Resource resource = new Resource(MonitoringUtil.getMonitoringResourceType(items[0]));
                 String uniqueId;
 
-                if (RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.name().equals(MonitoringUtil.
-                        getNormalizedComparatorType(Comparator.valueOf(items[2])))) {
+                if (Comparator.GREATER_THAN_OR_EQUAL.name().equals(MonitoringUtil.
+                        getNormalizedComparatorType(Comparator.valueOf(items[1])))) {
                      uniqueId = tablespoonAPI.submitter().
                             subscriber(monitoringListener).
                             groupId(groupId).
