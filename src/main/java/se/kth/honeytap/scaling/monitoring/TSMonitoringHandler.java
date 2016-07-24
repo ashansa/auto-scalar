@@ -7,14 +7,18 @@ import se.kth.honeytap.scaling.core.HoneyTapAPI;
 import se.kth.honeytap.scaling.exceptions.HoneyTapException;
 import se.kth.tablespoon.client.api.MissingParameterException;
 import se.kth.tablespoon.client.api.TablespoonApi;
+import se.kth.tablespoon.client.events.Comparator;
 import se.kth.tablespoon.client.events.EventType;
 import se.kth.tablespoon.client.events.Resource;
 import se.kth.tablespoon.client.events.ResourceType;
+import se.kth.tablespoon.client.events.Threshold;
 import se.kth.tablespoon.client.topics.MissingTopicException;
 import se.kth.tablespoon.client.topics.ThresholdException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -39,17 +43,48 @@ public class TSMonitoringHandler implements MonitoringHandler{
 
     public MonitoringListener addGroupForMonitoring(String groupId, InterestedEvent[] interestedEvents) throws HoneyTapException {
 
+
         for (InterestedEvent event : interestedEvents) {
             try {
+                //3 forms of items   RAM:<=:30;   CPU:AVG:>=:10:<=:90;    KILLED;
+                //but the initial form will be always the 1st form
                 String[] items = event.getInterest().split(Constants.SEPARATOR);
+                if (items.length != 3) {
+                    if (MachineMonitoringEvent.Status.KILLED.name().equals(event.getInterest()) ||
+                            MachineMonitoringEvent.Status.AT_END_OF_BILLING_PERIOD.name().equals(event.getInterest())) {
+
+                        log.info("AT_END_OF_BILLING_PERIOD and KILLED events will be handled by Karamel. So will not add to " +
+                                "simulator");
+                        continue;
+                    } else {
+                        throw new Exception("Interested event is not in the correct format :" + event.getInterest());
+                    }
+                }
+
                 Resource resource = new Resource(MonitoringUtil.getMonitoringResourceType(items[0]));
-                String uniqueId = tablespoonAPI.submitter().
-                        subscriber(monitoringListener).
-                        groupId(groupId).
-                        eventType(EventType.REGULAR).
-                        resource(resource).
-                        sendRate(1).
-                        submit();
+                String uniqueId;
+
+                if (RuleSupport.Comparator.GREATER_THAN_OR_EQUAL.name().equals(MonitoringUtil.
+                        getNormalizedComparatorType(Comparator.valueOf(items[2])))) {
+                     uniqueId = tablespoonAPI.submitter().
+                            subscriber(monitoringListener).
+                            groupId(groupId).
+                            eventType(EventType.REGULAR).
+                            resource(resource).
+                            high((MonitoringUtil.getMonitoringThreshold(items[1], items[2]))).
+                            sendRate(1).
+                            submit();
+                } else {
+                    uniqueId = tablespoonAPI.submitter().
+                            subscriber(monitoringListener).
+                            groupId(groupId).
+                            eventType(EventType.REGULAR).
+                            resource(resource).
+                            low((MonitoringUtil.getMonitoringThreshold(items[1], items[2]))).
+                            sendRate(1).
+                            submit();
+                }
+
                 subscribedRegularTopics.add(uniqueId);
             } catch (ThresholdException e) {
                 log.warn("Could not add the monitoring event: " + event.getInterest() + " for group: " + groupId, e);
@@ -59,8 +94,12 @@ public class TSMonitoringHandler implements MonitoringHandler{
                 log.warn("Could not add the monitoring event: " + event.getInterest() + " for group: " + groupId, e);
             } catch (IOException e) {
                 log.warn("Could not add the monitoring event: " + event.getInterest() + " for group: " + groupId, e);
+            }  catch (Exception e) {
+                log.warn("Could not add the monitoring event: " + event.getInterest() + " for group: " +
+                        groupId, e);
             }
             // monitoringListener.setUniqueId(uniqueId);
+
         }
 
         /*for (InterestedEvent interestedEvent : interestedEvents) {

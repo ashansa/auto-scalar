@@ -78,7 +78,7 @@ public class MonitoringUtil {
     throw new IllegalArgumentException("Could not finalize the comparator. Both thresholds are null");
   }
 
-  private static Comparator getNormalizedComparatorType(Comparator comparator) {
+  public static Comparator getNormalizedComparatorType(Comparator comparator) {
     if (comparator.equals(Comparator.GREATER_THAN) || comparator.equals(Comparator.GREATER_THAN_OR_EQUAL)) {
       return Comparator.GREATER_THAN_OR_EQUAL;
     } else {
