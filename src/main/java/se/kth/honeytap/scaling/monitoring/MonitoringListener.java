@@ -89,6 +89,9 @@ public class MonitoringListener implements Subscriber {
       @Override
       public void onEventArrival(TablespoonEvent event) {
         log.info("==================== table spoon event arrived ==================");
+        logTSEvent(event);
+        log.info("==================== table spoon event logged  ==================");
+
         if (EventType.REGULAR.equals(event.getEventType())) {
           RuleSupport.Comparator filteredComparator = MonitoringUtil.getASComparator(MonitoringUtil.
                   getFilteredComparator(event.getHigh(), event.getLow()));
@@ -127,7 +130,32 @@ public class MonitoringListener implements Subscriber {
             }
           }
         }
-
       }
 
+  private void logTSEvent(TablespoonEvent event) {
+    log.info("######################################################");
+    log.info("################### logging TS event #################");
+    log.info("######################################################");
+    log.info("group: " + event.getGroupId());
+    log.info("machine: " + event.getMachineId());
+    log.info("value: " + event.getValue());
+    log.info("time: " + event.getTimeStamp());
+    log.info("coll index: " + event.getCollectIndex());
+    log.info("event type: " + event.getEventType().name());
+    log.info("resource type : " + event.getResourceType().name());
+    if (event.getHigh() != null) {
+      log.info("threshold High: " + event.getHigh().toString());
+    } else {
+      log.info("threshold High: null");
+    }
+
+    if (event.getLow() != null) {
+      log.info("threshold High: " + event.getLow().toString());
+    } else {
+      log.info("threshold Low: null");
+    }
+
+    log.info("######################## logged ######################");
+
+  }
 }
