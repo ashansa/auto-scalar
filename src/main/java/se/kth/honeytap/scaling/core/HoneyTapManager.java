@@ -128,8 +128,8 @@ public class HoneyTapManager {
                     log.info("................. HoneyTapException while sending dummy high RAM event .............");
                 }
             }
-        //};
-        }.start();
+        };
+        //}.start();
 
 
         return monitoringListener;
