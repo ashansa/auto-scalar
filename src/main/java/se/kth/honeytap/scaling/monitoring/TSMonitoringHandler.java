@@ -62,9 +62,16 @@ public class TSMonitoringHandler implements MonitoringHandler{
                 }
 
                 Resource resource = new Resource(MonitoringUtil.getMonitoringResourceType(items[0]));
-                String uniqueId;
+                String uniqueId = tablespoonAPI.submitter().
+                        subscriber(monitoringListener).
+                        groupId(groupId).
+                        eventType(EventType.REGULAR).
+                        resource(resource).
+                        high((MonitoringUtil.getMonitoringThreshold(items[1], items[2]))).
+                        sendRate(1).
+                        submit();
 
-                if (Comparator.GREATER_THAN_OR_EQUAL.name().equals(MonitoringUtil.
+                /*if (Comparator.GREATER_THAN_OR_EQUAL.name().equals(MonitoringUtil.
                         getNormalizedComparatorType(Comparator.valueOf(items[1])))) {
                      uniqueId = tablespoonAPI.submitter().
                             subscriber(monitoringListener).
@@ -83,7 +90,7 @@ public class TSMonitoringHandler implements MonitoringHandler{
                             low((MonitoringUtil.getMonitoringThreshold(items[1], items[2]))).
                             sendRate(1).
                             submit();
-                }
+                }*/
 
                 subscribedRegularTopics.add(uniqueId);
             } catch (ThresholdException e) {
