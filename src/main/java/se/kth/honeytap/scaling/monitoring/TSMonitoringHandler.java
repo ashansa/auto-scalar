@@ -43,7 +43,7 @@ public class TSMonitoringHandler implements MonitoringHandler{
 
     public MonitoringListener addGroupForMonitoring(String groupId, InterestedEvent[] interestedEvents) throws HoneyTapException {
 
-
+        log.info("+++++++++++++++++++++ adding initial events for group: " + groupId);
         for (InterestedEvent event : interestedEvents) {
             try {
                 //3 forms of items   RAM:<=:30;   CPU:AVG:>=:10:<=:90;    KILLED;
@@ -143,12 +143,15 @@ public class TSMonitoringHandler implements MonitoringHandler{
         //should handle all interested event types
         //resource interests: CPU:>=:80; RAM:<=:30;   CPU:AVG:>=:10:<=:90  ; CPU:>=:70:<=:80
         // machine interests: KILLED; AT_END_OF_BILLING_PERIOD
+        log.info("+++++++++++++++++++++++++ adding new interested events for group: " + groupId + " with duration: " + timeDuration);
         for (InterestedEvent event : events) {
             ////////
             try {
+                log.info("++++++++++++++++++++ going to add new interest: " + event.getInterest());
+
                 String items[] = event.getInterest().split(Constants.SEPARATOR);
                 if (event.getInterest().contains(Constants.AVERAGE) && items.length == 6 && timeDuration > 0) {  //ie: CPU:AVG:>=:10:<=:90
-
+                    log.info("++++++++++++++++++++ adding new interests: group average ++++++++++++++ ");
                     Resource resource = new Resource(MonitoringUtil.getMonitoringResourceType(items[0]));
                     String uniqueId = tablespoonAPI.submitter().
                             subscriber(monitoringListener).
@@ -164,12 +167,16 @@ public class TSMonitoringHandler implements MonitoringHandler{
                             getMonitoringThreshold(items[4], items[5]), MonitoringUtil.getMonitoringThreshold(
                             items[2], items[3]));*/
                 } else if (items.length == 5 && timeDuration > 0) {  //ie: CPU:>=:70:<=:80
+                    log.info("++++++++++++++++++++ adding new interests: regular ++++++++++++++ ");
+
                     Resource resource = new Resource(MonitoringUtil.getMonitoringResourceType(items[0]));
                     String uniqueId = tablespoonAPI.submitter().
                             subscriber(monitoringListener).
                             groupId(groupId).
                             eventType(EventType.REGULAR).
                             resource(resource).
+                            high((MonitoringUtil.getMonitoringThreshold(items[4], items[5]))).
+                            low((MonitoringUtil.getMonitoringThreshold(items[2], items[3]))).
                             duration(timeDuration/1000).   //timeDuration is in ms
                             sendRate(timeDuration - 1000).   //reduce 1second from duration so the event will be sent only once
                             submit();
@@ -178,6 +185,7 @@ public class TSMonitoringHandler implements MonitoringHandler{
                             getMonitoringResourceType(items[0]), timeDuration, 1, MonitoringUtil.getMonitoringThreshold(
                             items[3], items[4]), MonitoringUtil.getMonitoringThreshold(items[1], items[2]));*/
                 }
+                log.info("++++++++++++++++++++ added new interest: " + event.getInterest());
             }catch(ThresholdException e){
                 log.warn("Could not add the monitoring event: " + event.getInterest() + " for group: " + groupId, e);
             } catch (IOException e) {
