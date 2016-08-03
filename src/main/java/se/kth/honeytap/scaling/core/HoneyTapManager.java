@@ -210,8 +210,9 @@ public class HoneyTapManager {
             }
         }
 
-        monitoringHandler.addInterestedEvent(groupId, interestedEvents.toArray(new InterestedEvent[interestedEvents.size()]),
-                timeDuration);
+        ////////////temp removing......
+        /*monitoringHandler.addInterestedEvent(groupId, interestedEvents.toArray(new InterestedEvent[interestedEvents.size()]),
+                timeDuration);*/
 
     }
 
@@ -229,7 +230,7 @@ public class HoneyTapManager {
 
         //ie: CPU:AVG:10-90
         InterestedEvent event = new InterestedEvent(resourceType.name().concat(Constants.SEPARATOR).concat(
-                Constants.AVERAGE).concat(Constants.SEPARATOR).concat(String.valueOf(lowerPercentile).concat("-").
+                Constants.AVERAGE).concat(Constants.SEPARATOR).concat(String.valueOf(lowerPercentile).concat(Constants.SEPARATOR).
                 concat(String.valueOf(upperPercentile))));
         monitoringHandler.addInterestedEvent(groupId, new InterestedEvent[]{event}, timeDuration);
     }
@@ -530,6 +531,7 @@ public class HoneyTapManager {
                 }
             }
         }
+        log.info("Group " + groupId + " is in cooling period for " + direction.name());
         return isInCoolDownPeriod;
     }
 

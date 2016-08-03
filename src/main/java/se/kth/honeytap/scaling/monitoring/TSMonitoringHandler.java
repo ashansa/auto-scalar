@@ -150,7 +150,7 @@ public class TSMonitoringHandler implements MonitoringHandler{
                 log.info("++++++++++++++++++++ going to add new interest: " + event.getInterest());
 
                 String items[] = event.getInterest().split(Constants.SEPARATOR);
-                if (event.getInterest().contains(Constants.AVERAGE) && items.length == 6 && timeDuration > 0) {  //ie: CPU:AVG:>=:10:<=:90
+                if (event.getInterest().contains(Constants.AVERAGE) && items.length == 4 && timeDuration > 0) {  //ie: CPU:AVG:>=:10:<=:90
                     log.info("++++++++++++++++++++ adding new interests: group average ++++++++++++++ ");
                     Resource resource = new Resource(MonitoringUtil.getMonitoringResourceType(items[0]));
                     String uniqueId = tablespoonAPI.submitter().
@@ -175,8 +175,8 @@ public class TSMonitoringHandler implements MonitoringHandler{
                             groupId(groupId).
                             eventType(EventType.REGULAR).
                             resource(resource).
-                            high((MonitoringUtil.getMonitoringThreshold(items[4], items[5]))).
-                            low((MonitoringUtil.getMonitoringThreshold(items[2], items[3]))).
+                            high((MonitoringUtil.getMonitoringThreshold(items[3], items[4]))).
+                            low((MonitoringUtil.getMonitoringThreshold(items[1], items[2]))).
                             duration(timeDuration/1000).   //timeDuration is in ms
                             sendRate(timeDuration - 1000).   //reduce 1second from duration so the event will be sent only once
                             submit();

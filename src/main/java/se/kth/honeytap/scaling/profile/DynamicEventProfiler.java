@@ -101,6 +101,10 @@ public class DynamicEventProfiler {
                         try {
                             tempMaplock.lock();
                             newEvents = eventsToBeProfiledTempMap.get(groupId);
+                            if(newEvents != null) {
+                                //add empty array to keep new events
+                                eventsToBeProfiledTempMap.put(groupId, new ArrayList<MonitoringEvent>());
+                            }
                         } finally {
                             tempMaplock.unlock();
                         }
@@ -152,6 +156,10 @@ public class DynamicEventProfiler {
                             try {
                                 tempMaplock.lock();
                                 newEvents = eventsToBeProfiledTempMap.get(groupId);
+                                if(newEvents != null) {
+                                    //add empty array to keep new events
+                                    eventsToBeProfiledTempMap.put(groupId, new ArrayList<MonitoringEvent>());
+                                }
                             } finally {
                                 tempMaplock.unlock();
                             }
@@ -182,6 +190,10 @@ public class DynamicEventProfiler {
                             try {
                                 tempMaplock.lock();
                                 newEvents = eventsToBeProfiledTempMap.get(groupId);
+                                if(newEvents != null) {
+                                    //add empty array to keep new events
+                                    eventsToBeProfiledTempMap.put(groupId, new ArrayList<MonitoringEvent>());
+                                }
                             } finally {
                                 tempMaplock.unlock();
                             }
